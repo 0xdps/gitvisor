@@ -1,0 +1,63 @@
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { logger } from "hono/logger";
+import { serve } from "@hono/node-server";
+import { createGitHubApp } from "@gitvisor/github";
+import { BullMQQueueRepository } from "@gitvisor/queue";
+
+import { config } from "./config.js";
+import { authRouter } from "./routes/auth.js";
+import { workflowsRouter } from "./routes/workflows.js";
+import { secretsRouter } from "./routes/secrets.js";
+import { repositoriesRouter } from "./routes/repositories.js";
+import { createWebhookRouter } from "./routes/webhooks.js";
+
+// ── GitHub App ───────────────────────────────────────────────────────────────
+createGitHubApp(config.github);
+
+// ── Queue ────────────────────────────────────────────────────────────────────
+const queue = new BullMQQueueRepository({ redis: config.redis });
+
+// ── Hono App ─────────────────────────────────────────────────────────────────
+const app = new Hono();
+
+app.use("*", logger());
+app.use(
+  "*",
+  cors({
+    origin: process.env["ALLOWED_ORIGINS"]?.split(",") ?? ["http://localhost:3000"],
+    credentials: true,
+  }),
+);
+
+// ── Health ───────────────────────────────────────────────────────────────────
+app.get("/health", (c) => c.json({ ok: true, service: "gitvisor-api" }));
+
+// ── Routes ───────────────────────────────────────────────────────────────────
+app.route("/auth", authRouter);
+app.route("/repositories", repositoriesRouter);
+app.route("/workflows", workflowsRouter);
+app.route("/secrets", secretsRouter);
+app.route("/webhooks", createWebhookRouter(queue));
+
+// ── 404 ──────────────────────────────────────────────────────────────────────
+app.notFound((c) => c.json({ ok: false, error: "Not found" }, 404));
+
+app.onError((err, c) => {
+  console.error("[api] unhandled error:", err);
+  return c.json({ ok: false, error: "Internal server error" }, 500);
+});
+
+// ── Start ────────────────────────────────────────────────────────────────────
+serve({ fetch: app.fetch, port: config.port }, () => {
+  console.log(`[api] listening on port ${config.port}`);
+});
+
+// ── Graceful shutdown ────────────────────────────────────────────────────────
+const shutdown = async () => {
+  await queue.close();
+  process.exit(0);
+};
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);

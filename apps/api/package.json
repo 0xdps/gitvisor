@@ -1,0 +1,26 @@
+{
+  "name": "@gitvisor/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --watch dist/index.js",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "hono": "^4.7.10",
+    "@hono/node-server": "^1.14.3",
+    "@nube-auth/client": "^0.3.2",
+    "@gitvisor/shared": "workspace:*",
+    "@gitvisor/github": "workspace:*",
+    "@gitvisor/queue": "workspace:*",
+    "@gitvisor/db": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "@types/node": "^22.15.17"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "@gitvisor/github",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@octokit/app": "^15.1.1",
+    "@octokit/rest": "^21.1.1",
+    "@octokit/webhooks": "^13.5.0",
+    "@octokit/types": "^13.10.0",
+    "@gitvisor/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

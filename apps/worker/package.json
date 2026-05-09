@@ -1,0 +1,23 @@
+{
+  "name": "@gitvisor/worker",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --watch dist/index.js",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@gitvisor/shared": "workspace:*",
+    "@gitvisor/github": "workspace:*",
+    "@gitvisor/queue": "workspace:*",
+    "@gitvisor/db": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "@types/node": "^22.15.17"
+  }
+}

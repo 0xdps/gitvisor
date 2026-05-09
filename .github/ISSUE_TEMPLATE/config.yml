@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability
+    url: mailto:security@gitvisor.dev
+    about: Please report security issues by email, not as a public issue.
+  - name: Discussions
+    url: https://github.com/0xdps/gitvisor/discussions
+    about: Questions, ideas, and general discussion.

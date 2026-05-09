@@ -1,7 +1,45 @@
+# Dependencies
 node_modules/
+.pnpm-store/
+
+# Build outputs
 dist/
-.turbo/
+.output/
+.vinxi/
+out/
+build/
+
+# TypeScript
 *.tsbuildinfo
+
+# Turbo
+.turbo/
+
+# Environment files — never commit secrets
 .env
 .env.local
 .env.*.local
+!.env.example
+
+# Editor
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Docker volumes
+infra/docker/volumes/

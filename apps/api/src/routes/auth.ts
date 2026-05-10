@@ -1,6 +1,7 @@
 import { Hono } from "hono";
+import { NubeAuthClient } from "@nube-auth/client";
 import { nubeAuthClient, config } from "../config.js";
-import { setCookie, deleteCookie } from "hono/cookie";
+import { setCookie, deleteCookie, getCookie } from "hono/cookie";
 
 export const authRouter = new Hono();
 
@@ -53,9 +54,18 @@ authRouter.post("/callback", async (c) => {
  * Invalidates the session on NubeAuth and clears the cookie.
  */
 authRouter.post("/logout", async (c) => {
-  await nubeAuthClient.auth.logout().catch(() => {
-    // Best-effort — clear cookie regardless
-  });
+  const token = getCookie(c, config.session.cookieName);
+  if (token) {
+    // Per-request client scoped to the user's session token.
+    const client = new NubeAuthClient({
+      gatewayUrl: config.nubeAuth.gatewayUrl,
+      appId: config.nubeAuth.appId,
+      sessionToken: token,
+    });
+    await client.auth.logout().catch(() => {
+      // Best-effort — clear cookie regardless
+    });
+  }
 
   deleteCookie(c, config.session.cookieName, { path: "/" });
   return c.json({ ok: true, data: null });

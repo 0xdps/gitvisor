@@ -1,6 +1,15 @@
 import type { User } from "@gitvisor/shared";
 
-const API_URL = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "http://localhost:3001";
+// During SSR (server-side in the web container) `window` is not defined.
+// API_INTERNAL_URL is a runtime env var pointing to the Docker service name,
+// e.g. http://api:3002. VITE_API_URL is baked at build time for the browser.
+const API_URL =
+  typeof window === "undefined"
+    ? (process.env["API_INTERNAL_URL"] ??
+        (import.meta.env["VITE_API_URL"] as string | undefined) ??
+        "http://localhost:3002")
+    : ((import.meta.env["VITE_API_URL"] as string | undefined) ??
+        "http://localhost:3002");
 
 /**
  * Fetch the GitHub OAuth URL from the API and redirect the browser there.

@@ -1,0 +1,17 @@
+import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+
+export default defineConfig({
+  plugins: [
+    tanstackStart({ target: "node-server" }),
+    viteReact(),
+    tailwindcss(),
+  ],
+  ssr: {
+    // Workspace packages that export raw TS source must be bundled,
+    // not externalized, so the SSR server output is self-contained.
+    noExternal: ["@gitvisor/ui", "@gitvisor/shared"],
+  },
+});

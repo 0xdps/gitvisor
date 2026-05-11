@@ -11,6 +11,7 @@ export interface GitHubWorkflowRun {
   status: string | null;
   conclusion: string | null;
   run_number: number;
+  run_attempt?: number | null;
   html_url: string;
   actor: { login: string } | null;
   created_at: string;
@@ -24,28 +25,29 @@ export function mapWorkflowRun(
   userId: string,
   workflowName: string,
 ): Omit<WorkflowRun, "id"> {
-  const startedAt = raw.run_started_at ?? raw.created_at;
-  const updatedAt = raw.updated_at;
+  const startedAt = raw.run_started_at ?? null;
+  const completedAt = raw.status === "completed" ? raw.updated_at : null;
   const durationMs =
-    raw.status === "completed"
-      ? new Date(updatedAt).getTime() - new Date(startedAt).getTime()
+    raw.status === "completed" && startedAt
+      ? new Date(raw.updated_at).getTime() - new Date(startedAt).getTime()
       : null;
 
   return {
     repositoryId,
     userId,
     githubRunId: raw.id,
-    workflowId: raw.workflow_id,
     workflowName: raw.name ?? workflowName,
-    headBranch: raw.head_branch,
-    headSha: raw.head_sha,
-    event: raw.event,
+    branch: raw.head_branch ?? "",
+    commitSha: raw.head_sha,
     status: (raw.status ?? "queued") as WorkflowRunStatus,
     conclusion: (raw.conclusion ?? null) as WorkflowRunConclusion,
     runNumber: raw.run_number,
-    actor: raw.actor?.login ?? null,
+    runAttempt: raw.run_attempt ?? 1,
+    triggeredBy: raw.actor?.login ?? null,
     durationMs,
-    githubUrl: raw.html_url,
+    htmlUrl: raw.html_url,
+    startedAt,
+    completedAt,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
   };

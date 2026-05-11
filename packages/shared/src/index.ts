@@ -11,11 +11,13 @@ export interface User {
 // ── GitHub App Installation ───────────────────────────────────────────────────
 
 export interface Installation {
-  id: number;
+  id: string;
   userId: string;
   githubInstallationId: number;
   accountLogin: string;
   accountType: "User" | "Organization";
+  appSlug: string;
+  suspended: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,17 +57,18 @@ export interface WorkflowRun {
   repositoryId: string;
   userId: string;
   githubRunId: number;
-  workflowId: number;
   workflowName: string;
-  headBranch: string | null;
-  headSha: string;
-  event: string;
+  branch: string;
+  commitSha: string;
   status: WorkflowRunStatus;
   conclusion: WorkflowRunConclusion;
   runNumber: number;
-  actor: string | null;
+  runAttempt: number;
+  triggeredBy: string | null;
   durationMs: number | null;
-  githubUrl: string;
+  htmlUrl: string;
+  startedAt: string | null;
+  completedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,11 +80,11 @@ export type SecretScope = "repo" | "environment" | "org";
 export interface SecretMeta {
   id: string;
   repositoryId: string;
-  userId: string;
+  userId?: string;
   name: string;
   scope: SecretScope;
-  environment: string | null;
-  githubUpdatedAt: string | null;
+  environment?: string | null;
+  githubUpdatedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -92,14 +95,14 @@ export type PackageEcosystem = "npm" | "docker" | "container" | "maven" | "rubyg
 
 export interface Package {
   id: string;
-  repositoryId: string;
-  userId: string;
+  repositoryId: string | null;
+  userId?: string;
   githubPackageId: number;
   name: string;
   ecosystem: PackageEcosystem;
   visibility: "public" | "private";
   latestVersion: string | null;
-  downloadCount: number;
+  downloadCount?: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -2,7 +2,7 @@ import { Queue, Worker, type ConnectionOptions } from "bullmq";
 import type { JobData } from "@gitvisor/shared";
 import type { EnqueueOptions, JobHandler, QueueRepository } from "./repository.js";
 
-const QUEUE_NAME = "gitvisor:sync";
+const QUEUE_NAME = "gitvisor-sync";
 
 export interface BullMQQueueConfig {
   redis: ConnectionOptions;

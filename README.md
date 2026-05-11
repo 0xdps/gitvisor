@@ -35,9 +35,9 @@ GitVisor is an open-source GitHub operational dashboard. Monitor workflow runs, 
 └──────────┬────────────────────────┬─────────────────┘
            │ enqueue                │ GitHub API
 ┌──────────▼────────┐   ┌──────────▼─────────────────┐
-│    apps/worker    │   │       packages/github       │
-│  BullMQ · Redis   │   │   @octokit/app · webhooks   │
-└──────────┬────────┘   └────────────────────────────-┘
+│    apps/worker    │   │       packages/github      │
+│  BullMQ · Redis   │   │   @octokit/app · webhooks  │
+└──────────┬────────┘   └────────────────────────────┘
            │ read/write
 ┌──────────▼────────┐
 │    packages/db    │
@@ -54,7 +54,7 @@ GitVisor is an open-source GitHub operational dashboard. Monitor workflow runs, 
 | API | Hono v4 on Node.js |
 | Queue | BullMQ v5 + Redis |
 | GitHub | `@octokit/app`, `@octokit/rest`, `@octokit/webhooks` |
-| Auth | NubeAuth (PKCE OAuth) |
+| Auth | HMAC-SHA256 signed cookies, GitHub OAuth |
 | Monorepo | Turborepo v2, pnpm v9 workspaces |
 | Language | TypeScript 5.8 strict |
 
@@ -88,17 +88,6 @@ Or run services individually:
 pnpm dev          # all apps via Turborepo
 ```
 
-### GitHub App Setup
-
-1. Create a GitHub App at [github.com/settings/apps/new](https://github.com/settings/apps/new)
-2. Set the webhook URL to `https://your-domain/webhooks/github`
-3. Required permissions:
-   - **Repository**: Actions (read), Secrets (read/write), Packages (read), Contents (read)
-   - **Organization**: Members (read)
-4. Subscribe to events: `workflow_run`, `push`, `installation`, `package`
-5. Generate a private key and note the App ID
-6. Install the app on your organization/repositories
-
 ### Environment Variables
 
 **`apps/api/.env`**
@@ -106,18 +95,19 @@ pnpm dev          # all apps via Turborepo
 ```env
 NODE_ENV=production
 PORT=3001
+ALLOWED_ORIGINS=https://your-domain
 
-# GitHub App
+# Session signing — generate with:
+# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+SESSION_SECRET=
+
+# GitHub App (from steps 9-11 above)
 GITHUB_APP_ID=
-GITHUB_PRIVATE_KEY=
+GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
 GITHUB_WEBHOOK_SECRET=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
-
-# NubeAuth
-NUBE_AUTH_GATEWAY_URL=
-NUBE_AUTH_APP_ID=
-NUBE_AUTH_APP_SECRET=
+GITHUB_OAUTH_REDIRECT_URI=https://your-domain/auth/callback
 
 # Redis
 REDIS_HOST=localhost
@@ -128,8 +118,6 @@ REDIS_PASSWORD=
 **`apps/web/.env`**
 
 ```env
-VITE_NUBE_AUTH_GATEWAY_URL=
-VITE_NUBE_AUTH_APP_ID=
 VITE_API_URL=http://localhost:3001
 ```
 

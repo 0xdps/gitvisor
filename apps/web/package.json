@@ -14,8 +14,6 @@
     "@tanstack/react-router": "^1.120.20",
     "@tanstack/start": "^1.120.20",
     "@tanstack/react-query": "^5.75.5",
-    "@nube-auth/client": "^0.3.2",
-    "@nube-auth/react": "^0.1.8",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "@gitvisor/shared": "workspace:*",

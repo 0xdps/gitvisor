@@ -32,6 +32,8 @@ export function getGitHubApp(): App {
  * Returns an Octokit instance authenticated as a specific installation.
  * Tokens are automatically refreshed by @octokit/app.
  */
-export async function getInstallationOctokit(installationId: number) {
+export async function getInstallationOctokit(
+  installationId: number,
+): Promise<Awaited<ReturnType<App["getInstallationOctokit"]>>> {
   return getGitHubApp().getInstallationOctokit(installationId);
 }

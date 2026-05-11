@@ -13,7 +13,7 @@
   "dependencies": {
     "hono": "^4.7.10",
     "@hono/node-server": "^1.14.3",
-    "@nube-auth/client": "^0.3.2",
+    "@gitvisor/auth": "workspace:*",
     "@gitvisor/shared": "workspace:*",
     "@gitvisor/github": "workspace:*",
     "@gitvisor/queue": "workspace:*",

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { nubeAuthClient } from "../../lib/auth-client";
+import { login } from "../lib/auth-client";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -14,10 +14,7 @@ function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const returnTo = `${window.location.origin}/auth/callback`;
-      const { url, codeVerifier } = await nubeAuthClient.app.buildOAuthUrl({ returnTo });
-      sessionStorage.setItem("pkce_verifier", codeVerifier);
-      window.location.href = url;
+      await login();
     } catch {
       setError("Failed to start login. Please try again.");
       setLoading(false);

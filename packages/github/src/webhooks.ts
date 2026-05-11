@@ -19,7 +19,7 @@ export function createWebhookHandler(
       await enqueue({
         type: "sync:repo",
         data: {
-          userId: String(payload.installation.account.id),
+          userId: String(payload.installation.account?.id ?? 0),
           installationId: payload.installation.id,
           repositoryId: String(repo.id),
           githubRepoId: repo.id,
@@ -34,7 +34,7 @@ export function createWebhookHandler(
     await enqueue({
       type: "sync:workflow-runs",
       data: {
-        userId: String(payload.repository.owner.id),
+        userId: String(payload.repository.owner?.id ?? 0),
         installationId: payload.installation?.id ?? 0,
         repositoryId: String(payload.repository.id),
         fullName: payload.repository.full_name,
@@ -48,7 +48,7 @@ export function createWebhookHandler(
     await enqueue({
       type: "sync:workflow-runs",
       data: {
-        userId: String(payload.repository.owner.id ?? 0),
+        userId: String(payload.repository.owner?.id ?? 0),
         installationId: payload.installation.id,
         repositoryId: String(payload.repository.id),
         fullName: payload.repository.full_name,

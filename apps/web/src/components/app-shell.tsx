@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { useAuth } from "@nube-auth/react";
+import { useQuery } from "@tanstack/react-query";
+import { me, logout as authLogout } from "../lib/auth-client";
 
 interface AppShellProps {
   children: ReactNode;
@@ -15,7 +16,18 @@ const navItems = [
 ];
 
 export function AppShell({ children }: AppShellProps) {
-  const { user, logout } = useAuth();
+  const { data: user } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: me,
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  function handleLogout() {
+    void authLogout().then(() => {
+      window.location.href = "/login";
+    });
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -38,9 +50,9 @@ export function AppShell({ children }: AppShellProps) {
         </nav>
 
         <div className="border-t p-4 flex items-center gap-3">
-          {user?.avatar_url && (
+          {user?.avatarUrl && (
             <img
-              src={user.avatar_url}
+              src={user.avatarUrl}
               alt={user.name ?? user.email}
               className="w-7 h-7 rounded-full"
             />
@@ -49,7 +61,7 @@ export function AppShell({ children }: AppShellProps) {
             <p className="text-xs font-medium truncate">{user?.name ?? user?.email}</p>
           </div>
           <button
-            onClick={() => logout()}
+            onClick={handleLogout}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Sign out

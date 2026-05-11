@@ -1,17 +1,19 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { useAuth } from "@nube-auth/react";
+import { useQuery } from "@tanstack/react-query";
+import { me } from "../lib/auth-client";
 import { AppShell } from "../components/app-shell";
 
 export const Route = createFileRoute("/_auth")({
-  beforeLoad: async ({ context }) => {
-    // Server-side auth check placeholder
-    // Client-side guard is handled in the component below
-  },
   component: AuthLayout,
 });
 
 function AuthLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { data: user, isLoading } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: me,
+    staleTime: 60_000,
+    retry: false,
+  });
 
   if (isLoading) {
     return (
@@ -21,7 +23,7 @@ function AuthLayout() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     throw redirect({ to: "/login" });
   }
 

@@ -1,5 +1,3 @@
-import { NubeAuthClient } from "@nube-auth/client";
-
 function requireEnv(key: string): string {
   const val = process.env[key];
   if (!val) throw new Error(`Missing required environment variable: ${key}`);
@@ -10,18 +8,15 @@ export const config = {
   port: Number(process.env["PORT"] ?? 3001),
   nodeEnv: process.env["NODE_ENV"] ?? "development",
 
-  nubeAuth: {
-    gatewayUrl: requireEnv("NUBE_AUTH_GATEWAY_URL"),
-    appId: requireEnv("NUBE_AUTH_APP_ID"),
-    appSecret: requireEnv("NUBE_AUTH_APP_SECRET"),
-  },
-
   github: {
     appId: requireEnv("GITHUB_APP_ID"),
     privateKey: requireEnv("GITHUB_APP_PRIVATE_KEY").replace(/\\n/g, "\n"),
     webhookSecret: requireEnv("GITHUB_WEBHOOK_SECRET"),
     clientId: requireEnv("GITHUB_CLIENT_ID"),
     clientSecret: requireEnv("GITHUB_CLIENT_SECRET"),
+    // Full URL that GitHub will redirect back to after OAuth.
+    // Must be registered in your GitHub App's callback URL list.
+    oauthRedirectUri: requireEnv("GITHUB_OAUTH_REDIRECT_URI"),
   },
 
   redis: {
@@ -33,11 +28,7 @@ export const config = {
   session: {
     cookieName: "gitvisor_session",
     secure: process.env["NODE_ENV"] === "production",
+    // Must be at least 32 random characters. Used to sign session cookies.
+    secret: requireEnv("SESSION_SECRET"),
   },
 } as const;
-
-export const nubeAuthClient = new NubeAuthClient({
-  gatewayUrl: config.nubeAuth.gatewayUrl,
-  appId: config.nubeAuth.appId,
-  appSecret: config.nubeAuth.appSecret,
-});

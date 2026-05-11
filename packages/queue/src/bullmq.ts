@@ -29,9 +29,9 @@ export class BullMQQueueRepository implements QueueRepository {
 
   async enqueue(job: JobData, opts: EnqueueOptions = {}): Promise<void> {
     await this.queue.add(job.type, job, {
-      delay: opts.delay,
-      attempts: opts.attempts,
-      jobId: opts.jobId,
+      ...(opts.delay !== undefined ? { delay: opts.delay } : {}),
+      ...(opts.attempts !== undefined ? { attempts: opts.attempts } : {}),
+      ...(opts.jobId !== undefined ? { jobId: opts.jobId } : {}),
     });
   }
 

@@ -3,48 +3,78 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(240 10% 3.9%);
-  --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(240 10% 3.9%);
-  --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(240 10% 3.9%);
-  --color-primary: hsl(240 5.9% 10%);
-  --color-primary-foreground: hsl(0 0% 98%);
-  --color-secondary: hsl(240 4.8% 95.9%);
-  --color-secondary-foreground: hsl(240 5.9% 10%);
-  --color-muted: hsl(240 4.8% 95.9%);
-  --color-muted-foreground: hsl(240 3.8% 46.1%);
-  --color-accent: hsl(240 4.8% 95.9%);
-  --color-accent-foreground: hsl(240 5.9% 10%);
-  --color-destructive: hsl(0 84.2% 60.2%);
+  /* ── Light mode ─────────────────────────────────────────────────────────── */
+  --color-background:         hsl(0 0% 100%);
+  --color-foreground:         hsl(220 25% 10%);
+  --color-card:               hsl(0 0% 100%);
+  --color-card-foreground:    hsl(220 25% 10%);
+  --color-popover:            hsl(0 0% 100%);
+  --color-popover-foreground: hsl(220 25% 10%);
+
+  /* Green primary — matches checkmygit brand */
+  --color-primary:            hsl(142 71% 36%);
+  --color-primary-foreground: hsl(0 0% 100%);
+
+  --color-secondary:          hsl(220 14% 96%);
+  --color-secondary-foreground: hsl(220 25% 10%);
+  --color-muted:              hsl(220 14% 96%);
+  --color-muted-foreground:   hsl(220 9% 46%);
+
+  /* Hover/active surface — light green tint */
+  --color-accent:             hsl(142 40% 95%);
+  --color-accent-foreground:  hsl(142 71% 25%);
+
+  --color-destructive:        hsl(0 84% 60%);
   --color-destructive-foreground: hsl(0 0% 98%);
-  --color-border: hsl(240 5.9% 90%);
-  --color-input: hsl(240 5.9% 90%);
-  --color-ring: hsl(240 5.9% 10%);
+
+  --color-border: hsl(220 13% 91%);
+  --color-input:  hsl(220 13% 91%);
+  --color-ring:   hsl(142 71% 36%);
   --radius: 0.5rem;
+
+  /* Contribution graph greens (light → dark) */
+  --color-contrib-0: hsl(220 14% 93%);
+  --color-contrib-1: hsl(142 70% 87%);
+  --color-contrib-2: hsl(142 71% 68%);
+  --color-contrib-3: hsl(142 71% 46%);
+  --color-contrib-4: hsl(142 71% 30%);
 }
 
 @media (prefers-color-scheme: dark) {
   @theme {
-    --color-background: hsl(240 10% 3.9%);
-    --color-foreground: hsl(0 0% 98%);
-    --color-card: hsl(240 10% 3.9%);
-    --color-card-foreground: hsl(0 0% 98%);
-    --color-popover: hsl(240 10% 3.9%);
-    --color-popover-foreground: hsl(0 0% 98%);
-    --color-primary: hsl(0 0% 98%);
-    --color-primary-foreground: hsl(240 5.9% 10%);
-    --color-secondary: hsl(240 3.7% 15.9%);
-    --color-secondary-foreground: hsl(0 0% 98%);
-    --color-muted: hsl(240 3.7% 15.9%);
-    --color-muted-foreground: hsl(240 5% 64.9%);
-    --color-accent: hsl(240 3.7% 15.9%);
-    --color-accent-foreground: hsl(0 0% 98%);
-    --color-destructive: hsl(0 62.8% 30.6%);
+    /* ── Dark mode — GitHub-dark inspired ──────────────────────────────────── */
+    --color-background:         hsl(215 28% 7%);   /* #0d1117 */
+    --color-foreground:         hsl(213 27% 91%);  /* #e6edf3 */
+    --color-card:               hsl(215 25% 10%);  /* #161b22 */
+    --color-card-foreground:    hsl(213 27% 91%);
+    --color-popover:            hsl(215 25% 10%);
+    --color-popover-foreground: hsl(213 27% 91%);
+
+    /* Green primary — slightly brighter for dark backgrounds */
+    --color-primary:            hsl(142 69% 45%);  /* #3fb950 */
+    --color-primary-foreground: hsl(215 28% 7%);
+
+    --color-secondary:          hsl(215 25% 14%);
+    --color-secondary-foreground: hsl(213 27% 91%);
+    --color-muted:              hsl(215 25% 14%);
+    --color-muted-foreground:   hsl(215 14% 55%);  /* #8b949e */
+
+    /* Hover/active surface — subtle dark green tint */
+    --color-accent:             hsl(215 25% 16%);
+    --color-accent-foreground:  hsl(142 69% 55%);
+
+    --color-destructive:        hsl(0 65% 55%);
     --color-destructive-foreground: hsl(0 0% 98%);
-    --color-border: hsl(240 3.7% 15.9%);
-    --color-input: hsl(240 3.7% 15.9%);
-    --color-ring: hsl(240 4.9% 83.9%);
+
+    --color-border: hsl(215 18% 22%);  /* #30363d */
+    --color-input:  hsl(215 18% 22%);
+    --color-ring:   hsl(142 69% 45%);
+
+    /* Contribution graph greens (dark palette) */
+    --color-contrib-0: hsl(215 18% 17%);
+    --color-contrib-1: hsl(142 70% 15%);
+    --color-contrib-2: hsl(142 71% 26%);
+    --color-contrib-3: hsl(142 71% 38%);
+    --color-contrib-4: hsl(142 69% 52%);
   }
 }

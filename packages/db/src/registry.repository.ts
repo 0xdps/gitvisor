@@ -8,6 +8,7 @@ export interface RegistryRepository {
   // Users
   upsertUser(user: Omit<User, "createdAt"> & { createdAt?: string }): Promise<User>;
   getUserById(id: string): Promise<User | null>;
+  getUserByGithubUsername(githubUsername: string): Promise<User | null>;
 
   // MesaHub DB mapping
   getUserDbRef(userId: string): Promise<string | null>;

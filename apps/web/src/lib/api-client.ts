@@ -1,11 +1,11 @@
 import type { Repository, WorkflowRun, SecretMeta, PaginatedResponse } from "@gitvisor/shared";
 
+// Client-side calls use the /api proxy (Next.js rewrites → API service).
+// Server-side calls bypass the proxy and hit the API directly.
 const API_URL =
   typeof window === "undefined"
-    ? (process.env["API_INTERNAL_URL"] ??
-        (import.meta.env["VITE_API_URL"] as string | undefined) ??
-        "http://localhost:3002")
-    : ((import.meta.env["VITE_API_URL"] as string | undefined) ?? "http://localhost:3002");
+    ? (process.env["API_INTERNAL_URL"] ?? "http://localhost:3002")
+    : "/api";
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
@@ -29,6 +29,10 @@ export function getRepositories(): Promise<Repository[]> {
 
 export function getRepository(githubRepoId: number): Promise<Repository> {
   return apiFetch<Repository>(`/repositories/${githubRepoId}`);
+}
+
+export function syncRepositories(): Promise<{ queued: number }> {
+  return apiFetch<{ queued: number }>("/repositories/sync", { method: "POST" });
 }
 
 // ── Workflow Runs ─────────────────────────────────────────────────────────────
@@ -79,4 +83,72 @@ export function getInstallations(): Promise<AccountInstallation[]> {
 
 export function getSecrets(repositoryId: string): Promise<SecretMeta[]> {
   return apiFetch<SecretMeta[]>(`/secrets?repositoryId=${encodeURIComponent(repositoryId)}`);
+}
+
+export function updateSecret(
+  repoId: number,
+  secretName: string,
+  value: string,
+): Promise<void> {
+  return apiFetch<void>(`/secrets/${repoId}/${encodeURIComponent(secretName)}`, {
+    method: "PUT",
+    body: JSON.stringify({ value }),
+  });
+}
+
+export function deleteSecret(repoId: number, secretName: string): Promise<void> {
+  return apiFetch<void>(`/secrets/${repoId}/${encodeURIComponent(secretName)}`, {
+    method: "DELETE",
+  });
+}
+
+// ── Packages ──────────────────────────────────────────────────────────────────
+
+export function getPackages(repositoryId?: string): Promise<import("@gitvisor/shared").Package[]> {
+  const qs = repositoryId ? `?repositoryId=${encodeURIComponent(repositoryId)}` : "";
+  return apiFetch(`/packages${qs}`);
+}
+
+// ── Profile & Analytics ───────────────────────────────────────────────────────
+
+export interface ProfileStats {
+  repositoryCount: number;
+  totalRuns: number;
+  successCount: number;
+  failureCount: number;
+  workflowSuccessRate: number | null;
+}
+
+export interface Profile {
+  userId: string;
+  githubUsername: string;
+  name: string | null;
+  avatarUrl: string | null;
+  stats: ProfileStats;
+}
+
+export function getProfile(): Promise<Profile> {
+  return apiFetch<Profile>("/profile");
+}
+
+// ── Audit Log ─────────────────────────────────────────────────────────────────
+
+export interface AuditEntry {
+  id: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  createdAt: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface AuditLogResponse {
+  items: AuditEntry[];
+  total: number;
+  page: number;
+  perPage: number;
+}
+
+export function getAuditLog(page = 1): Promise<AuditLogResponse> {
+  return apiFetch<AuditLogResponse>(`/audit-log?page=${page}&perPage=25`);
 }

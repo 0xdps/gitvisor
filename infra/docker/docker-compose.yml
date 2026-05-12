@@ -49,6 +49,8 @@ services:
       - "3000:3000"
     env_file:
       - ../../../.env.local
+    environment:
+      API_INTERNAL_URL: http://api:3002
     depends_on:
       - api
 

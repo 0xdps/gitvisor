@@ -5,9 +5,9 @@ node_modules/
 # Build outputs
 dist/
 .output/
-.vinxi/
 out/
 build/
+.next/
 
 # TypeScript
 *.tsbuildinfo

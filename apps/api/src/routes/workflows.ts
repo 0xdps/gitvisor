@@ -1,44 +1,68 @@
 import { Hono } from "hono";
 import { requireAuth, type AuthEnv } from "../middleware/auth.js";
+import { getInstallationOctokit, rerunWorkflow, cancelWorkflowRun } from "@gitvisor/github";
+import type { UserDbRepository } from "@gitvisor/db";
 
-export const workflowsRouter = new Hono<AuthEnv>();
+export function createWorkflowsRouter(
+  getUserDb: (userId: string) => Promise<UserDbRepository>,
+) {
+  const router = new Hono<AuthEnv>();
 
-workflowsRouter.use("*", requireAuth);
+  router.use("*", requireAuth);
 
-/**
- * GET /workflows?repositoryId=&page=&perPage=
- * Lists workflow runs from the user's MesaHub DB (no GitHub API call).
- */
-workflowsRouter.get("/", async (c) => {
-  const _user = c.get("user");
-  const _repositoryId = c.req.query("repositoryId");
-  const _page = Number(c.req.query("page") ?? 1);
-  const _perPage = Number(c.req.query("perPage") ?? 25);
+  /**
+   * GET /workflows?repositoryId=&page=&perPage=
+   * Lists workflow runs from the user's DB (no GitHub API call).
+   */
+  router.get("/", async (c) => {
+    const user = c.get("user");
+    const repositoryId = c.req.query("repositoryId");
+    const status = c.req.query("status");
+    const page = Math.max(1, Number(c.req.query("page") ?? 1));
+    const perPage = Math.min(100, Math.max(1, Number(c.req.query("perPage") ?? 25)));
+    const userDb = await getUserDb(user.id);
+    const result = await userDb.listWorkflowRuns({
+      ...(repositoryId !== undefined ? { repositoryId } : {}),
+      ...(status !== undefined ? { status } : {}),
+      page,
+      perPage,
+    });
+    return c.json({ ok: true, data: result });
+  });
 
-  // TODO: inject UserDbRepository and query MesaHub
-  return c.json({ ok: true, data: { items: [], total: 0, page: _page, perPage: _perPage, hasMore: false } });
-});
+  /**
+   * POST /workflows/:runId/rerun
+   * Reruns a workflow via GitHub API.
+   */
+  router.post("/:runId/rerun", async (c) => {
+    const user = c.get("user");
+    const runId = Number(c.req.param("runId"));
+    const userDb = await getUserDb(user.id);
+    const run = await userDb.getWorkflowRun(runId);
+    if (!run) return c.json({ ok: false, error: "Not found" }, 404);
+    const repo = await userDb.getRepository(Number(run.repositoryId));
+    if (!repo) return c.json({ ok: false, error: "Repository not found" }, 404);
+    const octokit = await getInstallationOctokit(repo.installationId);
+    await rerunWorkflow(octokit as never, repo.owner, repo.name, runId);
+    return c.json({ ok: true, data: null });
+  });
 
-/**
- * POST /workflows/:runId/rerun
- * Reruns a workflow via GitHub API.
- */
-workflowsRouter.post("/:runId/rerun", async (c) => {
-  const _user = c.get("user");
-  const _runId = Number(c.req.param("runId"));
+  /**
+   * POST /workflows/:runId/cancel
+   * Cancels a running workflow via GitHub API.
+   */
+  router.post("/:runId/cancel", async (c) => {
+    const user = c.get("user");
+    const runId = Number(c.req.param("runId"));
+    const userDb = await getUserDb(user.id);
+    const run = await userDb.getWorkflowRun(runId);
+    if (!run) return c.json({ ok: false, error: "Not found" }, 404);
+    const repo = await userDb.getRepository(Number(run.repositoryId));
+    if (!repo) return c.json({ ok: false, error: "Repository not found" }, 404);
+    const octokit = await getInstallationOctokit(repo.installationId);
+    await cancelWorkflowRun(octokit as never, repo.owner, repo.name, runId);
+    return c.json({ ok: true, data: null });
+  });
 
-  // TODO: resolve installation, call rerunWorkflow()
-  return c.json({ ok: true, data: null });
-});
-
-/**
- * POST /workflows/:runId/cancel
- * Cancels a running workflow via GitHub API.
- */
-workflowsRouter.post("/:runId/cancel", async (c) => {
-  const _user = c.get("user");
-  const _runId = Number(c.req.param("runId"));
-
-  // TODO: resolve installation, call cancelWorkflowRun()
-  return c.json({ ok: true, data: null });
-});
+  return router;
+}

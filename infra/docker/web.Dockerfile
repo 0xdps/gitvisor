@@ -12,10 +12,6 @@ COPY core/packages/ core/packages/
 COPY core/apps/web/ core/apps/web/
 COPY core/tsconfig.base.json core/tsconfig.base.json
 
-# VITE_ vars are baked in at build time
-ARG VITE_API_URL=http://localhost:3002
-ENV VITE_API_URL=${VITE_API_URL}
-
 RUN --mount=type=cache,id=pnpm-web,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm turbo run build --filter=@gitvisor/web...
 RUN pnpm deploy --filter=@gitvisor/web --prod /deploy
@@ -24,7 +20,10 @@ FROM base AS runner
 WORKDIR /app
 
 COPY --from=build /deploy .
+# Copy the Next.js standalone output if using output: 'standalone'
+# Otherwise node_modules/.bin/next start is used below.
 
 ENV NODE_ENV=production
 EXPOSE 3000
-CMD ["node", "server-start.mjs"]
+# API_INTERNAL_URL is injected at runtime via docker-compose (not baked in at build time)
+CMD ["node_modules/.bin/next", "start"]

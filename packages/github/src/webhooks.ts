@@ -56,6 +56,20 @@ export function createWebhookHandler(
     });
   });
 
+  // ── Workflow job events (re-trigger run sync) ────────────────────────────
+  webhooks.on("workflow_job", async ({ payload }) => {
+    if (!payload.installation) return;
+    await enqueue({
+      type: "sync:workflow-runs",
+      data: {
+        userId: String(payload.repository.owner?.id ?? 0),
+        installationId: payload.installation.id,
+        repositoryId: String(payload.repository.id),
+        fullName: payload.repository.full_name,
+      },
+    });
+  });
+
   // ── Package events ───────────────────────────────────────────────────────
   webhooks.on("package", async ({ payload }) => {
     if (!payload.installation) return;
@@ -69,6 +83,23 @@ export function createWebhookHandler(
       },
     });
   });
+
+  // ── Release events (trigger package re-sync) ─────────────────────────────
+  webhooks.on("release", async ({ payload }) => {
+    if (!payload.installation) return;
+    await enqueue({
+      type: "sync:packages",
+      data: {
+        userId: String(payload.repository.owner?.id ?? 0),
+        installationId: payload.installation.id,
+        repositoryId: String(payload.repository.id),
+        fullName: payload.repository.full_name,
+      },
+    });
+  });
+
+  // ── Installation deleted ─────────────────────────────────────────────────
+  // Handled downstream (e.g. cloud API) — no job type needed in core.
 
   return webhooks;
 }

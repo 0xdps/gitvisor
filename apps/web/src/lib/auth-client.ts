@@ -1,15 +1,11 @@
 import type { User } from "@gitvisor/shared";
 
-// During SSR (server-side in the web container) `window` is not defined.
-// API_INTERNAL_URL is a runtime env var pointing to the Docker service name,
-// e.g. http://api:3002. VITE_API_URL is baked at build time for the browser.
+// Client-side calls use the /api proxy (Next.js rewrites → API service).
+// Server-side calls (Server Components) bypass the proxy and hit the API directly.
 const API_URL =
   typeof window === "undefined"
-    ? (process.env["API_INTERNAL_URL"] ??
-        (import.meta.env["VITE_API_URL"] as string | undefined) ??
-        "http://localhost:3002")
-    : ((import.meta.env["VITE_API_URL"] as string | undefined) ??
-        "http://localhost:3002");
+    ? (process.env["API_INTERNAL_URL"] ?? "http://localhost:3002")
+    : "/api";
 
 /**
  * Fetch the GitHub OAuth URL from the API and redirect the browser there.
@@ -25,9 +21,14 @@ export async function login(): Promise<void> {
 /**
  * Return the currently signed-in user, or null if not authenticated.
  * Reads the local session cookie — no external call from the API.
+ * Pass `headers` when calling from a server context (SSR) so the incoming
+ * request's Cookie is forwarded to the API.
  */
-export async function me(): Promise<User | null> {
-  const res = await fetch(`${API_URL}/auth/me`, { credentials: "include" });
+export async function me(headers?: HeadersInit): Promise<User | null> {
+  const res = await fetch(`${API_URL}/auth/me`, {
+    credentials: "include",
+    headers: { ...headers },
+  });
   if (res.status === 401) return null;
   if (!res.ok) throw new Error("Failed to fetch user");
   const { data } = (await res.json()) as { data: User };

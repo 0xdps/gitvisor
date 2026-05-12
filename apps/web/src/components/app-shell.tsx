@@ -1,5 +1,8 @@
+"use client";
+
 import type { ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -9,6 +12,7 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
+  ScrollText,
   User,
 } from "lucide-react";
 import {
@@ -34,22 +38,25 @@ const navItems = [
   { label: "Workflows",    to: "/workflows",    icon: Activity },
   { label: "Secrets",      to: "/secrets",      icon: KeyRound },
   { label: "Packages",     to: "/packages",     icon: Package },
-] as const;
+  { label: "Profile",      to: "/profile",      icon: User },
+  { label: "Audit Log",   to: "/audit-log",    icon: ScrollText },
+];
 
 function getInitials(name: string | null | undefined, email: string | undefined) {
   if (name) {
     const parts = name.trim().split(/\s+/);
     return parts.length >= 2
-      ? (parts[0][0]! + parts[parts.length - 1][0]!).toUpperCase()
+      ? ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase()
       : name.slice(0, 2).toUpperCase();
   }
   return (email ?? "?").slice(0, 2).toUpperCase();
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
   const { data: user } = useQuery({
     queryKey: ["auth", "me"],
-    queryFn: me,
+    queryFn: () => me(),
     staleTime: 60_000,
     retry: false,
   });
@@ -68,7 +75,7 @@ export function AppShell({ children }: AppShellProps) {
       <aside className="w-60 border-r flex flex-col shrink-0">
         {/* Logo */}
         <div className="h-14 flex items-center px-4 border-b">
-          <Link to="/dashboard" className="flex items-center gap-2">
+          <Link href="/dashboard" className="flex items-center gap-2">
             <img src="/icon-trans.png" alt="Gitvisor" className="h-6 w-6" />
             <span className="font-bold text-sm tracking-tight">Gitvisor</span>
           </Link>
@@ -79,8 +86,12 @@ export function AppShell({ children }: AppShellProps) {
           {navItems.map(({ label, to, icon: Icon }) => (
             <Link
               key={to}
-              to={to}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-accent [&.active]:bg-accent [&.active]:text-foreground"
+              href={to}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                pathname === to
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+              }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
               {label}
@@ -126,7 +137,7 @@ export function AppShell({ children }: AppShellProps) {
               <DropdownMenuSeparator />
 
               <DropdownMenuItem asChild>
-                <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+              <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
                   <User className="h-4 w-4" />
                   Profile
                 </Link>

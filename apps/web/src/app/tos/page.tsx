@@ -1,12 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { PublicHeader } from "../components/public-header";
-import { PublicFooter } from "../components/public-footer";
+import Link from "next/link";
+import { PublicHeader } from "../../components/public-header";
+import { PublicFooter } from "../../components/public-footer";
 
-export const Route = createFileRoute("/tos")({
-  component: TosPage,
-});
-
-function TosPage() {
+export default function TosPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <PublicHeader />
@@ -23,7 +19,7 @@ function TosPage() {
           <section>
             <h2 className="mb-3 text-lg font-semibold">1. About Gitvisor</h2>
             <p className="text-muted-foreground">
-              Gitvisor ("we", "us", "our") is a GitHub Actions management
+              Gitvisor (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) is a GitHub Actions management
               dashboard that lets you monitor workflow runs, manage repository
               secrets, and view CI/CD activity across your GitHub repositories.
               By accessing or using Gitvisor you agree to these Terms of Service.
@@ -75,16 +71,17 @@ function TosPage() {
             <p className="mb-2 text-muted-foreground">You agree not to:</p>
             <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
               <li>Attempt to access data belonging to other Gitvisor users.</li>
-              <li>Use the service to automate abuse of GitHub's API or rate limits.</li>
+              <li>Use the service to automate abuse of GitHub&apos;s API or rate limits.</li>
               <li>Reverse-engineer, decompile, or attempt to extract our server-side source code.</li>
-              <li>Use the service for any unlawful purpose or in violation of{" "}
+              <li>
+                Use the service for any unlawful purpose or in violation of{" "}
                 <a
                   href="https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline underline-offset-2 hover:text-foreground"
                 >
-                  GitHub's Acceptable Use Policies
+                  GitHub&apos;s Acceptable Use Policies
                 </a>
                 .
               </li>
@@ -97,9 +94,9 @@ function TosPage() {
               Gitvisor displays secret names and metadata only. We do not request,
               transmit, store, or have access to the encrypted values of your
               GitHub secrets. When you create or update a secret through
-              Gitvisor's dashboard, the value is encrypted using GitHub's public
+              Gitvisor&apos;s dashboard, the value is encrypted using GitHub&apos;s public
               key in your browser before being sent directly to the GitHub API.
-              Gitvisor's servers never see the plaintext value.
+              Gitvisor&apos;s servers never see the plaintext value.
             </p>
           </section>
 
@@ -107,7 +104,7 @@ function TosPage() {
             <h2 className="mb-3 text-lg font-semibold">6. Beta service</h2>
             <p className="text-muted-foreground">
               Gitvisor is currently in beta. The service is provided free of
-              charge and "as is" without any guarantee of uptime, availability,
+              charge and &quot;as is&quot; without any guarantee of uptime, availability,
               data durability, or fitness for a particular purpose. Features may
               change, be removed, or be rate-limited at any time without prior
               notice.
@@ -118,7 +115,7 @@ function TosPage() {
             <h2 className="mb-3 text-lg font-semibold">7. Disclaimer of warranties</h2>
             <p className="text-muted-foreground">
               To the fullest extent permitted by law, Gitvisor is provided
-              "as is" without warranties of any kind, either express or implied,
+              &quot;as is&quot; without warranties of any kind, either express or implied,
               including but not limited to warranties of merchantability, fitness
               for a particular purpose, or non-infringement.
             </p>
@@ -178,10 +175,10 @@ function TosPage() {
         </div>
 
         <div className="mt-14 flex gap-4 text-sm text-muted-foreground">
-          <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground">
+          <Link href="/privacy" className="underline underline-offset-2 hover:text-foreground">
             Privacy Policy
           </Link>
-          <Link to="/" className="underline underline-offset-2 hover:text-foreground">
+          <Link href="/" className="underline underline-offset-2 hover:text-foreground">
             Back to home
           </Link>
         </div>

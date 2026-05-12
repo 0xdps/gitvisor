@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import { GitBranch } from "lucide-react";
 
 export function PublicFooter() {
@@ -39,7 +39,7 @@ export function PublicFooter() {
                 </a>
               </li>
               <li>
-                <Link to="/login" className="transition-colors hover:text-foreground">
+                <Link href="/login" className="transition-colors hover:text-foreground">
                   Sign in
                 </Link>
               </li>
@@ -51,12 +51,12 @@ export function PublicFooter() {
             <p className="text-sm font-semibold">Legal</p>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link to="/privacy" className="transition-colors hover:text-foreground">
+                <Link href="/privacy" className="transition-colors hover:text-foreground">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link to="/tos" className="transition-colors hover:text-foreground">
+                <Link href="/tos" className="transition-colors hover:text-foreground">
                   Terms of Service
                 </Link>
               </li>

@@ -1,54 +1,101 @@
 import { Hono } from "hono";
 import { requireAuth, type AuthEnv } from "../middleware/auth.js";
+import {
+  getInstallationOctokit,
+  getRepoPublicKey,
+  upsertRepoSecret,
+  deleteRepoSecret,
+  listRepoSecrets,
+  mapSecretMeta,
+} from "@gitvisor/github";
+import { createRequire } from "module";
+import type * as SodiumType from "libsodium-wrappers";
+const _require = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const sodium: typeof SodiumType = _require("libsodium-wrappers");
+import type { UserDbRepository } from "@gitvisor/db";
 
-export const secretsRouter = new Hono<AuthEnv>();
+async function encryptSecret(publicKeyB64: string, value: string): Promise<string> {
+  await sodium.ready;
+  const publicKey = sodium.from_base64(publicKeyB64, sodium.base64_variants.ORIGINAL);
+  const messageBytes = sodium.from_string(value);
+  const encryptedBytes = sodium.crypto_box_seal(messageBytes, publicKey);
+  return sodium.to_base64(encryptedBytes, sodium.base64_variants.ORIGINAL);
+}
 
-secretsRouter.use("*", requireAuth);
+export function createSecretsRouter(
+  getUserDb: (userId: string) => Promise<UserDbRepository>,
+) {
+  const router = new Hono<AuthEnv>();
 
-/**
- * GET /secrets?repositoryId=
- * Lists secret metadata (names + last updated) from MesaHub.
- * Raw secret values are never stored or returned.
- */
-secretsRouter.get("/", async (c) => {
-  const _user = c.get("user");
-  const _repositoryId = c.req.query("repositoryId");
+  router.use("*", requireAuth);
 
-  // TODO: query UserDbRepository.listSecretMeta()
-  return c.json({ ok: true, data: [] });
-});
+  /**
+   * GET /secrets?repositoryId=
+   * Lists secret metadata (names + last updated) from the user's DB.
+   * Raw secret values are never stored or returned.
+   */
+  router.get("/", async (c) => {
+    const user = c.get("user");
+    const repositoryId = c.req.query("repositoryId") ?? "";
+    if (!repositoryId) return c.json({ ok: false, error: "repositoryId required" }, 400);
+    const userDb = await getUserDb(user.id);
+    const secrets = await userDb.listSecretMeta(repositoryId);
+    return c.json({ ok: true, data: secrets });
+  });
 
-/**
- * PUT /secrets/:repoId/:secretName
- * Updates a secret across one or more repos.
- * Body: { value: string, repositoryIds?: string[] }
- *
- * Flow:
- * 1. Fetch repo public key from GitHub
- * 2. Encrypt value with libsodium sealed box
- * 3. Send encrypted value to GitHub API
- * 4. Update secret metadata in MesaHub
- * Note: raw value is never persisted anywhere.
- */
-secretsRouter.put("/:repoId/:secretName", async (c) => {
-  const _user = c.get("user");
-  const _repoId = c.req.param("repoId");
-  const _secretName = c.req.param("secretName");
-  const _body = await c.req.json<{ value: string; repositoryIds?: string[] }>();
+  /**
+   * PUT /secrets/:repoId/:secretName
+   * Encrypts the value server-side (libsodium sealed box) and pushes to GitHub.
+   * Body: { value: string }
+   * The raw value is never written to any database.
+   */
+  router.put("/:repoId/:secretName", async (c) => {
+    const user = c.get("user");
+    const repoId = Number(c.req.param("repoId"));
+    const secretName = c.req.param("secretName");
+    const body = await c.req.json<{ value: string }>();
 
-  // TODO: implement encrypt-and-push flow
-  return c.json({ ok: true, data: null });
-});
+    if (!body.value) return c.json({ ok: false, error: "Missing value" }, 400);
 
-/**
- * DELETE /secrets/:repoId/:secretName
- * Deletes a secret from GitHub and removes metadata from MesaHub.
- */
-secretsRouter.delete("/:repoId/:secretName", async (c) => {
-  const _user = c.get("user");
-  const _repoId = c.req.param("repoId");
-  const _secretName = c.req.param("secretName");
+    const userDb = await getUserDb(user.id);
+    const repo = await userDb.getRepository(repoId);
+    if (!repo) return c.json({ ok: false, error: "Repository not found" }, 404);
 
-  // TODO: call deleteRepoSecret() + UserDbRepository.deleteSecretMeta()
-  return c.json({ ok: true, data: null });
-});
+    const octokit = await getInstallationOctokit(repo.installationId);
+    const { key, keyId } = await getRepoPublicKey(octokit as never, repo.owner, repo.name);
+    const encryptedValue = await encryptSecret(key, body.value);
+    await upsertRepoSecret(octokit as never, repo.owner, repo.name, secretName, encryptedValue, keyId);
+
+    const mapped = mapSecretMeta(
+      { name: secretName, updated_at: new Date().toISOString() },
+      String(repoId),
+      user.id,
+    );
+    await userDb.upsertSecretMeta(mapped);
+
+    return c.json({ ok: true, data: null });
+  });
+
+  /**
+   * DELETE /secrets/:repoId/:secretName
+   * Deletes a secret from GitHub and removes metadata from the user's DB.
+   */
+  router.delete("/:repoId/:secretName", async (c) => {
+    const user = c.get("user");
+    const repoId = Number(c.req.param("repoId"));
+    const secretName = c.req.param("secretName");
+
+    const userDb = await getUserDb(user.id);
+    const repo = await userDb.getRepository(repoId);
+    if (!repo) return c.json({ ok: false, error: "Repository not found" }, 404);
+
+    const octokit = await getInstallationOctokit(repo.installationId);
+    await deleteRepoSecret(octokit as never, repo.owner, repo.name, secretName);
+    await userDb.deleteSecretMeta(String(repoId), secretName);
+
+    return c.json({ ok: true, data: null });
+  });
+
+  return router;
+}

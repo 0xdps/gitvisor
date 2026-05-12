@@ -1,35 +1,51 @@
-import { createFileRoute } from "@tanstack/react-router";
+"use client";
+
+import { Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Activity, RefreshCw, XCircle, CheckCircle, Clock, AlertCircle } from "lucide-react";
-import { getWorkflowRuns, rerunWorkflow, cancelWorkflow } from "../../lib/api-client";
+import { useSearchParams } from "next/navigation";
+import {
+  Activity,
+  RefreshCw,
+  XCircle,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+} from "lucide-react";
+import {
+  getWorkflowRuns,
+  rerunWorkflow,
+  cancelWorkflow,
+} from "@/lib/api-client";
 import type { WorkflowRun, WorkflowRunConclusion } from "@gitvisor/shared";
 
-export const Route = createFileRoute("/_auth/workflows")({
-  validateSearch: (raw: Record<string, unknown>) => ({
-    repositoryId: typeof raw["repositoryId"] === "string" ? raw["repositoryId"] : undefined,
-    page: typeof raw["page"] === "number" ? Math.max(1, raw["page"]) : 1,
-  }),
-  component: WorkflowsPage,
-});
+function WorkflowsContent() {
+  const searchParams = useSearchParams();
+  const repositoryId = searchParams.get("repositoryId") ?? undefined;
+  const page = Math.max(1, Number(searchParams.get("page") ?? "1"));
 
-function WorkflowsPage() {
-  const { repositoryId, page } = Route.useSearch();
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["workflows", repositoryId, page],
-    queryFn: () => getWorkflowRuns({ repositoryId, page, perPage: 30 }),
+    queryFn: () =>
+      getWorkflowRuns({
+        ...(repositoryId !== undefined ? { repositoryId } : {}),
+        page,
+        perPage: 30,
+      }),
     staleTime: 15_000,
   });
 
   const rerun = useMutation({
     mutationFn: (runId: number) => rerunWorkflow(runId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workflows"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["workflows"] }),
   });
 
   const cancel = useMutation({
     mutationFn: (runId: number) => cancelWorkflow(runId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workflows"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["workflows"] }),
   });
 
   return (
@@ -37,14 +53,19 @@ function WorkflowsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Workflow Runs</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {repositoryId ? "Runs for this repository" : "All workflow runs across your repositories"}
+          {repositoryId
+            ? "Runs for this repository"
+            : "All workflow runs across your repositories"}
         </p>
       </div>
 
       {isLoading && (
         <div className="space-y-2">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-14 rounded-lg border border-border bg-muted/40 animate-pulse" />
+            <div
+              key={i}
+              className="h-14 rounded-lg border border-border bg-muted/40 animate-pulse"
+            />
           ))}
         </div>
       )}
@@ -81,9 +102,7 @@ function WorkflowsPage() {
 
       {data && (data.hasMore || page > 1) && (
         <div className="flex items-center justify-between border-t border-border pt-4 text-sm">
-          <span className="text-muted-foreground">
-            {data.total} total runs
-          </span>
+          <span className="text-muted-foreground">{data.total} total runs</span>
           <div className="flex gap-2">
             {page > 1 && (
               <a
@@ -122,7 +141,6 @@ function RunRow({
   return (
     <div className="flex items-center gap-4 rounded-lg border border-border bg-card px-4 py-2.5 hover:bg-accent/20 transition-colors">
       <StatusIcon status={run.status} conclusion={run.conclusion} />
-
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="font-medium text-sm truncate">{run.workflowName}</span>
@@ -130,13 +148,14 @@ function RunRow({
         </div>
         <p className="text-xs text-muted-foreground">
           {run.branch}
-          {run.triggeredBy && <span className="ml-2">by {run.triggeredBy}</span>}
+          {run.triggeredBy && (
+            <span className="ml-2">by {run.triggeredBy}</span>
+          )}
           {run.durationMs && (
             <span className="ml-2">{formatDuration(run.durationMs)}</span>
           )}
         </p>
       </div>
-
       <div className="flex items-center gap-1 shrink-0">
         <span className="text-xs text-muted-foreground">
           {run.startedAt ? timeAgo(run.startedAt) : ""}
@@ -181,38 +200,52 @@ function StatusIcon({
   status: string;
   conclusion: WorkflowRunConclusion;
 }) {
-  if (status === "in_progress") {
+  if (status === "in_progress")
     return <Clock className="h-4 w-4 shrink-0 text-amber-500 animate-spin" />;
-  }
-  if (status === "queued") {
+  if (status === "queued")
     return <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />;
-  }
-  if (conclusion === "success") {
-    return <CheckCircle className="h-4 w-4 shrink-0 text-emerald-500" />;
-  }
-  if (conclusion === "failure" || conclusion === "timed_out") {
+  if (conclusion === "success")
+    return <CheckCircle className="h-4 w-4 shrink-0 text-primary" />;
+  if (conclusion === "failure" || conclusion === "timed_out")
     return <XCircle className="h-4 w-4 shrink-0 text-destructive" />;
-  }
-  if (conclusion === "cancelled") {
+  if (conclusion === "cancelled")
     return <XCircle className="h-4 w-4 shrink-0 text-muted-foreground" />;
-  }
   return <AlertCircle className="h-4 w-4 shrink-0 text-muted-foreground" />;
 }
 
 function formatDuration(ms: number): string {
-  const s = Math.round(ms / 1000);
+  const s = Math.floor(ms / 1000);
   if (s < 60) return `${s}s`;
   const m = Math.floor(s / 60);
   const rem = s % 60;
-  return `${m}m ${rem}s`;
+  return rem > 0 ? `${m}m ${rem}s` : `${m}m`;
 }
 
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60_000);
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
   if (m < 1) return "just now";
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
+}
+
+export default function WorkflowsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-14 rounded-lg border border-border bg-muted/40 animate-pulse"
+            />
+          ))}
+        </div>
+      }
+    >
+      <WorkflowsContent />
+    </Suspense>
+  );
 }

@@ -1,4 +1,8 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+"use client";
+
+import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   GitBranch,
   Activity,
@@ -11,15 +15,7 @@ import {
 } from "lucide-react";
 import { PublicHeader } from "../components/public-header";
 import { PublicFooter } from "../components/public-footer";
-import { me } from "../lib/auth-client";
-
-export const Route = createFileRoute("/")({
-  beforeLoad: async () => {
-    const user = await me();
-    if (user) throw redirect({ to: "/dashboard" });
-  },
-  component: LandingPage,
-});
+import { me } from "@/lib/auth-client";
 
 const features = [
   {
@@ -62,18 +58,31 @@ const features = [
 
 const steps = [
   { label: "Sign in with GitHub", detail: "OAuth — no password required." },
-  { label: "Install the GitHub App", detail: "Select the repos you want to monitor." },
-  { label: "Your data syncs automatically", detail: "Historical runs load immediately; live updates via webhooks." },
+  {
+    label: "Install the GitHub App",
+    detail: "Select the repos you want to monitor.",
+  },
+  {
+    label: "Your data syncs automatically",
+    detail: "Historical runs load immediately; live updates via webhooks.",
+  },
 ];
 
-function LandingPage() {
+export default function LandingPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    me().then((user) => {
+      if (user) router.replace("/dashboard");
+    });
+  }, [router]);
+
   return (
     <div className="flex min-h-screen flex-col">
       <PublicHeader />
 
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden bg-foreground py-24 md:py-36">
-        {/* subtle grid overlay */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.04]"
@@ -86,7 +95,7 @@ function LandingPage() {
 
         <div className="relative mx-auto max-w-4xl px-6 text-center">
           <span className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/80">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
             Now in beta
           </span>
 
@@ -102,7 +111,7 @@ function LandingPage() {
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link
-              to="/login"
+              href="/login"
               className="inline-flex h-11 items-center gap-2 rounded-md bg-white px-6 text-sm font-semibold text-foreground transition-colors hover:bg-white/90"
             >
               Get started free
@@ -129,7 +138,8 @@ function LandingPage() {
               Everything you need to understand your CI/CD
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Built for developers who want operational clarity without the GitHub tab overload.
+              Built for developers who want operational clarity without the
+              GitHub tab overload.
             </p>
           </div>
 
@@ -139,8 +149,8 @@ function LandingPage() {
                 key={f.title}
                 className="rounded-xl border border-border bg-card p-6 transition-shadow hover:shadow-sm"
               >
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <f.icon className="h-5 w-5 text-foreground" />
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <f.icon className="h-5 w-5 text-primary" />
                 </div>
                 <h3 className="mb-2 font-semibold">{f.title}</h3>
                 <p className="text-sm text-muted-foreground">{f.description}</p>
@@ -154,18 +164,22 @@ function LandingPage() {
       <section className="bg-muted/40 py-24">
         <div className="mx-auto max-w-3xl px-6">
           <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold tracking-tight">Up and running in minutes</h2>
+            <h2 className="text-3xl font-bold tracking-tight">
+              Up and running in minutes
+            </h2>
           </div>
 
           <ol className="space-y-6">
             {steps.map((step, i) => (
               <li key={i} className="flex items-start gap-4">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
                   {i + 1}
                 </span>
                 <div className="pt-0.5">
                   <p className="font-semibold">{step.label}</p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">{step.detail}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {step.detail}
+                  </p>
                 </div>
               </li>
             ))}
@@ -189,13 +203,13 @@ function LandingPage() {
               "Open source",
             ].map((item) => (
               <span key={item} className="flex items-center gap-1.5">
-                <CheckCircle className="h-4 w-4 text-emerald-400" />
+                <CheckCircle className="h-4 w-4 text-primary" />
                 {item}
               </span>
             ))}
           </div>
           <Link
-            to="/login"
+            href="/login"
             className="mt-8 inline-flex h-11 items-center gap-2 rounded-md bg-white px-8 text-sm font-semibold text-foreground transition-colors hover:bg-white/90"
           >
             Get started free

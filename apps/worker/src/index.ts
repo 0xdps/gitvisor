@@ -28,11 +28,19 @@ const queue = new BullMQQueueRepository({
 });
 
 /**
- * Stub: resolves a UserDbRepository for a given userId.
- * TODO: replace with MesaHub implementation once API spec is integrated.
+ * Resolves a UserDbRepository for a given userId.
+ *
+ * OSS users: replace this stub with a concrete implementation, e.g. a MesaHub
+ * client or any database adapter that implements UserDbRepository.
+ *
+ * Cloud: see cloud-apps/worker which wires MesaHub automatically via
+ * createMesaHubRepositories() and provisions DBs on demand.
  */
 async function getUserDb(_userId: string): Promise<UserDbRepository> {
-  throw new Error("UserDbRepository not yet implemented — awaiting MesaHub API spec");
+  throw new Error(
+    "No UserDbRepository configured. " +
+      "Provide a getUserDb implementation in apps/worker/src/index.ts or use the cloud worker.",
+  );
 }
 
 // ── Start processing ─────────────────────────────────────────────────────────

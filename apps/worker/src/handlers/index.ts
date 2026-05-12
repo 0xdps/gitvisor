@@ -2,7 +2,7 @@ import type { JobData } from "@gitvisor/shared";
 import type { UserDbRepository } from "@gitvisor/db";
 import { handleSyncWorkflowRuns } from "./sync-workflow-runs.js";
 import { handleSyncSecrets } from "./sync-secrets.js";
-import { randomUUID } from "node:crypto";
+import { handleSyncPackages } from "./sync-packages.js";
 
 /**
  * Central job dispatcher.
@@ -60,8 +60,7 @@ export async function dispatch(
       break;
 
     case "sync:packages":
-      // TODO: implement once packages handler is added
-      console.log(`[worker] sync:packages ${job.data.fullName}`);
+      await handleSyncPackages(job.data, getUserDb);
       break;
 
     default:

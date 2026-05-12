@@ -1,12 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { PublicHeader } from "../components/public-header";
-import { PublicFooter } from "../components/public-footer";
+import Link from "next/link";
+import { PublicHeader } from "../../components/public-header";
+import { PublicFooter } from "../../components/public-footer";
 
-export const Route = createFileRoute("/privacy")({
-  component: PrivacyPage,
-});
-
-function PrivacyPage() {
+export default function PrivacyPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <PublicHeader />
@@ -79,7 +75,10 @@ function PrivacyPage() {
               <li>To authenticate you and maintain your session.</li>
               <li>To display your GitHub Actions dashboard.</li>
               <li>To sync workflow run history and live updates via webhooks.</li>
-              <li>To allow you to manage (list, create, update, delete) repository secrets through the dashboard.</li>
+              <li>
+                To allow you to manage (list, create, update, delete) repository
+                secrets through the dashboard.
+              </li>
             </ul>
           </section>
 
@@ -88,7 +87,7 @@ function PrivacyPage() {
             <p className="text-muted-foreground">
               Your data is stored in an isolated, per-user SQLite database
               managed by MesaHub (our database infrastructure provider). Databases
-              are logically separated — no user can access another user's data.
+              are logically separated — no user can access another user&apos;s data.
               Data is stored on servers in the European Union unless you are
               accessing a region-specific deployment.
             </p>
@@ -106,7 +105,7 @@ function PrivacyPage() {
                   rel="noopener noreferrer"
                   className="underline underline-offset-2 hover:text-foreground"
                 >
-                  GitHub's Privacy Statement
+                  GitHub&apos;s Privacy Statement
                 </a>
                 .
               </li>
@@ -137,7 +136,7 @@ function PrivacyPage() {
               Session cookies are httpOnly, Secure, and SameSite=Lax. All
               communication with our API is over HTTPS. Per-user database
               isolation ensures that even in the event of a bug, one user cannot
-              access another's data.
+              access another&apos;s data.
             </p>
           </section>
 
@@ -165,10 +164,10 @@ function PrivacyPage() {
         </div>
 
         <div className="mt-14 flex gap-4 text-sm text-muted-foreground">
-          <Link to="/tos" className="underline underline-offset-2 hover:text-foreground">
+          <Link href="/tos" className="underline underline-offset-2 hover:text-foreground">
             Terms of Service
           </Link>
-          <Link to="/" className="underline underline-offset-2 hover:text-foreground">
+          <Link href="/" className="underline underline-offset-2 hover:text-foreground">
             Back to home
           </Link>
         </div>

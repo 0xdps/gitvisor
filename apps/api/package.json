@@ -11,16 +11,18 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "hono": "^4.7.10",
-    "@hono/node-server": "^1.14.3",
     "@gitvisor/auth": "workspace:*",
-    "@gitvisor/shared": "workspace:*",
+    "@gitvisor/db": "workspace:*",
     "@gitvisor/github": "workspace:*",
     "@gitvisor/queue": "workspace:*",
-    "@gitvisor/db": "workspace:*"
+    "@gitvisor/shared": "workspace:*",
+    "@hono/node-server": "^1.14.3",
+    "hono": "^4.7.10",
+    "libsodium-wrappers": "^0.7.16"
   },
   "devDependencies": {
-    "typescript": "^5.8.3",
-    "@types/node": "^22.15.17"
+    "@types/libsodium-wrappers": "^0.7.14",
+    "@types/node": "^22.15.17",
+    "typescript": "^5.8.3"
   }
 }

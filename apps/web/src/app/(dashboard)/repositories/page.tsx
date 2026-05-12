@@ -1,37 +1,72 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+"use client";
+
+import Link from "next/link";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, CheckCircle2, GitBranch, Lock, RefreshCw, User } from "lucide-react";
-import { getInstallations, getRepositories } from "../../lib/api-client";
-import type { AccountInstallation } from "../../lib/api-client";
+import {
+  getInstallations,
+  getRepositories,
+  syncRepositories,
+} from "@/lib/api-client";
+import type { AccountInstallation } from "@/lib/api-client";
 import type { Repository } from "@gitvisor/shared";
 
-export const Route = createFileRoute("/_auth/repositories")({
-  component: RepositoriesPage,
-});
-
-function RepositoriesPage() {
-  const { data: repos, isLoading, error } = useQuery({
+export default function RepositoriesPage() {
+  const queryClient = useQueryClient();
+  const {
+    data: repos,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["repositories"],
     queryFn: getRepositories,
     staleTime: 30_000,
   });
 
+  const sync = useMutation({
+    mutationFn: syncRepositories,
+    onSuccess: ({ queued }) => {
+      setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: ["repositories"] });
+      }, 2000);
+      console.log(`Queued ${queued} repo sync job(s)`);
+    },
+  });
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Repositories</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Repositories connected via your GitHub App installation.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Repositories</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Repositories connected via your GitHub App installation.
+          </p>
+        </div>
+        <button
+          onClick={() => sync.mutate()}
+          disabled={sync.isPending}
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+        >
+          <RefreshCw
+            className={`h-3.5 w-3.5 ${sync.isPending ? "animate-spin" : ""}`}
+          />
+          {sync.isPending
+            ? "Syncing…"
+            : sync.isSuccess
+              ? `Synced (${sync.data.queued} queued)`
+              : "Sync repositories"}
+        </button>
       </div>
 
-      {/* Always show the accounts panel so users can install on additional orgs */}
       <InstallAccountsPanel />
 
       {isLoading && (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-16 rounded-lg border border-border bg-muted/40 animate-pulse" />
+            <div
+              key={i}
+              className="h-16 rounded-lg border border-border bg-muted/40 animate-pulse"
+            />
           ))}
         </div>
       )}
@@ -47,7 +82,8 @@ function RepositoriesPage() {
           <GitBranch className="mx-auto h-8 w-8 text-muted-foreground/50" />
           <p className="mt-3 font-medium">No repositories yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Install the GitHub App on one of your accounts above to start syncing repositories.
+            Install the GitHub App above, then click{" "}
+            <strong>Sync repositories</strong> to import your repos.
           </p>
         </div>
       )}
@@ -64,7 +100,11 @@ function RepositoriesPage() {
 }
 
 function InstallAccountsPanel() {
-  const { data: accounts, isLoading, error } = useQuery({
+  const {
+    data: accounts,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["installations"],
     queryFn: getInstallations,
     staleTime: 60_000,
@@ -74,7 +114,10 @@ function InstallAccountsPanel() {
     return (
       <div className="space-y-2">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-14 rounded-lg border border-border bg-muted/40 animate-pulse" />
+          <div
+            key={i}
+            className="h-14 rounded-lg border border-border bg-muted/40 animate-pulse"
+          />
         ))}
       </div>
     );
@@ -94,7 +137,7 @@ function InstallAccountsPanel() {
           </p>
         </div>
         {allInstalled && (
-          <span className="text-xs text-emerald-500 font-medium flex items-center gap-1">
+          <span className="text-xs text-primary font-medium flex items-center gap-1">
             <CheckCircle2 className="h-3.5 w-3.5" /> All installed
           </span>
         )}
@@ -129,18 +172,16 @@ function AccountRow({ account }: { account: AccountInstallation }) {
           <p className="text-xs text-muted-foreground">{account.type}</p>
         </div>
       </div>
-
       {account.installed ? (
-        <span className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium">
-          <CheckCircle2 className="h-3.5 w-3.5" />
-          Installed
+        <span className="flex items-center gap-1 text-xs text-primary font-medium">
+          <CheckCircle2 className="h-3.5 w-3.5" /> Installed
         </span>
       ) : (
         <a
           href={account.installUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           Install
         </a>
@@ -151,38 +192,27 @@ function AccountRow({ account }: { account: AccountInstallation }) {
 
 function RepoCard({ repo }: { repo: Repository }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 hover:bg-accent/30 transition-colors">
+    <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 hover:bg-accent/20 transition-colors">
       <div className="flex items-center gap-3 min-w-0">
         <GitBranch className="h-4 w-4 shrink-0 text-muted-foreground" />
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-sm truncate">{repo.fullName}</span>
-            {repo.private && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Lock className="h-3 w-3" />
-                Private
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Branch: {repo.defaultBranch}
-            {repo.syncedAt && (
-              <span className="ml-3">
-                Synced {new Date(repo.syncedAt).toLocaleDateString()}
-              </span>
-            )}
-          </p>
+          <p className="text-sm font-medium truncate">{repo.fullName}</p>
+          <p className="text-xs text-muted-foreground">{repo.owner}</p>
         </div>
       </div>
-
-      <Link
-        to="/workflows"
-        search={{ repositoryId: repo.id }}
-        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <RefreshCw className="h-3.5 w-3.5" />
-        View runs
-      </Link>
+      <div className="flex items-center gap-3 shrink-0">
+        {repo.private && (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Lock className="h-3 w-3" /> Private
+          </span>
+        )}
+        <Link
+          href={`/workflows?repositoryId=${repo.id}`}
+          className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+        >
+          View runs
+        </Link>
+      </div>
     </div>
   );
 }

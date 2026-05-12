@@ -2,6 +2,7 @@ import type { JobData } from "@gitvisor/shared";
 import type { UserDbRepository } from "@gitvisor/db";
 import { handleSyncWorkflowRuns } from "./sync-workflow-runs.js";
 import { handleSyncSecrets } from "./sync-secrets.js";
+import { randomUUID } from "node:crypto";
 
 /**
  * Central job dispatcher.
@@ -13,11 +14,42 @@ export async function dispatch(
   getUserDb: (userId: string) => Promise<UserDbRepository>,
 ): Promise<void> {
   switch (job.type) {
-    case "sync:repo":
-      // Triggers sub-jobs for workflow runs, secrets, packages
-      // TODO: implement full repo sync once UserDbRepository is wired
-      console.log(`[worker] sync:repo ${job.data.fullName}`);
+    case "sync:repo": {
+      const { userId, installationId, repositoryId, githubRepoId, fullName } = job.data;
+      const [owner = "", name = ""] = fullName.split("/");
+
+      // Ensure repository record exists in the user's DB before syncing data
+      const userDb = await getUserDb(userId);
+      await userDb.upsertRepository({
+        id: repositoryId,
+        githubRepoId,
+        installationId,
+        userId,
+        owner,
+        name,
+        fullName,
+        private: false,
+        defaultBranch: "main",
+        syncedAt: null,
+      });
+
+      // Fan out to sub-handlers in parallel
+      await Promise.all([
+        handleSyncWorkflowRuns(
+          { userId, installationId, repositoryId, fullName },
+          getUserDb,
+        ),
+        handleSyncSecrets(
+          { userId, installationId, repositoryId, fullName },
+          getUserDb,
+        ),
+      ]);
+
+      // Mark the repo as synced
+      await (await getUserDb(userId)).markRepoSynced(repositoryId);
+      console.log(`[worker] sync:repo completed for ${fullName}`);
       break;
+    }
 
     case "sync:workflow-runs":
       await handleSyncWorkflowRuns(job.data, getUserDb);

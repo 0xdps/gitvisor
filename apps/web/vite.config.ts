@@ -16,4 +16,15 @@ export default defineConfig({
     // not externalized, so the SSR server output is self-contained.
     noExternal: ["@gitvisor/ui", "@gitvisor/shared"],
   },
+  // Dev-only: proxy /api/* → local API so the dev server behaves the same
+  // as the production server-start.mjs proxy.
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:3002",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
+  },
 });

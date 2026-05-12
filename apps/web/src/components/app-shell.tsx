@@ -1,6 +1,27 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Activity,
+  ChevronsUpDown,
+  GitFork,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  Package,
+  User,
+} from "lucide-react";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@gitvisor/ui";
 import { me, logout as authLogout } from "../lib/auth-client";
 
 interface AppShellProps {
@@ -8,12 +29,22 @@ interface AppShellProps {
 }
 
 const navItems = [
-  { label: "Dashboard", to: "/dashboard" },
-  { label: "Repositories", to: "/repositories" },
-  { label: "Workflows", to: "/workflows" },
-  { label: "Secrets", to: "/secrets" },
-  { label: "Packages", to: "/packages" },
-];
+  { label: "Dashboard",    to: "/dashboard",    icon: LayoutDashboard },
+  { label: "Repositories", to: "/repositories", icon: GitFork },
+  { label: "Workflows",    to: "/workflows",    icon: Activity },
+  { label: "Secrets",      to: "/secrets",      icon: KeyRound },
+  { label: "Packages",     to: "/packages",     icon: Package },
+] as const;
+
+function getInitials(name: string | null | undefined, email: string | undefined) {
+  if (name) {
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0]! + parts[parts.length - 1][0]!).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  }
+  return (email ?? "?").slice(0, 2).toUpperCase();
+}
 
 export function AppShell({ children }: AppShellProps) {
   const { data: user } = useQuery({
@@ -29,43 +60,89 @@ export function AppShell({ children }: AppShellProps) {
     });
   }
 
+  const initials = getInitials(user?.name, user?.email);
+
   return (
     <div className="min-h-screen flex">
       {/* Sidebar */}
       <aside className="w-60 border-r flex flex-col shrink-0">
+        {/* Logo */}
         <div className="h-14 flex items-center px-4 border-b">
-          <span className="font-bold text-sm tracking-tight">GitVisor</span>
+          <Link to="/dashboard" className="flex items-center gap-2">
+            <img src="/icon-trans.png" alt="Gitvisor" className="h-6 w-6" />
+            <span className="font-bold text-sm tracking-tight">Gitvisor</span>
+          </Link>
         </div>
 
-        <nav className="flex-1 px-2 py-4 space-y-1">
-          {navItems.map((item) => (
+        {/* Nav */}
+        <nav className="flex-1 px-2 py-4 space-y-0.5">
+          {navItems.map(({ label, to, icon: Icon }) => (
             <Link
-              key={item.to}
-              to={item.to}
-              className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent [&.active]:bg-accent [&.active]:text-accent-foreground"
+              key={to}
+              to={to}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-accent [&.active]:bg-accent [&.active]:text-foreground"
             >
-              {item.label}
+              <Icon className="h-4 w-4 shrink-0" />
+              {label}
             </Link>
           ))}
         </nav>
 
-        <div className="border-t p-4 flex items-center gap-3">
-          {user?.avatarUrl && (
-            <img
-              src={user.avatarUrl}
-              alt={user.name ?? user.email}
-              className="w-7 h-7 rounded-full"
-            />
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium truncate">{user?.name ?? user?.email}</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Sign out
-          </button>
+        {/* User profile */}
+        <div className="border-t p-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="w-full flex items-center gap-2.5 rounded-md px-2 py-2 text-sm hover:bg-accent transition-colors outline-none">
+                <Avatar className="h-7 w-7 shrink-0">
+                  <AvatarImage src={user?.avatarUrl ?? undefined} alt={user?.name ?? user?.email ?? ""} />
+                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-xs font-medium leading-tight truncate">
+                    {user?.name ?? user?.email ?? "…"}
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-tight truncate">
+                    {user?.email ?? ""}
+                  </p>
+                </div>
+                <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent side="top" align="start" className="w-56 mb-1">
+              <DropdownMenuLabel className="font-normal py-2">
+                <div className="flex items-center gap-2.5">
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarImage src={user?.avatarUrl ?? undefined} />
+                    <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{user?.name ?? user?.email}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem asChild>
+                <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                  <User className="h-4 w-4" />
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+              >
+                <LogOut className="h-4 w-4" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </aside>
 
@@ -76,3 +153,4 @@ export function AppShell({ children }: AppShellProps) {
     </div>
   );
 }
+

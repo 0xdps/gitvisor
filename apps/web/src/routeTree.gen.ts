@@ -9,12 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TosRouteImport } from './routes/tos'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as AuthWorkflowsRouteImport } from './routes/_auth/workflows'
+import { Route as AuthSecretsRouteImport } from './routes/_auth/secrets'
+import { Route as AuthRepositoriesRouteImport } from './routes/_auth/repositories'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 
+const TosRoute = TosRouteImport.update({
+  id: '/tos',
+  path: '/tos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -34,6 +49,21 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthWorkflowsRoute = AuthWorkflowsRouteImport.update({
+  id: '/workflows',
+  path: '/workflows',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthSecretsRoute = AuthSecretsRouteImport.update({
+  id: '/secrets',
+  path: '/secrets',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthRepositoriesRoute = AuthRepositoriesRouteImport.update({
+  id: '/repositories',
+  path: '/repositories',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -43,13 +73,23 @@ const AuthDashboardRoute = AuthDashboardRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/tos': typeof TosRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/repositories': typeof AuthRepositoriesRoute
+  '/secrets': typeof AuthSecretsRoute
+  '/workflows': typeof AuthWorkflowsRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/tos': typeof TosRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/repositories': typeof AuthRepositoriesRoute
+  '/secrets': typeof AuthSecretsRoute
+  '/workflows': typeof AuthWorkflowsRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
@@ -57,20 +97,48 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteWithChildren
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/tos': typeof TosRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/repositories': typeof AuthRepositoriesRoute
+  '/_auth/secrets': typeof AuthSecretsRoute
+  '/_auth/workflows': typeof AuthWorkflowsRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/dashboard' | '/auth/callback'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/privacy'
+    | '/tos'
+    | '/dashboard'
+    | '/repositories'
+    | '/secrets'
+    | '/workflows'
+    | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard' | '/auth/callback'
+  to:
+    | '/'
+    | '/login'
+    | '/privacy'
+    | '/tos'
+    | '/dashboard'
+    | '/repositories'
+    | '/secrets'
+    | '/workflows'
+    | '/auth/callback'
   id:
     | '__root__'
     | '/'
     | '/_auth'
     | '/login'
+    | '/privacy'
+    | '/tos'
     | '/_auth/dashboard'
+    | '/_auth/repositories'
+    | '/_auth/secrets'
+    | '/_auth/workflows'
     | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
@@ -78,11 +146,27 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TosRoute: typeof TosRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tos': {
+      id: '/tos'
+      path: '/tos'
+      fullPath: '/tos'
+      preLoaderRoute: typeof TosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -111,6 +195,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth/workflows': {
+      id: '/_auth/workflows'
+      path: '/workflows'
+      fullPath: '/workflows'
+      preLoaderRoute: typeof AuthWorkflowsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/secrets': {
+      id: '/_auth/secrets'
+      path: '/secrets'
+      fullPath: '/secrets'
+      preLoaderRoute: typeof AuthSecretsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/repositories': {
+      id: '/_auth/repositories'
+      path: '/repositories'
+      fullPath: '/repositories'
+      preLoaderRoute: typeof AuthRepositoriesRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard': {
       id: '/_auth/dashboard'
       path: '/dashboard'
@@ -123,10 +228,16 @@ declare module '@tanstack/react-router' {
 
 interface AuthRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthRepositoriesRoute: typeof AuthRepositoriesRoute
+  AuthSecretsRoute: typeof AuthSecretsRoute
+  AuthWorkflowsRoute: typeof AuthWorkflowsRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
+  AuthRepositoriesRoute: AuthRepositoriesRoute,
+  AuthSecretsRoute: AuthSecretsRoute,
+  AuthWorkflowsRoute: AuthWorkflowsRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
@@ -135,6 +246,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRouteWithChildren,
   LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
+  TosRoute: TosRoute,
   AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport

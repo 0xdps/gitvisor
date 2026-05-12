@@ -30,6 +30,7 @@ export const requireAuth = createMiddleware<AuthEnv>(async (c, next) => {
 
   const user: User = {
     id: payload.userId,
+    githubUsername: payload.githubUsername ?? "",
     email: payload.email,
     name: payload.name,
     avatarUrl: payload.avatarUrl,

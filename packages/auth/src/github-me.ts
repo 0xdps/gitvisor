@@ -49,7 +49,8 @@ export async function fetchGitHubUser(accessToken: string): Promise<User> {
   }
 
   return {
-    id: "owner",
+    id: String(ghUser.id),
+    githubUsername: ghUser.login,
     email,
     name: ghUser.name,
     avatarUrl: ghUser.avatar_url,

@@ -49,7 +49,8 @@ authRouter.post("/callback", async (c) => {
 
   const token = signSession(
     {
-      userId: "owner",
+      userId: String(user.id),
+      githubUsername: user.githubUsername,
       githubToken: accessToken,
       name: user.name,
       email: user.email,

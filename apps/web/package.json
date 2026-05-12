@@ -13,6 +13,7 @@
   "dependencies": {
     "@gitvisor/shared": "workspace:*",
     "@gitvisor/ui": "workspace:*",
+    "lucide-react": "^0.511.0",
     "@tanstack/react-query": "^5.75.5",
     "@tanstack/react-router": "^1.169.2",
     "@tanstack/react-start": "^1.167.65",

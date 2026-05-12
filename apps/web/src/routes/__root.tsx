@@ -24,12 +24,38 @@ function NotFound() {
   );
 }
 
+const DESCRIPTION =
+  "Monitor every GitHub Actions workflow run, manage secrets, and debug CI/CD failures — all in one clean dashboard.";
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Gitvisor" },
+      { title: "Gitvisor — GitHub Actions visibility, simplified" },
+      { name: "description", content: DESCRIPTION },
+      { name: "theme-color", content: "#09090b" },
+      // Open Graph
+      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Gitvisor" },
+      { property: "og:title", content: "Gitvisor — GitHub Actions visibility, simplified" },
+      { property: "og:description", content: DESCRIPTION },
+      // Twitter
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Gitvisor — GitHub Actions visibility, simplified" },
+      { name: "twitter:description", content: DESCRIPTION },
+    ],
+    links: [
+      // Classic favicon
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      // Modern PNG favicons
+      { rel: "icon", type: "image/png", sizes: "16x16", href: "/icon-16x16.png" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/icon-32x32.png" },
+      { rel: "icon", type: "image/png", sizes: "48x48", href: "/icon-48x48.png" },
+      // Apple touch icon (iOS home screen)
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
+      // PWA manifest
+      { rel: "manifest", href: "/site.webmanifest" },
     ],
   }),
   notFoundComponent: NotFound,

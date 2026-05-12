@@ -1,1 +1,58 @@
 @import "tailwindcss";
+
+@theme {
+  /* Base */
+  --color-background: #ffffff;
+  --color-foreground: #09090b;
+
+  /* Card */
+  --color-card: #ffffff;
+  --color-card-foreground: #09090b;
+
+  /* Popover */
+  --color-popover: #ffffff;
+  --color-popover-foreground: #09090b;
+
+  /* Primary */
+  --color-primary: #18181b;
+  --color-primary-foreground: #fafafa;
+
+  /* Secondary */
+  --color-secondary: #f4f4f5;
+  --color-secondary-foreground: #18181b;
+
+  /* Muted */
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #71717a;
+
+  /* Accent */
+  --color-accent: #f4f4f5;
+  --color-accent-foreground: #18181b;
+
+  /* Destructive */
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #fafafa;
+
+  /* Border / Input / Ring */
+  --color-border: #e4e4e7;
+  --color-input: #e4e4e7;
+  --color-ring: #18181b;
+
+  /* Radius */
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+    box-sizing: border-box;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+  }
+}

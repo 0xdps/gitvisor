@@ -1,0 +1,37 @@
+README.md
+  s_55f69f7b1db49b::t_30d947fd9e0048 77-78
+  s_55f69f7b1db49b::t_019c6fd9fa14ab 92,95-96,98-102,105,109
+apps/web/vite.config.ts
+  s_55f69f7b1db49b::t_249edc27ea3c45 7-8
+packages/shared/src/index.ts
+  s_55f69f7b1db49b::t_8c87ee5298c405 9
+apps/api/package.json
+  s_55f69f7b1db49b::t_131d300be8e2a1 8
+apps/web/src/routes/__root.tsx
+  s_55f69f7b1db49b::t_185e1779231f05 19-26,35
+apps/worker/package.json
+  s_55f69f7b1db49b::t_131d300be8e2a1 12
+infra/docker/docker-compose.yml
+  s_55f69f7b1db49b::t_30d947fd9e0048 23,36,51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "47e555f12306fd0d47a4f930645f906c7fab9f49",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_55f69f7b1db49b": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "7e74285d-ec0e-435d-aa9d-b9a6318dd5d0",
+        "model": "unknown"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

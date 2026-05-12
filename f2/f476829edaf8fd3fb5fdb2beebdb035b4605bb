@@ -1,0 +1,86 @@
+apps/web/src/routes/__root.tsx
+  h_7a2f4c8f0473b8 27-29,35-46
+  s_55f69f7b1db49b::t_f95f2cf74307ed 48-58
+packages/auth/src/session.ts
+  h_7a2f4c8f0473b8 5
+  s_55f69f7b1db49b::t_7cc21cfcfa53ca 6
+apps/web/public/site.webmanifest
+  h_7a2f4c8f0473b8 1-14
+apps/web/src/routes/index.tsx
+  s_55f69f7b1db49b::t_e44d5e893ee0f3 1-14,17-19,21,23-210
+apps/worker/src/handlers/index.ts
+  s_55f69f7b1db49b::t_79fd8af7bd9761 5,17-50,52
+apps/api/src/middleware/auth.ts
+  s_55f69f7b1db49b::t_7cc21cfcfa53ca 33
+apps/web/src/routes/_auth/dashboard.tsx
+  s_55f69f7b1db49b::t_0ff9b00c739d7a 6
+  s_55f69f7b1db49b::t_927401e4cb30ff 1-5,13-33,35-130,134-143,145-149,151-189
+  s_55f69f7b1db49b::t_29c0533ad5c26b 144
+  s_55f69f7b1db49b::t_15f111dbe7c23f 150
+apps/web/src/routes/tos.tsx
+  h_7a2f4c8f0473b8 1-193
+apps/web/package.json
+  s_55f69f7b1db49b::t_084562cfbdd8c6 16
+apps/web/src/routeTree.gen.ts
+  s_55f69f7b1db49b::t_cd4aa0ea61d78a 18-20,52-66,79-81,90-92,103-105,116-118,121-130,139-141,198-218,231-233,238-240
+  s_55f69f7b1db49b::t_5e5aee8e20cc57 12-13,23-32,76-77,87-88,100-101,110-115,119,136-137,149-150,156-169,249-250
+apps/api/src/routes/auth.ts
+  h_7a2f4c8f0473b8 52
+  s_55f69f7b1db49b::t_7cc21cfcfa53ca 53
+apps/web/vite.config.ts
+  s_55f69f7b1db49b::t_aabd5c9caec224 19-29
+packages/auth/src/github-me.ts
+  s_55f69f7b1db49b::t_e76c360b87ebfc 53
+  s_55f69f7b1db49b::t_4800ff064426a4 52
+apps/web/src/styles/app.css
+  s_55f69f7b1db49b::t_9aec293b906636 2-58
+apps/web/src/routes/_auth/secrets.tsx
+  s_55f69f7b1db49b::t_facdd50bb1a70c 8-10
+  h_7a2f4c8f0473b8 1-7,11-151
+apps/web/src/components/public-header.tsx
+  s_55f69f7b1db49b::t_9b3a842c104504 8
+  h_7a2f4c8f0473b8 1-7,9-40
+packages/shared/src/index.ts
+  s_55f69f7b1db49b::t_e76c360b87ebfc 5
+apps/web/src/components/app-shell.tsx
+  s_55f69f7b1db49b::t_cc273cc50f1b3b 4-24,32-47,63-64,69,71-74,77-79,81-83,85-86,91-145,156
+apps/web/src/routes/privacy.tsx
+  h_7a2f4c8f0473b8 1-180
+apps/web/src/components/public-footer.tsx
+  h_7a2f4c8f0473b8 1-73
+apps/web/src/routes/login.tsx
+  s_55f69f7b1db49b::t_62ce725e423643 1,25-28,30-48,50-72,79
+  s_55f69f7b1db49b::t_e1147a41aa891f 29
+apps/web/server-start.mjs
+  h_7a2f4c8f0473b8 24,29-39
+  s_55f69f7b1db49b::t_e89705e27fce46 10-15,18-23,25-28,40-41
+apps/web/src/routes/_auth/workflows.tsx
+  h_7a2f4c8f0473b8 1-7,12-218
+  s_55f69f7b1db49b::t_facdd50bb1a70c 8-11
+apps/web/src/routes/_auth/repositories.tsx
+  h_7a2f4c8f0473b8 1-2,6
+  s_55f69f7b1db49b::t_e1f4c2610a44dc 3-5,7-188
+apps/web/src/lib/api-client.ts
+  h_7a2f4c8f0473b8 1-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "f2f476829edaf8fd3fb5fdb2beebdb035b4605bb",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_55f69f7b1db49b": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "7e74285d-ec0e-435d-aa9d-b9a6318dd5d0",
+        "model": "unknown"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

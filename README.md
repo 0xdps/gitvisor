@@ -74,9 +74,8 @@ git clone https://github.com/0xdps/gitvisor.git
 cd gitvisor
 pnpm install
 
-# Copy and fill env files
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env
+# Copy and fill the root env file (one file covers all services)
+cp .env.example .env.local
 
 # Start everything
 docker compose -f infra/docker/docker-compose.yml up
@@ -90,35 +89,28 @@ pnpm dev          # all apps via Turborepo
 
 ### Environment Variables
 
-**`apps/api/.env`**
+A single **`.env.local`** at the monorepo root covers all services. Copy from `.env.example` and fill in the values:
 
 ```env
-NODE_ENV=production
-PORT=3001
-ALLOWED_ORIGINS=https://your-domain
+NODE_ENV=development
+PORT=3002
 
-# Session signing — generate with:
-# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-SESSION_SECRET=
+VITE_API_URL=http://localhost:3002
+WEB_URL=http://localhost:3000
+ALLOWED_ORIGINS=http://localhost:3000
 
-# GitHub App (from steps 9-11 above)
+SESSION_SECRET=          # node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
 GITHUB_APP_ID=
-GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+GITHUB_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
 GITHUB_WEBHOOK_SECRET=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
-GITHUB_OAUTH_REDIRECT_URI=https://your-domain/auth/callback
+GITHUB_OAUTH_REDIRECT_URI=http://localhost:3002/auth/callback
 
-# Redis
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=
-```
-
-**`apps/web/.env`**
-
-```env
-VITE_API_URL=http://localhost:3001
 ```
 
 ## Repository Structure

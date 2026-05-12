@@ -6,6 +6,7 @@ export interface User {
   name: string | null;
   avatarUrl: string | null;
   createdAt: string;
+  nubeAuthUserId?: string | null;
 }
 
 // ── GitHub App Installation ───────────────────────────────────────────────────

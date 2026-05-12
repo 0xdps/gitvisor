@@ -3,7 +3,6 @@ import {
   HeadContent,
   Outlet,
   Scripts,
-  ScrollRestoration,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "../styles/app.css";
@@ -17,6 +16,14 @@ const queryClient = new QueryClient({
   },
 });
 
+function NotFound() {
+  return (
+    <div style={{ padding: "2rem", textAlign: "center" }}>
+      <h1>404 — Page not found</h1>
+    </div>
+  );
+}
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -25,6 +32,7 @@ export const Route = createRootRoute({
       { title: "Gitvisor" },
     ],
   }),
+  notFoundComponent: NotFound,
   component: RootComponent,
 });
 
@@ -36,7 +44,6 @@ function RootComponent() {
       </head>
       <body>
         <QueryClientProvider client={queryClient}>
-          <ScrollRestoration />
           <Outlet />
         </QueryClientProvider>
         <Scripts />

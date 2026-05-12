@@ -4,6 +4,8 @@ import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
+  // Load .env.local from the monorepo root (three levels up from core/apps/web/)
+  envDir: "../../../",
   plugins: [
     tanstackStart({ target: "node-server" }),
     viteReact(),

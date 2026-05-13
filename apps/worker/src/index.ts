@@ -28,14 +28,14 @@ const queue = new BullMQQueueRepository({
 });
 
 // ── Database ─────────────────────────────────────────────────────────────────
-const { getUserDb } = await createSharedSqliteRepositories({
+const { getUserDb, registry } = await createSharedSqliteRepositories({
   registryPath: process.env["REGISTRY_DB_PATH"] ?? "./registry.sqlite",
   dataPath: process.env["DATA_DB_PATH"] ?? "./data.sqlite",
 });
 
-// ── Start processing ─────────────────────────────────────────────────────────
+// ── Start processing ────────────────────────────────────────────────────────────
 queue.process(async (job) => {
-  await dispatch(job, getUserDb);
+  await dispatch(job, getUserDb, registry, (j) => queue.enqueue(j));
 });
 
 console.log("[worker] started — waiting for jobs");

@@ -19,6 +19,7 @@ export interface RegistryRepository {
   getInstallationByGitHubId(githubInstallationId: number): Promise<Installation | null>;
   listInstallationsByUser(userId: string): Promise<Installation[]>;
   deleteInstallation(githubInstallationId: number): Promise<void>;
+  markInstallationUninstalled(githubInstallationId: number): Promise<void>;
 
   // Repository index (lightweight — full data lives in user DB)
   upsertRepository(repo: Omit<Repository, "createdAt" | "updatedAt" | "syncedAt">): Promise<void>;

@@ -10,8 +10,9 @@ export function createWebhookRouter(queue: BullMQQueueRepository) {
   const webhooks = createWebhookHandler(
     config.github.webhookSecret,
     async (job: JobData) => {
+      const resourceId = "repositoryId" in job.data ? job.data.repositoryId : job.data.githubInstallationId;
       await queue.enqueue(job, {
-        jobId: `${job.type}:${job.data.repositoryId}:${Date.now()}`,
+        jobId: `${job.type}:${resourceId}:${Date.now()}`,
       });
     },
   );

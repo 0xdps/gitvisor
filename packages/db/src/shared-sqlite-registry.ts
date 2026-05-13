@@ -42,6 +42,7 @@ export class SharedSqliteRegistryRepository implements RegistryRepository {
         account_type TEXT NOT NULL,
         app_slug TEXT NOT NULL,
         suspended INTEGER NOT NULL DEFAULT 0,
+        uninstalled_at TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
@@ -57,7 +58,17 @@ export class SharedSqliteRegistryRepository implements RegistryRepository {
         UNIQUE(github_repo_id, user_id)
       );
     `);
+    this.migrateColumns();
     return Promise.resolve();
+  }
+
+  // Run after CREATE TABLE to backfill columns added in later versions
+  private migrateColumns(): void {
+    try {
+      this.db.exec(`ALTER TABLE installations ADD COLUMN uninstalled_at TEXT`);
+    } catch {
+      // column already exists — safe to ignore
+    }
   }
 
   // ── Users ─────────────────────────────────────────────────────────────────
@@ -183,6 +194,17 @@ export class SharedSqliteRegistryRepository implements RegistryRepository {
     return Promise.resolve();
   }
 
+  markInstallationUninstalled(githubInstallationId: number): Promise<void> {
+    this.db
+      .prepare(
+        `UPDATE installations
+         SET uninstalled_at = datetime('now'), updated_at = datetime('now')
+         WHERE github_installation_id = ?`,
+      )
+      .run(githubInstallationId);
+    return Promise.resolve();
+  }
+
   private mapInstallation(row: Record<string, unknown>): Installation {
     return {
       id: row["id"] as string,
@@ -192,6 +214,7 @@ export class SharedSqliteRegistryRepository implements RegistryRepository {
       accountType: row["account_type"] as "User" | "Organization",
       appSlug: row["app_slug"] as string,
       suspended: (row["suspended"] as number) === 1,
+      uninstalledAt: (row["uninstalled_at"] as string | null) ?? null,
       createdAt: row["created_at"] as string,
       updatedAt: row["updated_at"] as string,
     };

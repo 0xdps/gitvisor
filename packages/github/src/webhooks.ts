@@ -99,7 +99,15 @@ export function createWebhookHandler(
   });
 
   // ── Installation deleted ─────────────────────────────────────────────────
-  // Handled downstream (e.g. cloud API) — no job type needed in core.
+  webhooks.on("installation.deleted", async ({ payload }) => {
+    await enqueue({
+      type: "uninstall:app",
+      data: {
+        githubInstallationId: payload.installation.id,
+        userId: String(payload.installation.account?.id ?? 0),
+      },
+    });
+  });
 
   return webhooks;
 }

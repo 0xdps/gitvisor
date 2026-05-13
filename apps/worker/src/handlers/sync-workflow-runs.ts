@@ -2,11 +2,10 @@ import type { JobData, SyncWorkflowRunsJobData } from "@gitvisor/shared";
 import { getInstallationOctokit, listWorkflowRuns, mapWorkflowRun } from "@gitvisor/github";
 import type { UserDbRepository } from "@gitvisor/db";
 
-// TODO: inject UserDbRepository once MesaHub implementation is available
-
 export async function handleSyncWorkflowRuns(
   data: SyncWorkflowRunsJobData,
   getUserDb: (userId: string) => Promise<UserDbRepository>,
+  enqueue?: (job: JobData) => Promise<void>,
 ): Promise<void> {
   const octokit = await getInstallationOctokit(data.installationId);
   const [owner, repo] = data.fullName.split("/") as [string, string];
@@ -25,9 +24,14 @@ export async function handleSyncWorkflowRuns(
     await userDb.upsertWorkflowRun(mapped);
   }
 
-  // Queue next page if there are more results
-  if (workflow_runs.length === 100) {
-    // Next page will be re-enqueued by the caller if needed
-    console.log(`[worker] synced ${workflow_runs.length} runs for ${data.fullName} page ${page}`);
+  console.log(`[worker] synced ${workflow_runs.length} runs for ${data.fullName} page ${page}`);
+
+  // If there are more pages, enqueue the next one
+  if (workflow_runs.length === 100 && enqueue) {
+    const nextPage = page + 1;
+    await enqueue({
+      type: "sync:workflow-runs",
+      data: { ...data, page: nextPage },
+    });
   }
 }

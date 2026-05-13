@@ -20,6 +20,7 @@ export interface Installation {
   accountType: "User" | "Organization";
   appSlug: string;
   suspended: boolean;
+  uninstalledAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -183,12 +184,18 @@ export interface SyncWorkflowsJobData {
   fullName: string;
 }
 
+export interface UninstallAppJobData {
+  githubInstallationId: number;
+  userId: string;
+}
+
 export type JobData =
   | { type: "sync:repo"; data: SyncRepoJobData }
   | { type: "sync:workflow-runs"; data: SyncWorkflowRunsJobData }
   | { type: "sync:secrets"; data: SyncSecretsJobData }
   | { type: "sync:packages"; data: SyncPackagesJobData }
-  | { type: "sync:workflows"; data: SyncWorkflowsJobData };
+  | { type: "sync:workflows"; data: SyncWorkflowsJobData }
+  | { type: "uninstall:app"; data: UninstallAppJobData };
 
 // ── API Response Envelope ─────────────────────────────────────────────────────
 

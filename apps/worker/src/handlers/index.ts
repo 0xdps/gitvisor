@@ -1,5 +1,5 @@
 import type { JobData } from "@gitvisor/shared";
-import type { UserDbRepository } from "@gitvisor/db";
+import type { UserDbRepository, RegistryRepository } from "@gitvisor/db";
 import { getInstallationOctokit, getRepo, getRepoPullsCount } from "@gitvisor/github";
 import { handleSyncWorkflowRuns } from "./sync-workflow-runs.js";
 import { handleSyncWorkflows } from "./sync-workflows.js";
@@ -9,11 +9,13 @@ import { handleSyncPackages } from "./sync-packages.js";
 /**
  * Central job dispatcher.
  * Receives a typed job from the queue and routes to the correct handler.
- * getUserDb is injected — implementation provided by the db package.
+ * getUserDb and registry are injected — implementation provided by the db package.
  */
 export async function dispatch(
   job: JobData,
   getUserDb: (userId: string) => Promise<UserDbRepository>,
+  registry: RegistryRepository,
+  enqueue: (job: JobData) => Promise<void>,
 ): Promise<void> {
   switch (job.type) {
     case "sync:repo": {
@@ -52,7 +54,7 @@ export async function dispatch(
 
       // Fan out all sub-syncs in parallel
       await Promise.all([
-        handleSyncWorkflowRuns({ userId, installationId, repositoryId, fullName }, getUserDb),
+        handleSyncWorkflowRuns({ userId, installationId, repositoryId, fullName }, getUserDb, enqueue),
         handleSyncWorkflows({ userId, installationId, repositoryId, fullName }, getUserDb),
         handleSyncSecrets({ userId, installationId, repositoryId, fullName }, getUserDb),
         handleSyncPackages({ userId, installationId, repositoryId, fullName }, getUserDb),
@@ -65,7 +67,7 @@ export async function dispatch(
     }
 
     case "sync:workflow-runs":
-      await handleSyncWorkflowRuns(job.data, getUserDb);
+      await handleSyncWorkflowRuns(job.data, getUserDb, enqueue);
       break;
 
     case "sync:workflows":
@@ -79,6 +81,13 @@ export async function dispatch(
     case "sync:packages":
       await handleSyncPackages(job.data, getUserDb);
       break;
+
+    case "uninstall:app": {
+      const { githubInstallationId } = job.data;
+      await registry.markInstallationUninstalled(githubInstallationId);
+      console.log(`[worker] uninstall:app marked installation ${githubInstallationId} as uninstalled`);
+      break;
+    }
 
     default:
       job satisfies never;

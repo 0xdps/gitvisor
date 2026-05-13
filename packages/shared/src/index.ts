@@ -189,13 +189,23 @@ export interface UninstallAppJobData {
   userId: string;
 }
 
+export interface InstallAppJobData {
+  userId: string;
+  githubInstallationId: number;
+  accountLogin: string;
+  accountType: "User" | "Organization";
+  appSlug: string;
+  suspended: boolean;
+}
+
 export type JobData =
   | { type: "sync:repo"; data: SyncRepoJobData }
   | { type: "sync:workflow-runs"; data: SyncWorkflowRunsJobData }
   | { type: "sync:secrets"; data: SyncSecretsJobData }
   | { type: "sync:packages"; data: SyncPackagesJobData }
   | { type: "sync:workflows"; data: SyncWorkflowsJobData }
-  | { type: "uninstall:app"; data: UninstallAppJobData };
+  | { type: "uninstall:app"; data: UninstallAppJobData }
+  | { type: "install:app"; data: InstallAppJobData };
 
 // ── API Response Envelope ─────────────────────────────────────────────────────
 

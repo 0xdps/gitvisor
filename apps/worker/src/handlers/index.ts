@@ -1,5 +1,6 @@
 import type { JobData } from "@gitvisor/shared";
 import type { UserDbRepository, RegistryRepository } from "@gitvisor/db";
+import { randomUUID } from "node:crypto";
 import { getInstallationOctokit, getRepo, getRepoPullsCount } from "@gitvisor/github";
 import { handleSyncWorkflowRuns } from "./sync-workflow-runs.js";
 import { handleSyncWorkflows } from "./sync-workflows.js";
@@ -86,6 +87,22 @@ export async function dispatch(
       const { githubInstallationId } = job.data;
       await registry.markInstallationUninstalled(githubInstallationId);
       console.log(`[worker] uninstall:app marked installation ${githubInstallationId} as uninstalled`);
+      break;
+    }
+
+    case "install:app": {
+      const { userId, githubInstallationId, accountLogin, accountType, appSlug, suspended } = job.data;
+      await registry.upsertInstallation({
+        id: randomUUID(),
+        userId,
+        githubInstallationId,
+        accountLogin,
+        accountType,
+        appSlug,
+        suspended,
+        uninstalledAt: null,
+      });
+      console.log(`[worker] install:app persisted installation ${githubInstallationId} for user ${userId}`);
       break;
     }
 

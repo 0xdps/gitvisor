@@ -1,0 +1,29 @@
+packages/shared/src/index.ts
+  s_0105f9dade0815::t_c89d846c592c18 192-200,207-208
+packages/github/src/webhooks.ts
+  s_0105f9dade0815::t_c35aff5a345d34 16-24,28,36-37,61,69-70
+  s_0105f9dade0815::t_af0c544e56bbb4 27,29-35,38-43,48-60,62-68,71-80
+apps/worker/src/handlers/index.ts
+  s_0105f9dade0815::t_4111ce5d1c216f 3,93-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "c2d9316b050d5eedfe0b6e43277015ff86198243",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_0105f9dade0815": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "4988122e-c846-4748-863c-1c3c2b2db0d5",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

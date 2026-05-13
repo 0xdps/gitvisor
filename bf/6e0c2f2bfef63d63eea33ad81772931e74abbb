@@ -1,0 +1,39 @@
+packages/db/src/registry.repository.ts
+  s_0105f9dade0815::t_8fd72bfe5a7f0c 22
+apps/api/src/routes/webhooks.ts
+  s_0105f9dade0815::t_365ac9c69cb4d4 13,15
+apps/worker/src/handlers/index.ts
+  s_0105f9dade0815::t_e8e2d8dd0a590f 2,12,17-18,57,70,85-90
+packages/shared/src/index.ts
+  s_0105f9dade0815::t_1688a99e5468ff 23,187-191,197-198
+packages/db/src/shared-sqlite-registry.ts
+  s_0105f9dade0815::t_09af476080aa5f 45,61,197-207,217
+  s_0105f9dade0815::t_65b35a7cdb23d8 65-73
+packages/github/src/webhooks.ts
+  s_0105f9dade0815::t_e8e2d8dd0a590f 102-110
+apps/worker/src/index.ts
+  s_0105f9dade0815::t_1efe2a72d9076c 31,36,38
+apps/worker/src/handlers/sync-workflow-runs.ts
+  s_0105f9dade0815::t_e8e2d8dd0a590f 8,27-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "bf6e0c2f2bfef63d63eea33ad81772931e74abbb",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_0105f9dade0815": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "4988122e-c846-4748-863c-1c3c2b2db0d5",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

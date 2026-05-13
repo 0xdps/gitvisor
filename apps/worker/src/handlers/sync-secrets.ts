@@ -1,6 +1,9 @@
 import type { SyncSecretsJobData } from "@gitvisor/shared";
 import { getInstallationOctokit, listRepoSecrets, mapSecretMeta } from "@gitvisor/github";
 import type { UserDbRepository } from "@gitvisor/db";
+import { createLogger } from "@gitvisor/logger";
+
+const log = createLogger("worker");
 
 export async function handleSyncSecrets(
   data: SyncSecretsJobData,
@@ -17,5 +20,5 @@ export async function handleSyncSecrets(
     await userDb.upsertSecretMeta(mapped);
   }
 
-  console.log(`[worker] synced ${secrets.length} secrets for ${data.fullName}`);
+  log.info({ count: secrets.length, fullName: data.fullName }, "secrets synced");
 }

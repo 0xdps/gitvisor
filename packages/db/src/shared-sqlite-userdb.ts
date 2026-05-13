@@ -216,6 +216,22 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
     return Promise.resolve();
   }
 
+  deleteRepository(githubRepoId: number): Promise<void> {
+    this.db.transaction(() => {
+      const repo = this.db
+        .prepare(`SELECT id FROM repositories WHERE github_repo_id = ? LIMIT 1`)
+        .get(githubRepoId) as { id: string } | undefined;
+      if (!repo) return;
+      // Delete child rows first (foreign_keys = ON prevents deleting the parent otherwise)
+      this.db.prepare(`DELETE FROM workflow_runs WHERE repository_id = ?`).run(repo.id);
+      this.db.prepare(`DELETE FROM workflows WHERE repository_id = ?`).run(repo.id);
+      this.db.prepare(`DELETE FROM secret_meta WHERE repository_id = ?`).run(repo.id);
+      this.db.prepare(`DELETE FROM packages WHERE repository_id = ?`).run(repo.id);
+      this.db.prepare(`DELETE FROM repositories WHERE id = ?`).run(repo.id);
+    })();
+    return Promise.resolve();
+  }
+
   private mapRepository(row: Record<string, unknown>): Repository {
     const fullName = row["full_name"] as string;
     const [owner = "", name = ""] = fullName.split("/");

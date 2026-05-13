@@ -1,10 +1,12 @@
 import { Hono } from "hono";
-import { requireAuth, type AuthEnv } from "../middleware/auth.js";
+import type { MiddlewareHandler } from "hono";
 import { getInstallationOctokit, rerunWorkflow, cancelWorkflowRun } from "@gitvisor/github";
 import type { UserDbRepository } from "@gitvisor/db";
+import type { AuthEnv } from "../middleware/auth.js";
 
 export function createWorkflowsRouter(
   getUserDb: (userId: string) => Promise<UserDbRepository>,
+  requireAuth: MiddlewareHandler<AuthEnv>,
 ) {
   const router = new Hono<AuthEnv>();
 
@@ -37,6 +39,7 @@ export function createWorkflowsRouter(
   router.post("/:runId/rerun", async (c) => {
     const user = c.get("user");
     const runId = Number(c.req.param("runId"));
+    if (!Number.isFinite(runId)) return c.json({ ok: false, error: "Invalid run ID" }, 400);
     const userDb = await getUserDb(user.id);
     const run = await userDb.getWorkflowRun(runId);
     if (!run) return c.json({ ok: false, error: "Not found" }, 404);
@@ -54,6 +57,7 @@ export function createWorkflowsRouter(
   router.post("/:runId/cancel", async (c) => {
     const user = c.get("user");
     const runId = Number(c.req.param("runId"));
+    if (!Number.isFinite(runId)) return c.json({ ok: false, error: "Invalid run ID" }, 400);
     const userDb = await getUserDb(user.id);
     const run = await userDb.getWorkflowRun(runId);
     if (!run) return c.json({ ok: false, error: "Not found" }, 404);

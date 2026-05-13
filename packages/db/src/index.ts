@@ -29,7 +29,17 @@ export interface SharedSqliteRepositories {
 
 /**
  * Creates shared SQLite-backed repositories for the OSS core.
- * All users share a single `data.sqlite` — no per-user isolation.
+ *
+ * ⚠️  SINGLE-USER ONLY.
+ * All users share a single `data.sqlite` file. `getUserDb` ignores the
+ * `userId` argument and always returns the same database instance.
+ * Repository query methods (listRepositories, listWorkflowRuns, etc.) have
+ * no per-user filter — they return every row in the database.
+ *
+ * Running more than one user on a single self-hosted instance will cause
+ * data cross-contamination. For multi-user support use the SaaS cloud
+ * (gitvisor.dev) which provisions a dedicated MesaHub SQLite DB per user.
+ *
  * Runs migrations on both databases before returning.
  */
 export async function createSharedSqliteRepositories(opts: {
@@ -40,6 +50,7 @@ export async function createSharedSqliteRepositories(opts: {
   const userDb = await createSharedSqliteUserDb(opts.dataPath);
   return {
     registry,
+    // userId is intentionally ignored — single-user SQLite, see JSDoc above.
     getUserDb: (_userId: string) => Promise.resolve(userDb),
   };
 }

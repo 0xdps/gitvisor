@@ -1,6 +1,9 @@
 import { Queue, Worker, type ConnectionOptions } from "bullmq";
 import type { JobData } from "@gitvisor/shared";
 import type { EnqueueOptions, JobHandler, QueueRepository } from "./repository.js";
+import { createLogger } from "@gitvisor/logger";
+
+const log = createLogger("queue");
 
 const QUEUE_NAME = "gitvisor-sync";
 
@@ -48,7 +51,7 @@ export class BullMQQueueRepository implements QueueRepository {
     );
 
     this.worker.on("failed", (job, err) => {
-      console.error(`[queue] job ${job?.id} (${job?.name}) failed:`, err.message);
+      log.error({ jobId: job?.id, jobName: job?.name, err: err.message }, "job failed");
     });
   }
 

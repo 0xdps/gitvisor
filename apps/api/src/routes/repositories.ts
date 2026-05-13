@@ -1,9 +1,11 @@
 import { Hono } from "hono";
+import type { MiddlewareHandler } from "hono";
 import type { UserDbRepository } from "@gitvisor/db";
-import { requireAuth, type AuthEnv } from "../middleware/auth.js";
+import type { AuthEnv } from "../middleware/auth.js";
 
 export function createRepositoriesRouter(
   getUserDb: (userId: string) => Promise<UserDbRepository>,
+  requireAuth: MiddlewareHandler<AuthEnv>,
 ) {
   const router = new Hono<AuthEnv>();
 

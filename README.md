@@ -41,7 +41,7 @@ GitVisor is an open-source GitHub operational dashboard. Monitor workflow runs, 
            │ read/write
 ┌──────────▼────────┐
 │    packages/db    │
-│  shared SQLite   │
+│  shared SQLite    │
 └───────────────────┘
 ```
 
@@ -60,6 +60,8 @@ GitVisor is an open-source GitHub operational dashboard. Monitor workflow runs, 
 | Language | TypeScript 5.8 strict |
 
 ## Self-Hosting
+
+> **Single-user only.** The OSS core uses a single shared SQLite database for all data. There is no per-user row isolation at the query layer — `listRepositories()`, `listWorkflowRuns()`, and similar reads return data for all stored users. Running GitVisor for more than one person on a single self-hosted instance is **not supported** and will result in data cross-contamination. For multi-user or team use, see [gitvisor.dev](https://gitvisor.dev) (cloud SaaS) or run a dedicated instance per user.
 
 ### Prerequisites
 

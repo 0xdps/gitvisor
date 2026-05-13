@@ -11,6 +11,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@gitvisor/logger": "workspace:*",
     "@gitvisor/auth": "workspace:*",
     "@gitvisor/db": "workspace:*",
     "@gitvisor/github": "workspace:*",

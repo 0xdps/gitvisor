@@ -1,12 +1,15 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export interface SessionPayload {
-  githubToken: string;
+  /** Opaque ID used to look up the GitHub OAuth token from the server-side token store. */
+  sessionId: string;
   userId: string;
   githubUsername: string;
   name: string | null;
   email: string;
   avatarUrl: string | null;
+  /** ISO string of when the GitVisor user account was created. */
+  createdAt: string;
   /** Unix timestamp seconds */
   exp: number;
 }
@@ -63,5 +66,5 @@ export function verifySession(token: string, secret: string): SessionPayload | n
   return payload;
 }
 
-/** Session TTL: 30 days in seconds */
-export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
+/** Session TTL: 7 days in seconds */
+export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;

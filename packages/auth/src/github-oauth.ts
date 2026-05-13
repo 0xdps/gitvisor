@@ -37,6 +37,7 @@ export async function exchangeGitHubCode(
 ): Promise<GitHubOAuthTokenResponse> {
   const res = await fetch(GITHUB_TOKEN_URL, {
     method: "POST",
+    signal: AbortSignal.timeout(10_000),
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",

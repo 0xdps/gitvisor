@@ -19,6 +19,8 @@ export interface UserDbRepository {
   getRepository(githubRepoId: number): Promise<Repository | null>;
   listRepositories(): Promise<Repository[]>;
   markRepoSynced(repositoryId: string): Promise<void>;
+  /** Cascade-delete a repository and all its related data (workflows, runs, secrets, packages). */
+  deleteRepository(githubRepoId: number): Promise<void>;
 
   // Workflow runs
   upsertWorkflowRun(run: Omit<WorkflowRun, "id"> & { id?: string }): Promise<WorkflowRun>;

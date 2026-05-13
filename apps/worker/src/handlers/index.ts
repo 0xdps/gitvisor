@@ -2,10 +2,13 @@ import type { JobData } from "@gitvisor/shared";
 import type { UserDbRepository, RegistryRepository } from "@gitvisor/db";
 import { randomUUID } from "node:crypto";
 import { getInstallationOctokit, getRepo, getRepoPullsCount } from "@gitvisor/github";
+import { createLogger } from "@gitvisor/logger";
 import { handleSyncWorkflowRuns } from "./sync-workflow-runs.js";
 import { handleSyncWorkflows } from "./sync-workflows.js";
 import { handleSyncSecrets } from "./sync-secrets.js";
 import { handleSyncPackages } from "./sync-packages.js";
+
+const log = createLogger("worker");
 
 /**
  * Central job dispatcher.
@@ -101,7 +104,7 @@ export async function dispatch(
         });
       }
 
-      console.log(`[worker] sync:repo completed for ${fullName}`);
+      log.info({ fullName }, "sync:repo completed");
       break;
     }
 
@@ -124,7 +127,7 @@ export async function dispatch(
     case "uninstall:app": {
       const { githubInstallationId } = job.data;
       await registry.markInstallationUninstalled(githubInstallationId);
-      console.log(`[worker] uninstall:app marked installation ${githubInstallationId} as uninstalled`);
+      log.info({ githubInstallationId }, "uninstall:app marked as uninstalled");
       break;
     }
 
@@ -140,7 +143,7 @@ export async function dispatch(
         suspended,
         uninstalledAt: null,
       });
-      console.log(`[worker] install:app persisted installation ${githubInstallationId} for user ${userId}`);
+      log.info({ githubInstallationId, userId }, "install:app persisted installation");
       break;
     }
 

@@ -16,6 +16,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@gitvisor/logger": "workspace:*",
     "bullmq": "^5.51.1",
     "@gitvisor/shared": "workspace:*"
   },

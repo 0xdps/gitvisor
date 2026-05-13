@@ -26,9 +26,14 @@ export const config = {
   },
 
   session: {
-    cookieName: "gitvisor_session",
+    // __Host- prefix enforces Secure + Path=/ + no Domain attribute in production (HTTPS)
+    cookieName: process.env["NODE_ENV"] === "production" ? "__Host-gitvisor_session" : "gitvisor_session",
     secure: process.env["NODE_ENV"] === "production",
-    // Must be at least 32 random characters. Used to sign session cookies.
-    secret: requireEnv("SESSION_SECRET"),
+    // Must be at least 32 random characters. Used to sign session cookies (HMAC-SHA256).
+    secret: (() => {
+      const s = requireEnv("SESSION_SECRET");
+      if (s.length < 32) throw new Error(`SESSION_SECRET is too short (${s.length} chars); minimum is 32`);
+      return s;
+    })(),
   },
 } as const;

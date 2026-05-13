@@ -1,6 +1,9 @@
 import type { JobData, SyncWorkflowRunsJobData } from "@gitvisor/shared";
 import { getInstallationOctokit, listWorkflowRuns, mapWorkflowRun } from "@gitvisor/github";
 import type { UserDbRepository } from "@gitvisor/db";
+import { createLogger } from "@gitvisor/logger";
+
+const log = createLogger("worker");
 
 export async function handleSyncWorkflowRuns(
   data: SyncWorkflowRunsJobData,
@@ -24,14 +27,20 @@ export async function handleSyncWorkflowRuns(
     await userDb.upsertWorkflowRun(mapped);
   }
 
-  console.log(`[worker] synced ${workflow_runs.length} runs for ${data.fullName} page ${page}`);
+  log.info({ count: workflow_runs.length, fullName: data.fullName, page }, "workflow runs synced");
 
-  // If there are more pages, enqueue the next one
+  const MAX_SYNC_PAGES = 50;
+
+  // If there are more pages, enqueue the next one (capped to prevent unbounded recursion)
   if (workflow_runs.length === 100 && enqueue) {
-    const nextPage = page + 1;
-    await enqueue({
-      type: "sync:workflow-runs",
-      data: { ...data, page: nextPage },
-    });
+    if (page < MAX_SYNC_PAGES) {
+      const nextPage = page + 1;
+      await enqueue({
+        type: "sync:workflow-runs",
+        data: { ...data, page: nextPage },
+      });
+    } else {
+      log.warn({ fullName: data.fullName, maxPages: MAX_SYNC_PAGES }, "sync truncated at max pages");
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { Hono } from "hono";
-import { requireAuth, type AuthEnv } from "../middleware/auth.js";
+import type { MiddlewareHandler } from "hono";
+import type { AuthEnv } from "../middleware/auth.js";
 import {
   getInstallationOctokit,
   getRepoPublicKey,
@@ -25,6 +26,7 @@ async function encryptSecret(publicKeyB64: string, value: string): Promise<strin
 
 export function createSecretsRouter(
   getUserDb: (userId: string) => Promise<UserDbRepository>,
+  requireAuth: MiddlewareHandler<AuthEnv>,
 ) {
   const router = new Hono<AuthEnv>();
 
@@ -53,10 +55,19 @@ export function createSecretsRouter(
   router.put("/:repoId/:secretName", async (c) => {
     const user = c.get("user");
     const repoId = Number(c.req.param("repoId"));
+    if (!Number.isFinite(repoId)) return c.json({ ok: false, error: "Invalid repository ID" }, 400);
     const secretName = c.req.param("secretName");
     const body = await c.req.json<{ value: string }>();
 
     if (!body.value) return c.json({ ok: false, error: "Missing value" }, 400);
+
+    // GitHub secret names must match [A-Z][A-Z0-9_]* (uppercase, no leading digits)
+    if (!/^[A-Z][A-Z0-9_]*$/.test(secretName)) {
+      return c.json(
+        { ok: false, error: "Secret name must start with a letter and contain only uppercase letters, digits, and underscores" },
+        400,
+      );
+    }
 
     const userDb = await getUserDb(user.id);
     const repo = await userDb.getRepository(repoId);
@@ -84,7 +95,15 @@ export function createSecretsRouter(
   router.delete("/:repoId/:secretName", async (c) => {
     const user = c.get("user");
     const repoId = Number(c.req.param("repoId"));
+    if (!Number.isFinite(repoId)) return c.json({ ok: false, error: "Invalid repository ID" }, 400);
     const secretName = c.req.param("secretName");
+
+    if (!/^[A-Z][A-Z0-9_]*$/.test(secretName)) {
+      return c.json(
+        { ok: false, error: "Secret name must start with a letter and contain only uppercase letters, digits, and underscores" },
+        400,
+      );
+    }
 
     const userDb = await getUserDb(user.id);
     const repo = await userDb.getRepository(repoId);

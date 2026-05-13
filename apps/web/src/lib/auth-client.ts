@@ -47,14 +47,16 @@ export async function logout(): Promise<void> {
 
 /**
  * Exchange a GitHub OAuth code for a session cookie.
+ * The state must match the value set by the server in the oauth_state cookie
+ * (CSRF protection — verified server-side).
  * Called from /auth/callback after GitHub redirects back.
  */
-export async function exchangeCode(code: string): Promise<void> {
+export async function exchangeCode(code: string, state: string): Promise<void> {
   const res = await fetch(`${API_URL}/auth/callback`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ code }),
+    body: JSON.stringify({ code, state }),
   });
   if (!res.ok) throw new Error("OAuth exchange failed");
 }

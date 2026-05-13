@@ -1,5 +1,8 @@
 import { Webhooks } from "@octokit/webhooks";
 import type { JobData } from "@gitvisor/shared";
+import { createLogger } from "@gitvisor/logger";
+
+const log = createLogger("github");
 
 export type WebhookJobEnqueuer = (job: JobData) => Promise<void>;
 
@@ -24,7 +27,12 @@ export function createWebhookHandler(
 
   // ── Installation events ──────────────────────────────────────────────────
   webhooks.on("installation.created", async ({ payload }) => {
-    const userId = String(payload.installation.account?.id ?? 0);
+    const accountId = payload.installation.account?.id;
+    if (!accountId) {
+      log.warn("installation.created: missing account id, skipping");
+      return;
+    }
+    const userId = String(accountId);
     const account = resolveAccount(payload.installation.account as Record<string, unknown>);
 
     // Persist the installation record first
@@ -57,7 +65,12 @@ export function createWebhookHandler(
 
   // ── Repos added to an existing installation ──────────────────────────────
   webhooks.on("installation_repositories.added", async ({ payload }) => {
-    const userId = String(payload.installation.account?.id ?? 0);
+    const accountId = payload.installation.account?.id;
+    if (!accountId) {
+      log.warn("installation_repositories.added: missing account id, skipping");
+      return;
+    }
+    const userId = String(accountId);
     const account = resolveAccount(payload.installation.account as Record<string, unknown>);
 
     // Re-upsert the installation (account may have changed)
@@ -89,11 +102,17 @@ export function createWebhookHandler(
 
   // ── Workflow run events ──────────────────────────────────────────────────
   webhooks.on("workflow_run", async ({ payload }) => {
+    const ownerId = payload.repository.owner?.id;
+    const installId = payload.installation?.id;
+    if (!ownerId || !installId) {
+      log.warn("workflow_run: missing owner or installation id, skipping");
+      return;
+    }
     await enqueue({
       type: "sync:workflow-runs",
       data: {
-        userId: String(payload.repository.owner?.id ?? 0),
-        installationId: payload.installation?.id ?? 0,
+        userId: String(ownerId),
+        installationId: installId,
         repositoryId: String(payload.repository.id),
         fullName: payload.repository.full_name,
       },
@@ -103,10 +122,15 @@ export function createWebhookHandler(
   // ── Push events (trigger workflow run refresh) ───────────────────────────
   webhooks.on("push", async ({ payload }) => {
     if (!payload.installation) return;
+    const ownerId = payload.repository.owner?.id;
+    if (!ownerId) {
+      log.warn("push: missing owner id, skipping");
+      return;
+    }
     await enqueue({
       type: "sync:workflow-runs",
       data: {
-        userId: String(payload.repository.owner?.id ?? 0),
+        userId: String(ownerId),
         installationId: payload.installation.id,
         repositoryId: String(payload.repository.id),
         fullName: payload.repository.full_name,
@@ -117,10 +141,15 @@ export function createWebhookHandler(
   // ── Workflow job events (re-trigger run sync) ────────────────────────────
   webhooks.on("workflow_job", async ({ payload }) => {
     if (!payload.installation) return;
+    const ownerId = payload.repository.owner?.id;
+    if (!ownerId) {
+      log.warn("workflow_job: missing owner id, skipping");
+      return;
+    }
     await enqueue({
       type: "sync:workflow-runs",
       data: {
-        userId: String(payload.repository.owner?.id ?? 0),
+        userId: String(ownerId),
         installationId: payload.installation.id,
         repositoryId: String(payload.repository.id),
         fullName: payload.repository.full_name,
@@ -131,12 +160,18 @@ export function createWebhookHandler(
   // ── Package events ───────────────────────────────────────────────────────
   webhooks.on("package", async ({ payload }) => {
     if (!payload.installation) return;
+    const ownerId = payload.repository?.owner?.id;
+    const repoId = payload.repository?.id;
+    if (!ownerId || !repoId) {
+      log.warn("package: missing owner or repository id, skipping");
+      return;
+    }
     await enqueue({
       type: "sync:packages",
       data: {
-        userId: String(payload.repository?.owner?.id ?? 0),
+        userId: String(ownerId),
         installationId: payload.installation.id,
-        repositoryId: String(payload.repository?.id ?? 0),
+        repositoryId: String(repoId),
         fullName: payload.repository?.full_name ?? "",
       },
     });
@@ -145,10 +180,15 @@ export function createWebhookHandler(
   // ── Release events (trigger package re-sync) ─────────────────────────────
   webhooks.on("release", async ({ payload }) => {
     if (!payload.installation) return;
+    const ownerId = payload.repository.owner?.id;
+    if (!ownerId) {
+      log.warn("release: missing owner id, skipping");
+      return;
+    }
     await enqueue({
       type: "sync:packages",
       data: {
-        userId: String(payload.repository.owner?.id ?? 0),
+        userId: String(ownerId),
         installationId: payload.installation.id,
         repositoryId: String(payload.repository.id),
         fullName: payload.repository.full_name,
@@ -159,10 +199,15 @@ export function createWebhookHandler(
   // ── Repository visibility changes ────────────────────────────────────────
   webhooks.on(["repository.privatized", "repository.publicized"], async ({ payload }) => {
     if (!payload.installation) return;
+    const ownerId = payload.repository.owner?.id;
+    if (!ownerId) {
+      log.warn({ action: payload.action }, "repository event: missing owner id, skipping");
+      return;
+    }
     await enqueue({
       type: "sync:repo",
       data: {
-        userId: String(payload.repository.owner?.id ?? 0),
+        userId: String(ownerId),
         installationId: payload.installation.id,
         repositoryId: String(payload.repository.id),
         githubRepoId: payload.repository.id,
@@ -173,11 +218,16 @@ export function createWebhookHandler(
 
   // ── Installation deleted ─────────────────────────────────────────────────
   webhooks.on("installation.deleted", async ({ payload }) => {
+    const accountId = payload.installation.account?.id;
+    if (!accountId) {
+      log.warn("installation.deleted: missing account id, skipping");
+      return;
+    }
     await enqueue({
       type: "uninstall:app",
       data: {
         githubInstallationId: payload.installation.id,
-        userId: String(payload.installation.account?.id ?? 0),
+        userId: String(accountId),
       },
     });
   });

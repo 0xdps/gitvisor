@@ -11,11 +11,12 @@ function AuthCallbackContent() {
 
   useEffect(() => {
     const code = searchParams.get("code");
-    if (!code) {
+    const state = searchParams.get("state");
+    if (!code || !state) {
       router.replace("/login");
       return;
     }
-    exchangeCode(code)
+    exchangeCode(code, state)
       .then(() => router.replace("/dashboard"))
       .catch(() => router.replace("/login"));
   }, [router, searchParams]);

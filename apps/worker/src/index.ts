@@ -1,7 +1,10 @@
 import { createGitHubApp } from "@gitvisor/github";
 import { BullMQQueueRepository } from "@gitvisor/queue";
 import { createSharedSqliteRepositories } from "@gitvisor/db";
+import { createLogger } from "@gitvisor/logger";
 import { dispatch } from "./handlers/index.js";
+
+const log = createLogger("worker");
 
 function requireEnv(key: string): string {
   const val = process.env[key];
@@ -38,7 +41,7 @@ queue.process(async (job) => {
   await dispatch(job, getUserDb, registry, (j) => queue.enqueue(j));
 });
 
-console.log("[worker] started — waiting for jobs");
+log.info("started — waiting for jobs");
 
 // ── Graceful shutdown ────────────────────────────────────────────────────────
 const shutdown = async () => {

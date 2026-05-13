@@ -26,7 +26,7 @@ export async function fetchGitHubUser(accessToken: string): Promise<User> {
     "X-GitHub-Api-Version": "2022-11-28",
   };
 
-  const userRes = await fetch("https://api.github.com/user", { headers });
+  const userRes = await fetch("https://api.github.com/user", { signal: AbortSignal.timeout(10_000), headers });
   if (!userRes.ok) {
     throw new Error(`GitHub /user failed: ${userRes.status}`);
   }
@@ -36,7 +36,7 @@ export async function fetchGitHubUser(accessToken: string): Promise<User> {
 
   // If the profile email is null/hidden, fetch the verified primary email
   if (!email) {
-    const emailsRes = await fetch("https://api.github.com/user/emails", { headers });
+    const emailsRes = await fetch("https://api.github.com/user/emails", { signal: AbortSignal.timeout(10_000), headers });
     if (emailsRes.ok) {
       const emails = (await emailsRes.json()) as GitHubEmailEntry[];
       const primary = emails.find((e) => e.primary && e.verified);

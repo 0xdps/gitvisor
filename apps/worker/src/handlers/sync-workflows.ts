@@ -1,6 +1,9 @@
 import type { SyncWorkflowsJobData } from "@gitvisor/shared";
 import { getInstallationOctokit, listWorkflows, mapWorkflow } from "@gitvisor/github";
 import type { UserDbRepository } from "@gitvisor/db";
+import { createLogger } from "@gitvisor/logger";
+
+const log = createLogger("worker");
 
 export async function handleSyncWorkflows(
   data: SyncWorkflowsJobData,
@@ -16,5 +19,5 @@ export async function handleSyncWorkflows(
     await userDb.upsertWorkflow(mapped);
   }
 
-  console.log(`[worker] synced ${workflows.length} workflow(s) for ${data.fullName}`);
+  log.info({ count: workflows.length, fullName: data.fullName }, "workflows synced");
 }

@@ -46,22 +46,8 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          {/* Legal */}
-          <div className="space-y-3">
-            <p className="text-sm font-semibold">Legal</p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link href="/privacy" className="transition-colors hover:text-foreground">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link href="/tos" className="transition-colors hover:text-foreground">
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {/* placeholder — legal links removed for OSS */}
+          <div />
         </div>
 
         <div className="mt-10 border-t border-border pt-6 text-center text-xs text-muted-foreground">

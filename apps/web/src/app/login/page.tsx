@@ -73,23 +73,7 @@ export default function LoginPage() {
               {loading ? "Redirecting…" : "Continue with GitHub"}
             </button>
 
-            <p className="mt-5 text-center text-xs text-muted-foreground">
-              By continuing, you agree to our{" "}
-              <Link
-                href="/tos"
-                className="underline underline-offset-2 hover:text-foreground"
-              >
-                Terms
-              </Link>{" "}
-              and{" "}
-              <Link
-                href="/privacy"
-                className="underline underline-offset-2 hover:text-foreground"
-              >
-                Privacy Policy
-              </Link>
-              .
-            </p>
+
           </div>
         </div>
       </main>

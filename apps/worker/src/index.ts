@@ -1,6 +1,6 @@
 import { createGitHubApp } from "@gitvisor/github";
 import { BullMQQueueRepository } from "@gitvisor/queue";
-import type { UserDbRepository } from "@gitvisor/db";
+import { createSharedSqliteRepositories } from "@gitvisor/db";
 import { dispatch } from "./handlers/index.js";
 
 function requireEnv(key: string): string {
@@ -27,21 +27,11 @@ const queue = new BullMQQueueRepository({
   },
 });
 
-/**
- * Resolves a UserDbRepository for a given userId.
- *
- * OSS users: replace this stub with a concrete implementation, e.g. a MesaHub
- * client or any database adapter that implements UserDbRepository.
- *
- * Cloud: see cloud-apps/worker which wires MesaHub automatically via
- * createMesaHubRepositories() and provisions DBs on demand.
- */
-async function getUserDb(_userId: string): Promise<UserDbRepository> {
-  throw new Error(
-    "No UserDbRepository configured. " +
-      "Provide a getUserDb implementation in apps/worker/src/index.ts or use the cloud worker.",
-  );
-}
+// ── Database ─────────────────────────────────────────────────────────────────
+const { getUserDb } = await createSharedSqliteRepositories({
+  registryPath: process.env["REGISTRY_DB_PATH"] ?? "./registry.sqlite",
+  dataPath: process.env["DATA_DB_PATH"] ?? "./data.sqlite",
+});
 
 // ── Start processing ─────────────────────────────────────────────────────────
 queue.process(async (job) => {

@@ -26,7 +26,7 @@ GitVisor is an open-source GitHub operational dashboard. Monitor workflow runs, 
 ```
 ┌─────────────────────────────────────────────────────┐
 │                     apps/web                        │
-│         TanStack Start · React 19 · Tailwind v4     │
+│         Next.js 15 · React 19 · Tailwind v4         │
 └───────────────────┬─────────────────────────────────┘
                     │ REST
 ┌───────────────────▼─────────────────────────────────┐
@@ -41,7 +41,7 @@ GitVisor is an open-source GitHub operational dashboard. Monitor workflow runs, 
            │ read/write
 ┌──────────▼────────┐
 │    packages/db    │
-│  per-user SQLite  │
+│  shared SQLite   │
 └───────────────────┘
 ```
 
@@ -49,12 +49,13 @@ GitVisor is an open-source GitHub operational dashboard. Monitor workflow runs, 
 
 | Layer | Technology |
 |---|---|
-| Frontend | TanStack Start v1, TanStack Router, TanStack Query v5, React 19 |
+| Frontend | Next.js 15 (App Router), React 19, TanStack Query v5 |
 | UI | Tailwind CSS v4, shadcn/ui, Radix UI |
 | API | Hono v4 on Node.js |
 | Queue | BullMQ v5 + Redis |
 | GitHub | `@octokit/app`, `@octokit/rest`, `@octokit/webhooks` |
 | Auth | HMAC-SHA256 signed cookies, GitHub OAuth |
+| Database | `better-sqlite3` (shared local SQLite) |
 | Monorepo | Turborepo v2, pnpm v9 workspaces |
 | Language | TypeScript 5.8 strict |
 
@@ -93,24 +94,28 @@ A single **`.env.local`** at the monorepo root covers all services. Copy from `.
 
 ```env
 NODE_ENV=development
-PORT=3002
+PORT=3001
 
-VITE_API_URL=http://localhost:3002
+NEXT_PUBLIC_API_URL=http://localhost:3001
 WEB_URL=http://localhost:3000
 ALLOWED_ORIGINS=http://localhost:3000
 
 SESSION_SECRET=          # node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 GITHUB_APP_ID=
-GITHUB_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+GITHUB_APP_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
 GITHUB_WEBHOOK_SECRET=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
-GITHUB_OAUTH_REDIRECT_URI=http://localhost:3002/auth/callback
+GITHUB_OAUTH_REDIRECT_URI=http://localhost:3001/auth/callback
 
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=
+
+# Optional: paths for local SQLite files (defaults shown)
+# REGISTRY_DB_PATH=./registry.sqlite
+# DATA_DB_PATH=./data.sqlite
 ```
 
 ## Repository Structure

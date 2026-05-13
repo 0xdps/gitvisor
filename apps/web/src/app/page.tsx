@@ -1,75 +1,25 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  GitBranch,
-  Activity,
-  Lock,
-  Zap,
-  ArrowRight,
-  CheckCircle,
-  Terminal,
-  RefreshCw,
-} from "lucide-react";
-import { PublicHeader } from "../components/public-header";
-import { PublicFooter } from "../components/public-footer";
-import { me } from "@/lib/auth-client";
+import { login, me } from "@/lib/auth-client";
 
-const features = [
-  {
-    icon: Activity,
-    title: "Workflow visibility",
-    description:
-      "See every GitHub Actions run across all your repositories in a single feed. Status, duration, branch, actor — all at a glance.",
-  },
-  {
-    icon: Lock,
-    title: "Secrets management",
-    description:
-      "List, audit, and update repository secrets without leaving your dashboard. Values are encrypted client-side and never stored.",
-  },
-  {
-    icon: Zap,
-    title: "Real-time sync",
-    description:
-      "Webhooks keep your data fresh instantly. Every workflow run and push event updates your dashboard within seconds.",
-  },
-  {
-    icon: RefreshCw,
-    title: "One-click rerun",
-    description:
-      "Failed a workflow? Rerun it directly from the dashboard without switching to GitHub. Cancel in-progress runs too.",
-  },
-  {
-    icon: Terminal,
-    title: "Historical data",
-    description:
-      "Full workflow run history synced on GitHub App install. Query, filter, and track trends over time.",
-  },
-  {
-    icon: GitBranch,
-    title: "Per-repo drill-down",
-    description:
-      "Click into any repository for a detailed view of its workflow runs, grouped by workflow name and branch.",
-  },
-];
-
-const steps = [
-  { label: "Sign in with GitHub", detail: "OAuth — no password required." },
-  {
-    label: "Install the GitHub App",
-    detail: "Select the repos you want to monitor.",
-  },
-  {
-    label: "Your data syncs automatically",
-    detail: "Historical runs load immediately; live updates via webhooks.",
-  },
-];
+function GitHubIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 fill-current"
+      aria-hidden="true"
+    >
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+    </svg>
+  );
+}
 
 export default function LandingPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     me().then((user) => {
@@ -77,148 +27,44 @@ export default function LandingPage() {
     });
   }, [router]);
 
+  async function handleLogin() {
+    setLoading(true);
+    setError(null);
+    try {
+      await login();
+    } catch {
+      setError("Failed to start login. Please try again.");
+      setLoading(false);
+    }
+  }
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <PublicHeader />
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
+      <div className="flex flex-col items-center gap-6 text-center">
+        <img src="/icon-trans.png" alt="Gitvisor" className="h-16 w-16" />
 
-      {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-foreground py-24 md:py-36">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-            backgroundSize: "48px 48px",
-          }}
-        />
-
-        <div className="relative mx-auto max-w-4xl px-6 text-center">
-          <span className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/80">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-            Now in beta
-          </span>
-
-          <h1 className="mt-4 text-4xl font-bold tracking-tight text-white md:text-6xl">
-            GitHub Actions visibility,{" "}
-            <span className="text-white/60">simplified.</span>
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
-            Monitor every workflow run, manage secrets, and debug CI/CD failures
-            — all in one clean dashboard. Install in 60 seconds.
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Gitvisor</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            GitHub Actions visibility for developers who ship.
           </p>
-
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/login"
-              className="inline-flex h-11 items-center gap-2 rounded-md bg-white px-6 text-sm font-semibold text-foreground transition-colors hover:bg-white/90"
-            >
-              Get started free
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <a
-              href="https://github.com/0xdps/gitvisor"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-11 items-center gap-2 rounded-md border border-white/20 bg-white/5 px-6 text-sm font-medium text-white transition-colors hover:bg-white/10"
-            >
-              <GitBranch className="h-4 w-4" />
-              View source
-            </a>
-          </div>
         </div>
-      </section>
 
-      {/* ── Features ─────────────────────────────────────────────── */}
-      <section id="features" className="bg-background py-24">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="mb-14 text-center">
-            <h2 className="text-3xl font-bold tracking-tight">
-              Everything you need to understand your CI/CD
-            </h2>
-            <p className="mt-3 text-muted-foreground">
-              Built for developers who want operational clarity without the
-              GitHub tab overload.
-            </p>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((f) => (
-              <div
-                key={f.title}
-                className="rounded-xl border border-border bg-card p-6 transition-shadow hover:shadow-sm"
-              >
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <f.icon className="h-5 w-5 text-primary" />
-                </div>
-                <h3 className="mb-2 font-semibold">{f.title}</h3>
-                <p className="text-sm text-muted-foreground">{f.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── How it works ─────────────────────────────────────────── */}
-      <section className="bg-muted/40 py-24">
-        <div className="mx-auto max-w-3xl px-6">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold tracking-tight">
-              Up and running in minutes
-            </h2>
-          </div>
-
-          <ol className="space-y-6">
-            {steps.map((step, i) => (
-              <li key={i} className="flex items-start gap-4">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                  {i + 1}
-                </span>
-                <div className="pt-0.5">
-                  <p className="font-semibold">{step.label}</p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">
-                    {step.detail}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* ── CTA banner ───────────────────────────────────────────── */}
-      <section className="bg-foreground py-20">
-        <div className="mx-auto max-w-2xl px-6 text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-white">
-            Ready to stop guessing why your builds fail?
-          </h2>
-          <p className="mt-4 text-white/60">
-            Free during beta. No credit card required.
+        {error && (
+          <p className="rounded-md bg-destructive/10 px-4 py-2 text-sm text-destructive">
+            {error}
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-white/60">
-            {[
-              "No credit card required",
-              "GitHub OAuth — no password",
-              "Open source",
-            ].map((item) => (
-              <span key={item} className="flex items-center gap-1.5">
-                <CheckCircle className="h-4 w-4 text-primary" />
-                {item}
-              </span>
-            ))}
-          </div>
-          <Link
-            href="/login"
-            className="mt-8 inline-flex h-11 items-center gap-2 rounded-md bg-white px-8 text-sm font-semibold text-foreground transition-colors hover:bg-white/90"
-          >
-            Get started free
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </section>
+        )}
 
-      <PublicFooter />
+        <button
+          onClick={handleLogin}
+          disabled={loading}
+          className="inline-flex items-center gap-2.5 rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+        >
+          <GitHubIcon />
+          {loading ? "Redirecting…" : "Sign in with GitHub"}
+        </button>
+      </div>
     </div>
   );
 }

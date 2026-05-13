@@ -1,0 +1,70 @@
+packages/github/src/repos.ts
+  s_0105f9dade0815::t_0ec6ad3d94aaa9 7,28
+packages/github/src/webhooks.ts
+  s_0105f9dade0815::t_336101953bf329 159-173
+packages/shared/src/index.ts
+  s_0105f9dade0815::t_0ec6ad3d94aaa9 39
+  s_0105f9dade0815::t_fc06bff00610e3 137-147,149-152
+  s_0105f9dade0815::t_e6578a7b008c28 148
+apps/web/src/app/page.tsx
+  s_0105f9dade0815::t_02de255234c6b1 1,3,5,11-56,58-88,90-119,121-123,125-143,145-280
+apps/web/src/app/webhooks/[...path]/route.ts
+  s_0105f9dade0815::t_296bc537e6a753 1-41
+packages/db/src/shared-sqlite-registry.ts
+  s_0105f9dade0815::t_69e460222102eb 264
+apps/worker/src/handlers/index.ts
+  s_0105f9dade0815::t_2fddf72ffb2b17 88-90
+  s_0105f9dade0815::t_7c5b3041d64c26 26-28,32
+  s_0105f9dade0815::t_0ec6ad3d94aaa9 50,81
+  s_0105f9dade0815::t_bd95238079825d 72
+  s_0105f9dade0815::t_d890ded8f9ea86 75-80,82-83
+  s_0105f9dade0815::t_8ad58e8e96bb86 37-40
+  h_7a2f4c8f0473b8 73-74,84-87,91-103
+apps/web/src/app/tos/page.tsx
+  s_0105f9dade0815::t_23dc9552bd3ffd 1-143
+packages/github/src/packages.ts
+  s_0105f9dade0815::t_7c5b3041d64c26 4-7
+apps/web/src/app/privacy/page.tsx
+  s_0105f9dade0815::t_2e1e6fe26119aa 1-158
+apps/web/src/app/login/page.tsx
+  s_0105f9dade0815::t_05dcb131e81772 76-85
+packages/db/src/shared-sqlite-userdb.ts
+  s_0105f9dade0815::t_2330ebd115f98f 126-141
+  s_0105f9dade0815::t_0ec6ad3d94aaa9 38,153,156,160,179,231
+  s_0105f9dade0815::t_15ed2bfec7bdc7 584-620,629-630,633-639,647-648,650-655,657-658,681
+  s_0105f9dade0815::t_10e63da4a53e91 11
+  s_0105f9dade0815::t_42af46d2d77a9b 539-545,550-556,558-559,563-564,621-628,631-632,640-646,649,656,659-668
+  s_0105f9dade0815::t_3b069b6b78b30e 669-680
+infra/docker/web.Dockerfile
+  s_0105f9dade0815::t_f1e2d853327e5e 8,41
+  s_0105f9dade0815::t_ffe45eb594850e 16-20,49-50
+packages/db/src/user-db.repository.ts
+  s_0105f9dade0815::t_e5c9ce615b48eb 8
+  s_0105f9dade0815::t_e6578a7b008c28 48-54,59-66
+  s_0105f9dade0815::t_5c2b38e2c0679f 56-58
+apps/web/src/app/(dashboard)/dashboard/page.tsx
+  s_0105f9dade0815::t_69b353de755cbf 12-13,15,17,21-23,29,33-38,40-42,44-48,62,66-67,72,79,93-94,97-100,108-122,125-153,155
+  s_0105f9dade0815::t_6f660875ec301d 165,171,198-237
+  s_0105f9dade0815::t_f795b6cd29a88c 75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "c7406f10ef8f3d35ecd7c41a3cac8b2cc2d8ecd8",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_0105f9dade0815": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "4988122e-c846-4748-863c-1c3c2b2db0d5",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

@@ -261,6 +261,7 @@ export class SharedSqliteRegistryRepository implements RegistryRepository {
           name,
           fullName,
           private: (row["private"] as number) === 1,
+          archived: false,
           defaultBranch: row["default_branch"] as string,
           description: null,
           language: null,

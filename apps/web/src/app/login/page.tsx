@@ -73,6 +73,16 @@ export default function LoginPage() {
               {loading ? "Redirecting…" : "Continue with GitHub"}
             </button>
 
+            <p className="mt-4 text-center text-xs text-muted-foreground">
+              By continuing, you agree to our{" "}
+              <a href="/tos" className="underline underline-offset-4 hover:text-foreground transition-colors">
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a href="/privacy" className="underline underline-offset-4 hover:text-foreground transition-colors">
+                Privacy Policy
+              </a>.
+            </p>
 
           </div>
         </div>

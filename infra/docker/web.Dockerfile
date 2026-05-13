@@ -5,12 +5,18 @@ RUN corepack enable
 
 FROM base AS build
 WORKDIR /app
+RUN apk add --no-cache python3 make g++
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json ./
 COPY cloud-packages/ cloud-packages/
 COPY cloud-apps/ cloud-apps/
 COPY core/packages/ core/packages/
 COPY core/apps/web/ core/apps/web/
 COPY core/tsconfig.base.json core/tsconfig.base.json
+
+# Stub package.json files for workspace packages not otherwise needed
+# (pnpm requires all workspace dirs present during --frozen-lockfile install)
+COPY core/apps/api/package.json core/apps/api/
+COPY core/apps/worker/package.json core/apps/worker/
 
 RUN --mount=type=cache,id=pnpm-web,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm turbo run build --filter=@gitvisor/web...
@@ -32,6 +38,7 @@ CMD ["node_modules/.bin/next", "start"]
 # Used by docker-compose.override.yml. Source dirs are volume-mounted at runtime.
 FROM base AS dev
 WORKDIR /app
+RUN apk add --no-cache python3 make g++
 
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json ./
 COPY cloud-packages/ cloud-packages/
@@ -39,6 +46,8 @@ COPY cloud-apps/ cloud-apps/
 COPY core/packages/ core/packages/
 COPY core/apps/web/ core/apps/web/
 COPY core/tsconfig.base.json core/tsconfig.base.json
+COPY core/apps/api/package.json core/apps/api/
+COPY core/apps/worker/package.json core/apps/worker/
 
 RUN --mount=type=cache,id=pnpm-web,target=/pnpm/store pnpm install --frozen-lockfile
 

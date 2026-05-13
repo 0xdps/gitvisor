@@ -9,34 +9,43 @@ import {
   XCircle,
   Clock,
   ArrowRight,
+  ScrollText,
+  TrendingUp,
 } from "lucide-react";
-import { getRepositories, getWorkflowRuns } from "@/lib/api-client";
+import { getProfile, getWorkflowRuns, getAuditLog } from "@/lib/api-client";
 import type { WorkflowRun } from "@gitvisor/shared";
+import type { AuditEntry } from "@/lib/api-client";
 import type { ElementType } from "react";
 
 export default function DashboardPage() {
-  const { data: repos } = useQuery({
-    queryKey: ["repositories"],
-    queryFn: getRepositories,
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: getProfile,
     staleTime: 30_000,
   });
 
   const { data: runData } = useQuery({
     queryKey: ["workflows", undefined, 1],
-    queryFn: () => getWorkflowRuns({ perPage: 10 }),
+    queryFn: () => getWorkflowRuns({ perPage: 8 }),
     staleTime: 15_000,
   });
 
-  const runs = runData?.items ?? [];
-  const repoCount = repos?.length ?? 0;
+  const { data: auditData } = useQuery({
+    queryKey: ["audit-log", 1],
+    queryFn: () => getAuditLog(1),
+    staleTime: 30_000,
+  });
 
-  const successCount = runs.filter((r) => r.conclusion === "success").length;
-  const failureCount = runs.filter(
-    (r) => r.conclusion === "failure" || r.conclusion === "timed_out",
-  ).length;
-  const inProgressCount = runs.filter(
-    (r) => r.status === "in_progress",
-  ).length;
+  const runs = runData?.items ?? [];
+  const recentAudit = auditData?.items.slice(0, 5) ?? [];
+
+  const inProgressCount = runs.filter((r) => r.status === "in_progress").length;
+
+  const stats = profile?.stats;
+  const successRate =
+    stats?.workflowSuccessRate != null
+      ? `${Math.round(stats.workflowSuccessRate)}%`
+      : null;
 
   return (
     <div className="space-y-8">
@@ -50,23 +59,24 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard
           label="Repositories"
-          value={repoCount}
+          value={stats?.repositoryCount ?? 0}
           icon={GitBranch}
         />
         <StatCard
-          label="Recent Runs"
-          value={runs.length}
+          label="Total Runs"
+          value={stats?.totalRuns ?? 0}
           icon={Activity}
         />
         <StatCard
           label="Successful"
-          value={successCount}
+          value={stats?.successCount ?? 0}
           icon={CheckCircle}
           accent="green"
+          {...(successRate ? { sub: `${successRate} success rate` } : {})}
         />
         <StatCard
           label="Failed"
-          value={failureCount}
+          value={stats?.failureCount ?? 0}
           icon={XCircle}
           accent="red"
         />
@@ -80,10 +90,14 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {runs.length > 0 && (
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recent workflow runs */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold">Recent Workflow Runs</h2>
+            <h2 className="text-sm font-semibold flex items-center gap-1.5">
+              <Activity className="h-4 w-4 text-muted-foreground" />
+              Recent Workflow Runs
+            </h2>
             <Link
               href="/workflows"
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -91,23 +105,54 @@ export default function DashboardPage() {
               View all <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="space-y-1.5">
-            {runs.slice(0, 8).map((run) => (
-              <RunRow key={run.id} run={run} />
-            ))}
-          </div>
+          {runs.length > 0 ? (
+            <div className="space-y-1.5">
+              {runs.map((run) => (
+                <RunRow key={run.id} run={run} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border py-12 text-center">
+              <Activity className="mx-auto h-7 w-7 text-muted-foreground/40" />
+              <p className="mt-2 text-sm font-medium">No workflow runs yet</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Trigger a workflow to see activity here.
+              </p>
+            </div>
+          )}
         </div>
-      )}
 
-      {runs.length === 0 && (
-        <div className="rounded-xl border border-dashed border-border py-16 text-center">
-          <Activity className="mx-auto h-8 w-8 text-muted-foreground/50" />
-          <p className="mt-3 font-medium">No workflow runs yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Connect a repository and trigger a workflow to see data here.
-          </p>
+        {/* Recent audit activity */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold flex items-center gap-1.5">
+              <ScrollText className="h-4 w-4 text-muted-foreground" />
+              Recent Activity
+            </h2>
+            <Link
+              href="/audit-log"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          {recentAudit.length > 0 ? (
+            <div className="space-y-1.5">
+              {recentAudit.map((entry) => (
+                <AuditRow key={entry.id} entry={entry} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border py-12 text-center">
+              <TrendingUp className="mx-auto h-7 w-7 text-muted-foreground/40" />
+              <p className="mt-2 text-sm font-medium">No activity yet</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Actions like installs, syncs, and secret changes appear here.
+              </p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -117,11 +162,13 @@ function StatCard({
   value,
   icon: Icon,
   accent,
+  sub,
 }: {
   label: string;
   value: number;
   icon: ElementType;
   accent?: "green" | "red";
+  sub?: string;
 }) {
   return (
     <div
@@ -148,6 +195,46 @@ function StatCard({
         />
       </div>
       <p className="text-2xl font-bold tabular-nums">{value}</p>
+      {sub && (
+        <p className="text-xs text-muted-foreground -mt-1">{sub}</p>
+      )}
+    </div>
+  );
+}
+
+const ACTION_LABELS: Record<string, string> = {
+  "repository.synced_first": "Repo synced",
+  "repository.synced_with_changes": "Repo updated",
+  "repository.privatized": "Repo privatized",
+  "repository.publicized": "Repo made public",
+  "secret.upserted": "Secret set",
+  "secret.deleted": "Secret deleted",
+  "workflow_run.rerun": "Workflow rerun",
+  "workflow_run.cancelled": "Workflow cancelled",
+  "installation.created": "App installed",
+  "installation.deleted": "App uninstalled",
+};
+
+function AuditRow({ entry }: { entry: AuditEntry }) {
+  const label = ACTION_LABELS[entry.action] ?? entry.action;
+  const time = new Date(entry.createdAt).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-2.5 hover:bg-accent/20 transition-colors">
+      <div className="h-2 w-2 rounded-full bg-primary/60 shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium truncate">{label}</p>
+        <p className="text-xs text-muted-foreground truncate">
+          {entry.resourceType}
+          {entry.resourceId ? ` · ${entry.resourceId}` : ""}
+        </p>
+      </div>
+      <p className="text-xs text-muted-foreground shrink-0">{time}</p>
     </div>
   );
 }

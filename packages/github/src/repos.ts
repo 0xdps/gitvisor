@@ -4,6 +4,7 @@ export interface RepoMeta {
   description: string | null;
   language: string | null;
   private: boolean;
+  archived: boolean;
   defaultBranch: string;
   stargazersCount: number;
   /** subscribers_count = actual watch count */
@@ -24,6 +25,7 @@ export async function getRepo(
     description: data.description ?? null,
     language: data.language ?? null,
     private: data.private,
+    archived: data.archived,
     defaultBranch: data.default_branch,
     stargazersCount: data.stargazers_count,
     watchersCount: data.subscribers_count,

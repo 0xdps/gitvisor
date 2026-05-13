@@ -156,6 +156,21 @@ export function createWebhookHandler(
     });
   });
 
+  // ── Repository visibility changes ────────────────────────────────────────
+  webhooks.on(["repository.privatized", "repository.publicized"], async ({ payload }) => {
+    if (!payload.installation) return;
+    await enqueue({
+      type: "sync:repo",
+      data: {
+        userId: String(payload.repository.owner?.id ?? 0),
+        installationId: payload.installation.id,
+        repositoryId: String(payload.repository.id),
+        githubRepoId: payload.repository.id,
+        fullName: payload.repository.full_name,
+      },
+    });
+  });
+
   // ── Installation deleted ─────────────────────────────────────────────────
   webhooks.on("installation.deleted", async ({ payload }) => {
     await enqueue({

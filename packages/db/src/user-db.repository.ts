@@ -5,6 +5,7 @@ import type {
   Package,
   Repository,
   AuditLogEntry,
+  WebhookEvent,
   PaginatedResponse,
 } from "@gitvisor/shared";
 
@@ -44,7 +45,25 @@ export interface UserDbRepository {
 
   // Audit log
   appendAuditLog(entry: Omit<AuditLogEntry, "id" | "createdAt">): Promise<void>;
-  listAuditLog(opts: { page?: number; perPage?: number }): Promise<PaginatedResponse<AuditLogEntry>>;
+  listAuditLog(opts: {
+    action?: string;
+    resourceType?: string;
+    resourceId?: string;
+    page?: number;
+    perPage?: number;
+  }): Promise<PaginatedResponse<AuditLogEntry>>;
+
+  // Webhook events
+  insertWebhookEvent(event: Omit<WebhookEvent, "id" | "receivedAt">): Promise<void>;
+  updateWebhookEventStatus(deliveryId: string, status: WebhookEvent["status"], error?: string): Promise<void>;
+  getWebhookEvent(deliveryId: string): Promise<WebhookEvent | null>;
+  listWebhookEvents(opts: {
+    status?: string;
+    eventName?: string;
+    resourceId?: string;
+    page?: number;
+    perPage?: number;
+  }): Promise<PaginatedResponse<WebhookEvent>>;
 
   // Schema migration
   migrate(): Promise<void>;

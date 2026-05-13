@@ -36,6 +36,7 @@ export interface Repository {
   name: string;
   fullName: string;
   private: boolean;
+  archived: boolean;
   defaultBranch: string;
   description: string | null;
   language: string | null;
@@ -131,6 +132,22 @@ export interface Workflow {
   htmlUrl: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ── Webhook Events ────────────────────────────────────────────────────────────
+
+export interface WebhookEvent {
+  id: string;
+  deliveryId: string;
+  eventName: string;
+  action: string | null;
+  installationId: number | null;
+  resourceType: string | null;
+  resourceId: string | null;
+  payload: Record<string, unknown>;
+  status: "received" | "queued" | "processed" | "failed";
+  error: string | null;
+  receivedAt: string;
 }
 
 // ── Audit Log ─────────────────────────────────────────────────────────────────

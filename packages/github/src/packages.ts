@@ -1,7 +1,10 @@
 import type { Octokit } from "@octokit/rest";
 import type { Package, PackageEcosystem } from "@gitvisor/shared";
 
-const SUPPORTED_ECOSYSTEMS: PackageEcosystem[] = ["npm", "docker", "container", "maven", "rubygems", "nuget"];
+// "container" (ghcr.io) requires Container Registry OAuth scopes that GitHub App
+// installations don't always have — GitHub returns 400 instead of an empty list,
+// which creates log noise. "docker" covers GitHub Packages Docker images.
+const SUPPORTED_ECOSYSTEMS: PackageEcosystem[] = ["npm", "docker", "maven", "rubygems", "nuget"];
 
 export async function listPackages(
   octokit: Octokit,

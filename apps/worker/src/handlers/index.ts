@@ -23,15 +23,21 @@ export async function dispatch(
       const { userId, installationId, repositoryId, githubRepoId, fullName } = job.data;
       const [owner = "", name = ""] = fullName.split("/");
 
-      // Fetch real repo metadata from GitHub in parallel with PR count
+      // Fetch real repo metadata from GitHub in parallel with PR count.
+      // getRepoPullsCount requires pulls:read permission which the app may not have;
+      // fall back to 0 rather than failing the whole job.
       const octokit = await getInstallationOctokit(installationId);
       const [meta, openPullsCount] = await Promise.all([
         getRepo(octokit as never, owner, name),
-        getRepoPullsCount(octokit as never, owner, name),
+        getRepoPullsCount(octokit as never, owner, name).catch(() => 0),
       ]);
 
       // Upsert repo record with real metadata before fanning out
       const userDb = await getUserDb(userId);
+
+      // Capture current state before upsert so we can log meaningful changes
+      const existing = await userDb.getRepository(githubRepoId);
+
       await userDb.upsertRepository({
         id: repositoryId,
         githubRepoId,
@@ -41,6 +47,7 @@ export async function dispatch(
         name,
         fullName,
         private: meta.private,
+        archived: meta.archived,
         defaultBranch: meta.defaultBranch,
         description: meta.description,
         language: meta.language,
@@ -62,7 +69,38 @@ export async function dispatch(
       ]);
 
       // Mark the repo as synced
-      await (await getUserDb(userId)).markRepoSynced(repositoryId);
+      await userDb.markRepoSynced(repositoryId);
+
+      // Log meaningful changes to the audit log (visibility, default branch)
+      if (!existing) {
+        await userDb.appendAuditLog({
+          userId,
+          action: "repository.synced_first",
+          resourceType: "repository",
+          resourceId: repositoryId,
+          metadata: { fullName, private: meta.private, archived: meta.archived, defaultBranch: meta.defaultBranch },
+        });
+      }
+      const changes: Record<string, { from: unknown; to: unknown }> = {};
+      if (existing && existing.private !== meta.private) {
+        changes["private"] = { from: existing.private, to: meta.private };
+      }
+      if (existing && existing.archived !== meta.archived) {
+        changes["archived"] = { from: existing.archived, to: meta.archived };
+      }
+      if (existing && existing.defaultBranch !== meta.defaultBranch) {
+        changes["defaultBranch"] = { from: existing.defaultBranch, to: meta.defaultBranch };
+      }
+      if (Object.keys(changes).length > 0) {
+        await userDb.appendAuditLog({
+          userId,
+          action: "repository.synced_with_changes",
+          resourceType: "repository",
+          resourceId: repositoryId,
+          metadata: { fullName, changes },
+        });
+      }
+
       console.log(`[worker] sync:repo completed for ${fullName}`);
       break;
     }

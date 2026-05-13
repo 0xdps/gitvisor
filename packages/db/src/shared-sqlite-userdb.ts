@@ -8,6 +8,7 @@ import type {
   Package,
   Repository,
   AuditLogEntry,
+  WebhookEvent,
   PaginatedResponse,
 } from "@gitvisor/shared";
 
@@ -34,6 +35,7 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
         user_id TEXT NOT NULL,
         full_name TEXT NOT NULL,
         private INTEGER NOT NULL DEFAULT 0,
+        archived INTEGER NOT NULL DEFAULT 0,
         default_branch TEXT NOT NULL DEFAULT 'main',
         description TEXT,
         language TEXT,
@@ -121,6 +123,22 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
       CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS webhook_events (
+        id TEXT PRIMARY KEY,
+        delivery_id TEXT UNIQUE NOT NULL,
+        event_name TEXT NOT NULL,
+        action TEXT,
+        installation_id INTEGER,
+        resource_type TEXT,
+        resource_id TEXT,
+        payload TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'received',
+        error TEXT,
+        received_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_webhook_events_received_at ON webhook_events(received_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_webhook_events_status ON webhook_events(status);
     `);
     return Promise.resolve();
   }
@@ -132,13 +150,14 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
     this.db
       .prepare(
         `INSERT INTO repositories (
-           id, github_repo_id, installation_id, user_id, full_name, private, default_branch,
+           id, github_repo_id, installation_id, user_id, full_name, private, archived, default_branch,
            description, language, stargazers_count, watchers_count, forks_count,
            open_issues_count, open_pulls_count, pushed_at, synced_at, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(github_repo_id) DO UPDATE SET
            full_name         = excluded.full_name,
            private           = excluded.private,
+           archived          = excluded.archived,
            default_branch    = excluded.default_branch,
            description       = excluded.description,
            language          = excluded.language,
@@ -157,6 +176,7 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
         repo.userId,
         repo.fullName,
         repo.private ? 1 : 0,
+        repo.archived ? 1 : 0,
         repo.defaultBranch,
         repo.description ?? null,
         repo.language ?? null,
@@ -208,6 +228,7 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
       name,
       fullName,
       private: (row["private"] as number) === 1,
+      archived: (row["archived"] as number) === 1,
       defaultBranch: row["default_branch"] as string,
       description: (row["description"] as string | null) ?? null,
       language: (row["language"] as string | null) ?? null,
@@ -515,19 +536,32 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
     return Promise.resolve();
   }
 
-  listAuditLog(opts: { page?: number; perPage?: number }): Promise<PaginatedResponse<AuditLogEntry>> {
+  listAuditLog(opts: {
+    action?: string;
+    resourceType?: string;
+    resourceId?: string;
+    page?: number;
+    perPage?: number;
+  }): Promise<PaginatedResponse<AuditLogEntry>> {
     const page = opts.page ?? 1;
     const perPage = opts.perPage ?? 50;
     const offset = (page - 1) * perPage;
 
+    const conditions: string[] = [];
+    const filterParams: (string | number | null)[] = [];
+    if (opts.action) { conditions.push("action = ?"); filterParams.push(opts.action); }
+    if (opts.resourceType) { conditions.push("resource_type = ?"); filterParams.push(opts.resourceType); }
+    if (opts.resourceId) { conditions.push("resource_id = ?"); filterParams.push(opts.resourceId); }
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
     const countRow = this.db
-      .prepare(`SELECT COUNT(*) as total FROM audit_log`)
-      .get() as { total: number } | undefined;
+      .prepare(`SELECT COUNT(*) as total FROM audit_log ${where}`)
+      .get(...filterParams) as { total: number } | undefined;
     const total = countRow?.total ?? 0;
 
     const rows = this.db
-      .prepare(`SELECT * FROM audit_log ORDER BY created_at DESC LIMIT ? OFFSET ?`)
-      .all(perPage, offset) as Record<string, unknown>[];
+      .prepare(`SELECT * FROM audit_log ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
+      .all(...filterParams, perPage, offset) as Record<string, unknown>[];
 
     return Promise.resolve({
       items: rows.map((row) => ({
@@ -546,6 +580,104 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
       perPage,
       hasMore: total > page * perPage,
     });
+  }
+
+  // ── Webhook Events ──────────────────────────────────────────────────────────
+
+  insertWebhookEvent(event: Omit<WebhookEvent, "id" | "receivedAt">): Promise<void> {
+    this.db
+      .prepare(
+        `INSERT INTO webhook_events
+           (id, delivery_id, event_name, action, installation_id, resource_type, resource_id, payload, status, error)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(delivery_id) DO NOTHING`,
+      )
+      .run(
+        randomUUID(),
+        event.deliveryId,
+        event.eventName,
+        event.action ?? null,
+        event.installationId ?? null,
+        event.resourceType ?? null,
+        event.resourceId ?? null,
+        JSON.stringify(event.payload),
+        event.status,
+        event.error ?? null,
+      );
+    return Promise.resolve();
+  }
+
+  updateWebhookEventStatus(
+    deliveryId: string,
+    status: WebhookEvent["status"],
+    error?: string,
+  ): Promise<void> {
+    this.db
+      .prepare(`UPDATE webhook_events SET status = ?, error = ? WHERE delivery_id = ?`)
+      .run(status, error ?? null, deliveryId);
+    return Promise.resolve();
+  }
+
+  getWebhookEvent(deliveryId: string): Promise<WebhookEvent | null> {
+    const row = this.db
+      .prepare(`SELECT * FROM webhook_events WHERE delivery_id = ? LIMIT 1`)
+      .get(deliveryId) as Record<string, unknown> | undefined;
+    if (!row) return Promise.resolve(null);
+    return Promise.resolve(this.mapWebhookEvent(row));
+  }
+
+  listWebhookEvents(opts: {
+    status?: string;
+    eventName?: string;
+    resourceId?: string;
+    page?: number;
+    perPage?: number;
+  }): Promise<PaginatedResponse<WebhookEvent>> {
+    const page = opts.page ?? 1;
+    const perPage = opts.perPage ?? 50;
+    const offset = (page - 1) * perPage;
+
+    const conditions: string[] = [];
+    const filterParams: (string | number | null)[] = [];
+    if (opts.status) { conditions.push("status = ?"); filterParams.push(opts.status); }
+    if (opts.eventName) { conditions.push("event_name = ?"); filterParams.push(opts.eventName); }
+    if (opts.resourceId) { conditions.push("resource_id = ?"); filterParams.push(opts.resourceId); }
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const countRow = this.db
+      .prepare(`SELECT COUNT(*) as total FROM webhook_events ${where}`)
+      .get(...filterParams) as { total: number } | undefined;
+    const total = countRow?.total ?? 0;
+
+    const rows = this.db
+      .prepare(
+        `SELECT * FROM webhook_events ${where} ORDER BY received_at DESC LIMIT ? OFFSET ?`,
+      )
+      .all(...filterParams, perPage, offset) as Record<string, unknown>[];
+
+    return Promise.resolve({
+      items: rows.map((row) => this.mapWebhookEvent(row)),
+      total,
+      page,
+      perPage,
+      hasMore: total > page * perPage,
+    });
+  }
+
+  private mapWebhookEvent(row: Record<string, unknown>): WebhookEvent {
+    return {
+      id: row["id"] as string,
+      deliveryId: row["delivery_id"] as string,
+      eventName: row["event_name"] as string,
+      action: (row["action"] as string | null) ?? null,
+      installationId: (row["installation_id"] as number | null) ?? null,
+      resourceType: (row["resource_type"] as string | null) ?? null,
+      resourceId: (row["resource_id"] as string | null) ?? null,
+      payload: JSON.parse(row["payload"] as string) as Record<string, unknown>,
+      status: row["status"] as WebhookEvent["status"],
+      error: (row["error"] as string | null) ?? null,
+      receivedAt: row["received_at"] as string,
+    };
   }
 }
 

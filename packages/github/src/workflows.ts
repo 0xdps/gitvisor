@@ -78,6 +78,49 @@ export async function rerunWorkflow(
   await octokit.rest.actions.reRunWorkflow({ owner, repo, run_id: runId });
 }
 
+// ── Workflow Definitions ──────────────────────────────────────────────────────
+
+export interface GitHubWorkflow {
+  id: number;
+  name: string;
+  path: string;
+  state: string;
+  html_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export function mapWorkflow(
+  raw: GitHubWorkflow,
+  repositoryId: string,
+  userId: string,
+) {
+  return {
+    repositoryId,
+    userId,
+    githubWorkflowId: raw.id,
+    name: raw.name,
+    path: raw.path,
+    state: raw.state,
+    htmlUrl: raw.html_url,
+  };
+}
+
+export async function listWorkflows(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+): Promise<GitHubWorkflow[]> {
+  const workflows: GitHubWorkflow[] = [];
+  for await (const page of octokit.paginate.iterator(
+    octokit.rest.actions.listRepoWorkflows,
+    { owner, repo, per_page: 100 },
+  )) {
+    workflows.push(...(page.data as GitHubWorkflow[]));
+  }
+  return workflows;
+}
+
 export async function cancelWorkflowRun(
   octokit: Octokit,
   owner: string,

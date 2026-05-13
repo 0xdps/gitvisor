@@ -1,13 +1,18 @@
 export { createGitHubApp, getGitHubApp, getInstallationOctokit } from "./app.js";
 export type { GitHubAppConfig } from "./app.js";
 
+export { getRepo, getRepoPullsCount } from "./repos.js";
+export type { RepoMeta } from "./repos.js";
+
 export {
   listWorkflowRuns,
+  listWorkflows,
   rerunWorkflow,
   cancelWorkflowRun,
   mapWorkflowRun,
+  mapWorkflow,
 } from "./workflows.js";
-export type { GitHubWorkflowRun } from "./workflows.js";
+export type { GitHubWorkflowRun, GitHubWorkflow } from "./workflows.js";
 
 export {
   getRepoPublicKey,

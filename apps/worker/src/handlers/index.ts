@@ -1,6 +1,8 @@
 import type { JobData } from "@gitvisor/shared";
 import type { UserDbRepository } from "@gitvisor/db";
+import { getInstallationOctokit, getRepo, getRepoPullsCount } from "@gitvisor/github";
 import { handleSyncWorkflowRuns } from "./sync-workflow-runs.js";
+import { handleSyncWorkflows } from "./sync-workflows.js";
 import { handleSyncSecrets } from "./sync-secrets.js";
 import { handleSyncPackages } from "./sync-packages.js";
 
@@ -18,7 +20,14 @@ export async function dispatch(
       const { userId, installationId, repositoryId, githubRepoId, fullName } = job.data;
       const [owner = "", name = ""] = fullName.split("/");
 
-      // Ensure repository record exists in the user's DB before syncing data
+      // Fetch real repo metadata from GitHub in parallel with PR count
+      const octokit = await getInstallationOctokit(installationId);
+      const [meta, openPullsCount] = await Promise.all([
+        getRepo(octokit as never, owner, name),
+        getRepoPullsCount(octokit as never, owner, name),
+      ]);
+
+      // Upsert repo record with real metadata before fanning out
       const userDb = await getUserDb(userId);
       await userDb.upsertRepository({
         id: repositoryId,
@@ -28,21 +37,25 @@ export async function dispatch(
         owner,
         name,
         fullName,
-        private: false,
-        defaultBranch: "main",
+        private: meta.private,
+        defaultBranch: meta.defaultBranch,
+        description: meta.description,
+        language: meta.language,
+        stargazersCount: meta.stargazersCount,
+        watchersCount: meta.watchersCount,
+        forksCount: meta.forksCount,
+        openIssuesCount: meta.openIssuesCount,
+        openPullsCount,
+        pushedAt: meta.pushedAt,
         syncedAt: null,
       });
 
-      // Fan out to sub-handlers in parallel
+      // Fan out all sub-syncs in parallel
       await Promise.all([
-        handleSyncWorkflowRuns(
-          { userId, installationId, repositoryId, fullName },
-          getUserDb,
-        ),
-        handleSyncSecrets(
-          { userId, installationId, repositoryId, fullName },
-          getUserDb,
-        ),
+        handleSyncWorkflowRuns({ userId, installationId, repositoryId, fullName }, getUserDb),
+        handleSyncWorkflows({ userId, installationId, repositoryId, fullName }, getUserDb),
+        handleSyncSecrets({ userId, installationId, repositoryId, fullName }, getUserDb),
+        handleSyncPackages({ userId, installationId, repositoryId, fullName }, getUserDb),
       ]);
 
       // Mark the repo as synced
@@ -53,6 +66,10 @@ export async function dispatch(
 
     case "sync:workflow-runs":
       await handleSyncWorkflowRuns(job.data, getUserDb);
+      break;
+
+    case "sync:workflows":
+      await handleSyncWorkflows(job.data, getUserDb);
       break;
 
     case "sync:secrets":

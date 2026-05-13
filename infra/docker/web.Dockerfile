@@ -27,3 +27,22 @@ ENV NODE_ENV=production
 EXPOSE 3000
 # API_INTERNAL_URL is injected at runtime via docker-compose (not baked in at build time)
 CMD ["node_modules/.bin/next", "start"]
+
+# ── Dev Stage (Next.js HMR via next dev) ─────────────────────────────────────
+# Used by docker-compose.override.yml. Source dirs are volume-mounted at runtime.
+FROM base AS dev
+WORKDIR /app
+
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json ./
+COPY cloud-packages/ cloud-packages/
+COPY cloud-apps/ cloud-apps/
+COPY core/packages/ core/packages/
+COPY core/apps/web/ core/apps/web/
+COPY core/tsconfig.base.json core/tsconfig.base.json
+
+RUN --mount=type=cache,id=pnpm-web,target=/pnpm/store pnpm install --frozen-lockfile
+
+WORKDIR /app/core/apps/web
+ENV NODE_ENV=development
+EXPOSE 3000
+CMD ["node_modules/.bin/next", "dev"]

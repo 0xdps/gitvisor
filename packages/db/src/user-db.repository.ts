@@ -1,5 +1,6 @@
 import type {
   WorkflowRun,
+  Workflow,
   SecretMeta,
   Package,
   Repository,
@@ -36,6 +37,10 @@ export interface UserDbRepository {
   // Packages
   upsertPackage(pkg: Omit<Package, "id" | "createdAt" | "updatedAt">): Promise<Package>;
   listPackages(repositoryId?: string): Promise<Package[]>;
+
+  // Workflows (definitions — not runs)
+  upsertWorkflow(workflow: Omit<Workflow, "id" | "createdAt" | "updatedAt">): Promise<Workflow>;
+  listWorkflows(repositoryId: string): Promise<Workflow[]>;
 
   // Audit log
   appendAuditLog(entry: Omit<AuditLogEntry, "id" | "createdAt">): Promise<void>;

@@ -36,6 +36,14 @@ export interface Repository {
   fullName: string;
   private: boolean;
   defaultBranch: string;
+  description: string | null;
+  language: string | null;
+  stargazersCount: number;
+  watchersCount: number;
+  forksCount: number;
+  openIssuesCount: number;
+  openPullsCount: number;
+  pushedAt: string | null;
   syncedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -109,6 +117,21 @@ export interface Package {
   updatedAt: string;
 }
 
+// ── Workflow (definition) ─────────────────────────────────────────────────────
+
+export interface Workflow {
+  id: string;
+  repositoryId: string;
+  userId: string;
+  githubWorkflowId: number;
+  name: string;
+  path: string;
+  state: string;
+  htmlUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── Audit Log ─────────────────────────────────────────────────────────────────
 
 export interface AuditLogEntry {
@@ -153,11 +176,19 @@ export interface SyncPackagesJobData {
   fullName: string;
 }
 
+export interface SyncWorkflowsJobData {
+  userId: string;
+  installationId: number;
+  repositoryId: string;
+  fullName: string;
+}
+
 export type JobData =
   | { type: "sync:repo"; data: SyncRepoJobData }
   | { type: "sync:workflow-runs"; data: SyncWorkflowRunsJobData }
   | { type: "sync:secrets"; data: SyncSecretsJobData }
-  | { type: "sync:packages"; data: SyncPackagesJobData };
+  | { type: "sync:packages"; data: SyncPackagesJobData }
+  | { type: "sync:workflows"; data: SyncWorkflowsJobData };
 
 // ── API Response Envelope ─────────────────────────────────────────────────────
 

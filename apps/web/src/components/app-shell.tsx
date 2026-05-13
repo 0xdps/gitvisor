@@ -38,7 +38,6 @@ const navItems = [
   { label: "Workflows",    to: "/workflows",    icon: Activity },
   { label: "Secrets",      to: "/secrets",      icon: KeyRound },
   { label: "Packages",     to: "/packages",     icon: Package },
-  { label: "Profile",      to: "/profile",      icon: User },
   { label: "Audit Log",   to: "/audit-log",    icon: ScrollText },
 ];
 

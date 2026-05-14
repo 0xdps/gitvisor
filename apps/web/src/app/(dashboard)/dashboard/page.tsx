@@ -12,7 +12,7 @@ import {
   ScrollText,
   TrendingUp,
 } from "lucide-react";
-import { getProfile, getWorkflowRuns, getAuditLog } from "@/lib/api-client";
+import { getProfile, getWorkflowRuns, getAuditLog, getRepositories } from "@/lib/api-client";
 import type { WorkflowRun } from "@gitvisor/shared";
 import type { AuditEntry } from "@/lib/api-client";
 import type { ElementType } from "react";
@@ -30,6 +30,12 @@ export default function DashboardPage() {
     staleTime: 15_000,
   });
 
+  const { data: reposData } = useQuery({
+    queryKey: ["repositories"],
+    queryFn: getRepositories,
+    staleTime: 30_000,
+  });
+
   const { data: auditData } = useQuery({
     queryKey: ["audit-log", 1],
     queryFn: () => getAuditLog(1),
@@ -38,6 +44,7 @@ export default function DashboardPage() {
 
   const runs = runData?.items ?? [];
   const recentAudit = auditData?.items.slice(0, 5) ?? [];
+  const repoMap = new Map(reposData?.map((r) => [r.id, r.fullName]) ?? []);
 
   const inProgressCount = runs.filter((r) => r.status === "in_progress").length;
 
@@ -108,7 +115,7 @@ export default function DashboardPage() {
           {runs.length > 0 ? (
             <div className="space-y-1.5">
               {runs.map((run) => (
-                <RunRow key={run.id} run={run} />
+                <RunRow key={run.id} run={run} repoName={repoMap.get(run.repositoryId) ?? null} />
               ))}
             </div>
           ) : (
@@ -239,7 +246,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
   );
 }
 
-function RunRow({ run }: { run: WorkflowRun }) {
+function RunRow({ run, repoName }: { run: WorkflowRun; repoName: string | null }) {
   const isRunning = run.status === "in_progress";
   const isSuccess = run.conclusion === "success";
   const isFailed =
@@ -257,7 +264,14 @@ function RunRow({ run }: { run: WorkflowRun }) {
         <Activity className="h-4 w-4 shrink-0 text-muted-foreground" />
       )}
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-sm truncate">{run.workflowName}</p>
+        <div className="flex items-center gap-2 min-w-0">
+          {repoName && (
+            <span className="text-xs font-medium text-blue/80 shrink-0 truncate max-w-[130px]">
+              {repoName}
+            </span>
+          )}
+          <p className="font-medium text-sm truncate">{run.workflowName}</p>
+        </div>
         <p className="text-xs text-muted-foreground">{run.branch}</p>
       </div>
       <a

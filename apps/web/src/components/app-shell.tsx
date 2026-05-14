@@ -70,7 +70,7 @@ export function AppShell({ children }: AppShellProps) {
   const initials = getInitials(user?.name, user?.email);
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="h-screen overflow-hidden flex bg-background">
       {/* Sidebar */}
       <aside className="w-60 border-r border-border flex flex-col shrink-0 bg-[#030303]">
         {/* Logo */}

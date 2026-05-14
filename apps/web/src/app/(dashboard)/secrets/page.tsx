@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Lock, ArrowLeft, Pencil, Trash2, Check, X } from "lucide-react";
+import { Lock, ArrowLeft, ChevronRight, Globe, Pencil, Trash2, Check, X } from "lucide-react";
 import {
   getRepositories,
   getSecrets,
@@ -39,7 +39,8 @@ function SecretsContent() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Secrets</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Select a repository to view its secrets.
+            Select a repository to manage its GitHub Actions secrets. Only repos
+            with secrets configured will have results.
           </p>
         </div>
 
@@ -65,15 +66,38 @@ function SecretsContent() {
         )}
 
         {repos && repos.length > 0 && (
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {repos.map((repo) => (
               <Link
                 key={repo.id}
                 href={`/secrets?repositoryId=${repo.id}`}
-                className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 hover:bg-accent/20 transition-colors"
+                className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3.5 hover:bg-accent/20 transition-colors group"
               >
-                <Lock className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="text-sm font-medium">{repo.fullName}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    {repo.private ? (
+                      <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    )}
+                    <span className="text-sm font-semibold truncate">{repo.fullName}</span>
+                    <span
+                      className={`rounded border px-1.5 py-0.5 text-[10px] font-medium shrink-0 ${
+                        repo.private
+                          ? "border-orange-900/50 bg-orange-950/20 text-orange-400"
+                          : "border-blue/30 bg-blue/5 text-blue"
+                      }`}
+                    >
+                      {repo.private ? "Private" : "Public"}
+                    </span>
+                  </div>
+                  {repo.description && (
+                    <p className="text-xs text-muted-foreground mt-1 truncate pl-5">
+                      {repo.description}
+                    </p>
+                  )}
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:text-foreground transition-colors" />
               </Link>
             ))}
           </div>
@@ -167,14 +191,38 @@ function SecretRow({
 
   return (
     <div className="rounded-lg border border-border bg-card px-4 py-3">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-mono font-medium">{secret.name}</p>
-          {secret.updatedAt && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Updated {new Date(secret.updatedAt).toLocaleDateString()}
-            </p>
-          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-mono font-medium">{secret.name}</p>
+            <span
+              className={`rounded border px-1.5 py-0.5 text-[10px] font-medium shrink-0 ${
+                secret.scope === "environment"
+                  ? "border-purple-900/50 bg-purple-950/20 text-purple-400"
+                  : secret.scope === "org"
+                    ? "border-amber-900/50 bg-amber-950/20 text-amber-400"
+                    : "border-blue/30 bg-blue/5 text-blue"
+              }`}
+            >
+              {secret.scope}
+            </span>
+            {secret.scope === "environment" && secret.environment && (
+              <span className="text-xs text-muted-foreground">{secret.environment}</span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {secret.githubUpdatedAt
+              ? `Updated on GitHub ${
+                  new Date(secret.githubUpdatedAt).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                }`
+              : secret.updatedAt
+                ? `Updated ${new Date(secret.updatedAt).toLocaleDateString()}`
+                : null}
+          </p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button

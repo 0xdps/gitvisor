@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import {
   getWorkflowRuns,
+  getRepositories,
   rerunWorkflow,
   cancelWorkflow,
 } from "@/lib/api-client";
@@ -35,6 +36,13 @@ function WorkflowsContent() {
       }),
     staleTime: 15_000,
   });
+
+  const { data: repos } = useQuery({
+    queryKey: ["repositories"],
+    queryFn: getRepositories,
+    staleTime: 30_000,
+  });
+  const repoMap = new Map(repos?.map((r) => [r.id, r.fullName]) ?? []);
 
   const rerun = useMutation({
     mutationFn: (runId: number) => rerunWorkflow(runId),
@@ -92,6 +100,7 @@ function WorkflowsContent() {
             <RunRow
               key={run.id}
               run={run}
+              repoName={repoMap.get(run.repositoryId) ?? null}
               onRerun={() => rerun.mutate(run.githubRunId)}
               onCancel={() => cancel.mutate(run.githubRunId)}
               isActing={rerun.isPending || cancel.isPending}
@@ -129,30 +138,38 @@ function WorkflowsContent() {
 
 function RunRow({
   run,
+  repoName,
   onRerun,
   onCancel,
   isActing,
 }: {
   run: WorkflowRun;
+  repoName: string | null;
   onRerun: () => void;
   onCancel: () => void;
   isActing: boolean;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-lg border border-border bg-card px-4 py-2.5 hover:bg-accent/20 transition-colors">
+    <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 hover:bg-accent/20 transition-colors">
       <StatusIcon status={run.status} conclusion={run.conclusion} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {repoName && (
+            <span className="text-xs font-medium text-blue/80 shrink-0">{repoName}</span>
+          )}
           <span className="font-medium text-sm truncate">{run.workflowName}</span>
-          <span className="text-xs text-muted-foreground">#{run.runNumber}</span>
+          <span className="text-xs text-muted-foreground shrink-0">#{run.runNumber}</span>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground mt-0.5">
           {run.branch}
           {run.triggeredBy && (
-            <span className="ml-2">by {run.triggeredBy}</span>
+            <span className="ml-1.5">· by {run.triggeredBy}</span>
+          )}
+          {run.commitSha && (
+            <span className="ml-1.5 font-mono">· {run.commitSha.slice(0, 7)}</span>
           )}
           {run.durationMs && (
-            <span className="ml-2">{formatDuration(run.durationMs)}</span>
+            <span className="ml-1.5">· {formatDuration(run.durationMs)}</span>
           )}
         </p>
       </div>

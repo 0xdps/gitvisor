@@ -45,8 +45,8 @@ function timeAgo(dateStr: string): string {
 }
 
 function statusColor(status: string, conclusion: WorkflowRunConclusion): string {
-  if (status === "in_progress") return "text-amber-600 border-amber-200 bg-amber-50";
-  if (conclusion === "success") return "text-primary border-primary/20 bg-primary/5";
+  if (status === "in_progress") return "text-amber-400 border-amber-900/50 bg-amber-950/30";
+  if (conclusion === "success") return "text-blue border-blue/20 bg-blue/5";
   if (conclusion === "failure" || conclusion === "timed_out")
     return "text-destructive border-destructive/20 bg-destructive/5";
   return "text-muted-foreground";
@@ -180,13 +180,13 @@ export default function ProfilePage() {
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Workflow success rate
               </p>
-              <span className="text-sm font-semibold tabular-nums text-primary">
+              <span className="text-sm font-semibold tabular-nums text-blue">
                 {successRate}%
               </span>
             </div>
             <div className="h-2 rounded-full bg-muted overflow-hidden">
               <div
-                className="h-full rounded-full bg-primary transition-all"
+                className="h-full rounded-full bg-blue transition-all"
                 style={{ width: `${successRate}%` }}
               />
             </div>
@@ -277,7 +277,7 @@ function StatCard({
     <div
       className={`rounded-xl border bg-card p-4 flex flex-col gap-2 ${
         accent === "green"
-          ? "border-primary/30"
+          ? "border-blue/30"
           : accent === "red"
             ? "border-destructive/25"
             : "border-border"
@@ -290,7 +290,7 @@ function StatCard({
         <span
           className={
             accent === "green"
-              ? "text-primary"
+              ? "text-blue"
               : accent === "red"
                 ? "text-destructive"
                 : "text-muted-foreground"
@@ -310,7 +310,7 @@ function RepoCard({ repo }: { repo: Repository }) {
       <div className="flex items-start justify-between gap-2">
         <Link
           href={`/workflows?repositoryId=${repo.id}`}
-          className="text-sm font-semibold text-primary hover:underline truncate"
+          className="text-sm font-semibold text-foreground hover:text-blue hover:underline truncate"
         >
           {repo.name}
         </Link>
@@ -344,7 +344,7 @@ function RunStatusDot({
     status === "in_progress"
       ? "bg-amber-400"
       : conclusion === "success"
-        ? "bg-primary"
+        ? "bg-blue"
         : conclusion === "failure" || conclusion === "timed_out"
           ? "bg-destructive"
           : "bg-muted-foreground";

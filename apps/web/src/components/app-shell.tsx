@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LogoIcon } from "./logo-icon";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -69,14 +70,14 @@ export function AppShell({ children }: AppShellProps) {
   const initials = getInitials(user?.name, user?.email);
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-background">
       {/* Sidebar */}
-      <aside className="w-60 border-r flex flex-col shrink-0">
+      <aside className="w-60 border-r border-border flex flex-col shrink-0 bg-[#030303]">
         {/* Logo */}
-        <div className="h-14 flex items-center px-4 border-b">
+        <div className="h-14 flex items-center px-4 border-b border-border">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <img src="/icon-trans.png" alt="Gitvisor" className="h-6 w-6" />
-            <span className="font-bold text-sm tracking-tight">Gitvisor</span>
+            <LogoIcon size="md" />
+            <span className="font-bold text-sm tracking-tight text-foreground">Gitvisor</span>
           </Link>
         </div>
 
@@ -88,7 +89,7 @@ export function AppShell({ children }: AppShellProps) {
               href={to}
               className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 pathname === to
-                  ? "bg-primary/10 text-primary"
+                  ? "bg-blue/10 text-blue"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
               }`}
             >
@@ -99,16 +100,16 @@ export function AppShell({ children }: AppShellProps) {
         </nav>
 
         {/* User profile */}
-        <div className="border-t p-2">
+        <div className="border-t border-border p-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="w-full flex items-center gap-2.5 rounded-md px-2 py-2 text-sm hover:bg-accent transition-colors outline-none">
                 <Avatar className="h-7 w-7 shrink-0">
                   <AvatarImage src={user?.avatarUrl ?? undefined} alt={user?.name ?? user?.email ?? ""} />
-                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                  <AvatarFallback className="text-xs bg-blue/10 text-blue">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-xs font-medium leading-tight truncate">
+                  <p className="text-xs font-medium leading-tight truncate text-foreground">
                     {user?.name ?? user?.email ?? "…"}
                   </p>
                   <p className="text-xs text-muted-foreground leading-tight truncate">
@@ -119,15 +120,15 @@ export function AppShell({ children }: AppShellProps) {
               </button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent side="top" align="start" className="w-56 mb-1">
+            <DropdownMenuContent side="top" align="start" className="w-56 mb-1 bg-card border-border">
               <DropdownMenuLabel className="font-normal py-2">
                 <div className="flex items-center gap-2.5">
                   <Avatar className="h-8 w-8 shrink-0">
                     <AvatarImage src={user?.avatarUrl ?? undefined} />
-                    <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                    <AvatarFallback className="text-xs bg-blue/10 text-blue">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{user?.name ?? user?.email}</p>
+                    <p className="text-sm font-medium truncate text-foreground">{user?.name ?? user?.email}</p>
                     <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
                 </div>
@@ -157,7 +158,7 @@ export function AppShell({ children }: AppShellProps) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto bg-background">
         <div className="max-w-6xl mx-auto px-6 py-8">{children}</div>
       </main>
     </div>

@@ -1,58 +1,118 @@
 @import "tailwindcss";
 
 @theme {
-  /* Base */
-  --color-background: #ffffff;
-  --color-foreground: #09090b;
+  /* ── Backgrounds ───────────────────────────── */
+  --color-background: #030303;
+  --color-foreground: #ededed;
 
-  /* Card */
-  --color-card: #ffffff;
-  --color-card-foreground: #09090b;
+  /* ── Card / Popover ────────────────────────── */
+  --color-card: #0a0a0a;
+  --color-card-foreground: #ededed;
+  --color-popover: #0a0a0a;
+  --color-popover-foreground: #ededed;
 
-  /* Popover */
-  --color-popover: #ffffff;
-  --color-popover-foreground: #09090b;
+  /* ── Primary (white button on dark bg) ──────── */
+  --color-primary: #ededed;
+  --color-primary-foreground: #030303;
 
-  /* Primary */
-  --color-primary: #18181b;
-  --color-primary-foreground: #fafafa;
+  /* ── Secondary ──────────────────────────────── */
+  --color-secondary: #161616;
+  --color-secondary-foreground: #ededed;
 
-  /* Secondary */
-  --color-secondary: #f4f4f5;
-  --color-secondary-foreground: #18181b;
+  /* ── Muted ──────────────────────────────────── */
+  --color-muted: #161616;
+  --color-muted-foreground: #a1a1a1;
 
-  /* Muted */
-  --color-muted: #f4f4f5;
-  --color-muted-foreground: #71717a;
+  /* ── Accent ─────────────────────────────────── */
+  --color-accent: #1a1a1a;
+  --color-accent-foreground: #ededed;
 
-  /* Accent */
-  --color-accent: #f4f4f5;
-  --color-accent-foreground: #18181b;
-
-  /* Destructive */
+  /* ── Destructive ─────────────────────────────── */
   --color-destructive: #ef4444;
   --color-destructive-foreground: #fafafa;
 
-  /* Border / Input / Ring */
-  --color-border: #e4e4e7;
-  --color-input: #e4e4e7;
-  --color-ring: #18181b;
+  /* ── Border / Input / Ring ───────────────────── */
+  --color-border: #222222;
+  --color-input: #222222;
+  --color-ring: #3b82f6;
 
-  /* Radius */
+  /* ── Brand accent blue ───────────────────────── */
+  --color-blue: #3b82f6;
+  --color-blue-dim: #0d2a5c;
+
+  /* ── Radius ──────────────────────────────────── */
   --radius: 0.5rem;
+
+  /* ── Font ─────────────────────────────────────── */
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #333333 transparent;
   }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     line-height: 1.5;
+  }
+  ::selection {
+    background: rgba(59, 130, 246, 0.25);
+    color: #ededed;
+  }
+}
+
+@layer utilities {
+  /* Ambient blue saas glow for hero */
+  .saas-glow {
+    position: absolute;
+    top: -120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 900px;
+    height: 500px;
+    background: var(--color-blue-dim);
+    filter: blur(120px);
+    opacity: 0.75;
+    pointer-events: none;
+    border-radius: 9999px;
+    z-index: 0;
+  }
+
+  /* Subtle grid background */
+  .grid-bg {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 50px 50px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 90%);
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 90%);
+  }
+
+  /* Glass morphism panel */
+  .glass-panel {
+    background: rgba(22, 22, 22, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Blue gradient text */
+  .text-gradient {
+    background: linear-gradient(135deg, #ededed 30%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Blue glow border */
+  .glow-blue {
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4), 0 0 32px rgba(59, 130, 246, 0.18);
   }
 }

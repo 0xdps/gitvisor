@@ -1,11 +1,19 @@
 import { Hono } from "hono";
+import type { MiddlewareHandler } from "hono";
 import { createWebhookHandler } from "@gitvisor/github";
-import { BullMQQueueRepository } from "@gitvisor/queue";
+import type { QueueRepository } from "@gitvisor/queue";
+import type { UserDbRepository } from "@gitvisor/db";
+import { randomUUID } from "node:crypto";
 import { config } from "../config.js";
 import type { JobData } from "@gitvisor/shared";
+import type { AuthEnv } from "../middleware/auth.js";
 
-export function createWebhookRouter(queue: BullMQQueueRepository) {
-  const router = new Hono();
+export function createWebhookRouter(
+  queue: QueueRepository,
+  getUserDb: (userId: string) => Promise<UserDbRepository>,
+  requireAuth: MiddlewareHandler<AuthEnv>,
+) {
+  const router = new Hono<AuthEnv>();
 
   const webhooks = createWebhookHandler(
     config.github.webhookSecret,
@@ -39,6 +47,55 @@ export function createWebhookRouter(queue: BullMQQueueRepository) {
       return c.json({ ok: true }, 200);
     } catch {
       return c.json({ ok: false, error: "Invalid webhook payload" }, 400);
+    }
+  });
+
+  /**
+   * GET /webhooks/events?status=&eventName=&resourceId=&page=&perPage=
+   * Lists stored webhook events for the current user.
+   */
+  router.get("/events", requireAuth, async (c) => {
+    const user = c.get("user");
+    const status = c.req.query("status");
+    const eventName = c.req.query("eventName");
+    const resourceId = c.req.query("resourceId");
+    const page = Math.max(1, Number(c.req.query("page") ?? 1));
+    const perPage = Math.min(100, Math.max(1, Number(c.req.query("perPage") ?? 50)));
+    const userDb = await getUserDb(user.id);
+    const result = await userDb.listWebhookEvents({
+      ...(status !== undefined ? { status } : {}),
+      ...(eventName !== undefined ? { eventName } : {}),
+      ...(resourceId !== undefined ? { resourceId } : {}),
+      page,
+      perPage,
+    });
+    return c.json({ ok: true, data: result });
+  });
+
+  /**
+   * POST /webhooks/events/:deliveryId/replay
+   * Re-dispatches a stored webhook event through the handler (no signature check).
+   */
+  router.post("/events/:deliveryId/replay", requireAuth, async (c) => {
+    const user = c.get("user");
+    const deliveryId = c.req.param("deliveryId");
+    const userDb = await getUserDb(user.id);
+    const event = await userDb.getWebhookEvent(deliveryId);
+    if (!event) return c.json({ ok: false, error: "Webhook event not found" }, 404);
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (webhooks as any).receive({
+        id: `replay-${randomUUID()}`,
+        name: event.eventName,
+        payload: event.payload,
+      });
+      await userDb.updateWebhookEventStatus(deliveryId, "processed");
+      return c.json({ ok: true, data: { replayed: true } });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      await userDb.updateWebhookEventStatus(deliveryId, "failed", msg);
+      return c.json({ ok: false, error: msg }, 500);
     }
   });
 

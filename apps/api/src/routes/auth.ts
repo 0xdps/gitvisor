@@ -40,7 +40,22 @@ function makeRateLimiter(maxRequests: number, windowMs: number) {
 
 const authCallbackLimiter = makeRateLimiter(10, 60_000);
 
-export function createAuthRouter(registry: RegistryRepository, tokenStore: TokenStore) {
+/**
+ * Called after the user has been upserted in the registry but before the
+ * session cookie is issued.  Cloud uses this to run NubeAuth provisioning,
+ * installation sync, and per-user DB pre-migration.
+ */
+export interface AuthSuccessContext {
+  userId: string;
+  githubToken: string;
+  githubUsername: string;
+}
+
+export function createAuthRouter(
+  registry: RegistryRepository,
+  tokenStore: TokenStore,
+  onAuthSuccess?: (ctx: AuthSuccessContext) => Promise<void>,
+) {
   const router = new Hono();
 
   /**
@@ -111,6 +126,15 @@ export function createAuthRouter(registry: RegistryRepository, tokenStore: Token
       name: user.name ?? null,
       avatarUrl: user.avatarUrl ?? null,
     });
+
+    // Cloud extension hook: NubeAuth provisioning, installation sync, etc.
+    if (onAuthSuccess) {
+      await onAuthSuccess({
+        userId: String(user.id),
+        githubToken: accessToken,
+        githubUsername: user.githubUsername,
+      });
+    }
 
     // Store the GitHub token server-side; never embed it in the session cookie
     const sessionId = generateSessionId();

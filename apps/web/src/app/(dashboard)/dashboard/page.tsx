@@ -83,7 +83,7 @@ export default function DashboardPage() {
       </div>
 
       {inProgressCount > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="flex items-center gap-2 rounded-lg border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-400">
           <Clock className="h-4 w-4 animate-spin shrink-0" />
           {inProgressCount} workflow{inProgressCount !== 1 ? "s" : ""} in
           progress
@@ -174,7 +174,7 @@ function StatCard({
     <div
       className={`rounded-xl border bg-card p-4 flex flex-col gap-2 ${
         accent === "green"
-          ? "border-primary/30"
+          ? "border-blue/30"
           : accent === "red"
             ? "border-destructive/25"
             : "border-border"
@@ -187,7 +187,7 @@ function StatCard({
         <Icon
           className={`h-4 w-4 ${
             accent === "green"
-              ? "text-primary"
+              ? "text-blue"
               : accent === "red"
                 ? "text-destructive"
                 : "text-muted-foreground"
@@ -226,7 +226,7 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
 
   return (
     <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-2.5 hover:bg-accent/20 transition-colors">
-      <div className="h-2 w-2 rounded-full bg-primary/60 shrink-0" />
+      <div className="h-2 w-2 rounded-full bg-blue/60 shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium truncate">{label}</p>
         <p className="text-xs text-muted-foreground truncate">
@@ -250,7 +250,7 @@ function RunRow({ run }: { run: WorkflowRun }) {
       {isRunning ? (
         <Clock className="h-4 w-4 shrink-0 text-amber-500 animate-spin" />
       ) : isSuccess ? (
-        <CheckCircle className="h-4 w-4 shrink-0 text-primary" />
+        <CheckCircle className="h-4 w-4 shrink-0 text-blue" />
       ) : isFailed ? (
         <XCircle className="h-4 w-4 shrink-0 text-destructive" />
       ) : (

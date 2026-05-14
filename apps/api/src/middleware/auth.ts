@@ -7,6 +7,8 @@ import type { User } from "@gitvisor/shared";
 export interface AuthEnv {
   Variables: {
     user: User;
+    /** The user's GitHub OAuth token, retrieved from the server-side token store. */
+    githubToken: string;
   };
 }
 
@@ -47,6 +49,7 @@ export function createRequireAuth(tokenStore: TokenStore) {
       createdAt: payload.createdAt,
     };
     c.set("user", user);
+    c.set("githubToken", githubToken);
     return await next();
   });
 }

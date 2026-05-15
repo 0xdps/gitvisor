@@ -1,0 +1,112 @@
+apps/web/src/app/(dashboard)/repositories/page.tsx
+  s_056c82c5ab56e4::t_4e0517e6877598 17,22-26,40,55-56,62-67,70-71,90-91,94-96,98-99,104,106-107,142,144-148,152,161-169,175,177-178,181,183-184,186-194,196-199,201-203,208,213-214,216-217,222,228,233-235,240-243,245-268,270,279,282-289,291-299
+  s_056c82c5ab56e4::t_ccb3e319d799cb 3,13-14,43-50,53-54,75-86,97
+  s_056c82c5ab56e4::t_44ad2ec7e57f12 92
+  s_056c82c5ab56e4::t_0427071a431281 111-136,139,141,151,153,157-160
+  s_056c82c5ab56e4::t_5113089c10e65c 269,271-278,280-281,290
+apps/api/src/app.ts
+  s_056c82c5ab56e4::t_4144acb5f2b1f4 94
+  s_056c82c5ab56e4::t_55a25c1783ab88 19,93
+  h_7a2f4c8f0473b8 20
+packages/db/src/user-db.repository.ts
+  s_056c82c5ab56e4::t_ce007f5f7f5c2a 7
+  s_056c82c5ab56e4::t_de2560f3e107af 46-49
+  s_056c82c5ab56e4::t_f758e8dd386f65 32
+  s_056c82c5ab56e4::t_084d9a81c10b12 39
+  s_056c82c5ab56e4::t_5b3e48a4f9c8f7 76-81
+apps/web/src/lib/api-client.ts
+  s_056c82c5ab56e4::t_0f482c3abb07bd 43,54
+  s_056c82c5ab56e4::t_084bc7c7e3f4f9 88
+  s_056c82c5ab56e4::t_5910af8b3cffcc 1
+  s_056c82c5ab56e4::t_8abd3d78236d17 169-192
+  s_056c82c5ab56e4::t_fb1b5a41f3e8e1 86-87
+  s_056c82c5ab56e4::t_bf0f056a8a4edf 158-168
+apps/web/src/app/(dashboard)/workflows/page.tsx
+  s_056c82c5ab56e4::t_9b2e656ee231ef 7,10-11,21-41,43,48,130,147,220,286,288,315,323,336,356,358-359
+  s_056c82c5ab56e4::t_bb9e54b1109d4c 325
+  s_056c82c5ab56e4::t_354ded7b2dde1a 93-94,97-98
+  s_056c82c5ab56e4::t_5113089c10e65c 115-116,119-121,277,282
+  s_056c82c5ab56e4::t_bcb66dfa88d1c0 12-15,19-20,42,44-47,56,63-71,78,81,109-113,128,133-141,143-144,149-156,158-159,161,195,218-219,221-233,243-245,247,251,253-254,259,261-262,271-276,278-281,283-284,287,289-314,316-317,319-322,324,326-335,338,340-341,343-346,348-352,357,360,362-391,393-395
+  s_056c82c5ab56e4::t_0ceb3dfc862693 246,248-250,252,255-258,260,263
+  s_056c82c5ab56e4::t_4afafeddd6017d 3,5,16-17,50-55,57-62
+  s_056c82c5ab56e4::t_0fa48ed60cebdd 75-77,80,83-85,87-92,95-96,99-108,114,117-118,157,163-184,187-194,196-214
+packages/shared/src/index.ts
+  s_056c82c5ab56e4::t_281b1520b2c97a 165-182
+  s_056c82c5ab56e4::t_4888684c4508f2 249
+  s_056c82c5ab56e4::t_f38f987851d979 222-228
+apps/web/src/components/app-shell.tsx
+  s_056c82c5ab56e4::t_195dff2a8492fa 4,17-18,20,49-50,53,68-83,91-99,109-119,121-122,124,126-129,131-138,140-167,169-273
+  s_056c82c5ab56e4::t_72da61231ea8a8 33-36
+  s_056c82c5ab56e4::t_714ac3216b2431 11,39
+apps/worker/src/handlers/sync-releases.ts
+  s_056c82c5ab56e4::t_74c502bf6c56e0 1-33
+apps/api/src/routes/workflows.ts
+  s_056c82c5ab56e4::t_c8a42fcf8d6b16 23,30
+apps/api/src/routes/analytics.ts
+  h_7a2f4c8f0473b8 1-27
+apps/worker/src/handlers/index.ts
+  s_056c82c5ab56e4::t_b796baf56f3122 10
+  s_056c82c5ab56e4::t_ab116ef0652c96 128-131
+apps/web/src/app/(dashboard)/analytics/page.tsx
+  s_056c82c5ab56e4::t_9e74994415c4fb 29-84,87-88,90-92,96-102,104-113,115-135,137-185,187-191,196-199,201,204,206-211,213
+  s_056c82c5ab56e4::t_b7f7aff4f77911 4-6
+  s_056c82c5ab56e4::t_f5ddf1f39ae29c 9-11,15-27
+packages/github/src/index.ts
+  s_056c82c5ab56e4::t_c9c1c7a4303c40 7-9
+packages/db/src/shared-sqlite-userdb.ts
+  s_056c82c5ab56e4::t_581539f008dd75 724,790-821
+  s_056c82c5ab56e4::t_f160816865f681 725-789
+  s_056c82c5ab56e4::t_084d9a81c10b12 421-428
+  s_056c82c5ab56e4::t_29c8a6c4e9299e 10
+  s_056c82c5ab56e4::t_bcc5e3e9a4c32b 335,347
+  s_056c82c5ab56e4::t_e9028fbb0b96d2 143-161
+apps/web/src/app/(dashboard)/dashboard/page.tsx
+  s_056c82c5ab56e4::t_d7b2c9e34b14a6 8,15-23,25-33,67-68,84,86,90,92-93,95,105,202,206-209,230,237,253,262,264
+  s_056c82c5ab56e4::t_bb9e54b1109d4c 82
+  s_056c82c5ab56e4::t_400acd292764a3 44,100-103,186,188,191,193-196
+  s_056c82c5ab56e4::t_4be2f7ae456d4d 6,10,24,61,63,69-76,81,83,85,87-89,91,94,99,104,106-111,114-128,131-135,137-160,163-178,185,197,199-201,210-211,214-229,233-236,242-252,255-256,258-259,261,263,266
+apps/web/src/app/(dashboard)/releases/page.tsx
+  s_056c82c5ab56e4::t_5477c53a19a9b2 1-68,74-119,124-261
+  s_056c82c5ab56e4::t_354ded7b2dde1a 69-73,120-123
+apps/web/src/app/(dashboard)/secrets/page.tsx
+  s_056c82c5ab56e4::t_8c24bb1ed98e9d 110-114
+  s_056c82c5ab56e4::t_2541e6ca5bfac0 29-35,38,43-55,60,62-65,72,81,85,87
+apps/web/src/app/(dashboard)/audit-log/page.tsx
+  s_056c82c5ab56e4::t_bbe868be957621 163
+  s_056c82c5ab56e4::t_50f5ad03526bb5 6-8,11-12,14,17,23,25,28-30,41,43-44,81,152,154,158-161,164,181-182,184
+  s_056c82c5ab56e4::t_8a59b59bab3e70 5,9-10,13,15-16,20-22,24,26-27,31-40,42,45-51,55,57,63-78,82-83,85-90,93-97,100-104,106-119,123-143,145,151,155-157,165-166,169-179,183,185-186
+packages/github/src/releases.ts
+  h_7a2f4c8f0473b8 1-37
+apps/web/src/app/globals.css
+  s_056c82c5ab56e4::t_b335a7ab469e4c 43,47-48,52-53
+  s_056c82c5ab56e4::t_65229600bee9d5 68
+  s_056c82c5ab56e4::t_6161408f0ff9c3 5-6,9-12,15-16,19-20,23-24,27-28,31,35-37,40-41,44-46,49-51,54
+apps/web/src/app/(dashboard)/packages/page.tsx
+  s_056c82c5ab56e4::t_43c9c7de059527 3,8,177-202,204,209-217,220-256,259-268,270-275,278-293
+apps/api/src/routes/secrets.ts
+  s_056c82c5ab56e4::t_3d8e61f2f67106 42
+apps/api/src/routes/releases.ts
+  s_056c82c5ab56e4::t_10d09ae9fd9c21 1-24,30-57
+  s_056c82c5ab56e4::t_1fffc266b13cbb 25-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "7df56f55bf976f3b8c6540315237c6268ee30f68",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_056c82c5ab56e4": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "8bef6f47-e9be-4548-8dc4-1f965da6242b",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

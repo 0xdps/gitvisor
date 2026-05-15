@@ -26,31 +26,50 @@ function SecretsContent() {
 
   const selectedRepo = repos?.find((r) => r.id === repositoryId);
 
+  // Load ALL secrets (no repositoryId) so we can filter the repo list to only those with secrets
+  const { data: allSecrets } = useQuery({
+    queryKey: ["secrets", undefined],
+    queryFn: () => getSecrets(),
+    staleTime: 30_000,
+  });
+
   const { data: secrets, isLoading, error } = useQuery({
     queryKey: ["secrets", repositoryId],
-    queryFn: () => getSecrets(repositoryId!),
+    queryFn: () => getSecrets(repositoryId),
     enabled: !!repositoryId,
     staleTime: 30_000,
   });
+
+  // Build a map of repositoryId → secret count from the all-secrets response
+  const secretCountByRepo = new Map<string, number>();
+  if (allSecrets) {
+    for (const s of allSecrets) {
+      secretCountByRepo.set(s.repositoryId, (secretCountByRepo.get(s.repositoryId) ?? 0) + 1);
+    }
+  }
+
+  // Only show repos that have at least one secret. Fall back to all repos while allSecrets is loading.
+  const reposWithSecrets = allSecrets
+    ? (repos?.filter((r) => secretCountByRepo.has(r.id)) ?? [])
+    : (repos ?? []);
 
   if (!repositoryId) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Secrets</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Secrets</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Select a repository to manage its GitHub Actions secrets. Only repos
-            with secrets configured will have results.
+            Select a repository to manage its GitHub Actions secrets.
+            {allSecrets && reposWithSecrets.length === 0 && repos && repos.length > 0
+              ? " No repositories have secrets configured yet."
+              : ""}
           </p>
         </div>
 
         {!repos && (
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-14 rounded-lg border border-border bg-muted/40 animate-pulse"
-              />
+              <div key={i} className="h-14 rounded-lg border border-border bg-muted/40 animate-pulse" />
             ))}
           </div>
         )}
@@ -59,15 +78,13 @@ function SecretsContent() {
           <div className="rounded-xl border border-dashed border-border py-16 text-center">
             <Lock className="mx-auto h-8 w-8 text-muted-foreground/50" />
             <p className="mt-3 font-medium">No repositories yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Connect a repository first.
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Connect a repository first.</p>
           </div>
         )}
 
-        {repos && repos.length > 0 && (
+        {reposWithSecrets.length > 0 && (
           <div className="space-y-2">
-            {repos.map((repo) => (
+            {reposWithSecrets.map((repo) => (
               <Link
                 key={repo.id}
                 href={`/secrets?repositoryId=${repo.id}`}
@@ -90,6 +107,11 @@ function SecretsContent() {
                     >
                       {repo.private ? "Private" : "Public"}
                     </span>
+                    {secretCountByRepo.get(repo.id) != null && (
+                      <span className="rounded border border-border px-1.5 py-0.5 text-[10px] font-medium shrink-0 text-muted-foreground">
+                        {secretCountByRepo.get(repo.id)} secret{(secretCountByRepo.get(repo.id) ?? 0) !== 1 ? "s" : ""}
+                      </span>
+                    )}
                   </div>
                   {repo.description && (
                     <p className="text-xs text-muted-foreground mt-1 truncate pl-5">

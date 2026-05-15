@@ -1,4 +1,4 @@
-import type { Repository, WorkflowRun, SecretMeta, PaginatedResponse } from "@gitvisor/shared";
+import type { Repository, WorkflowRun, SecretMeta, PaginatedResponse, Release } from "@gitvisor/shared";
 
 // Client-side calls use the /api proxy (Next.js rewrites → API service).
 // Server-side calls bypass the proxy and hit the API directly.
@@ -40,6 +40,7 @@ export function syncRepositories(): Promise<{ queued: number }> {
 export interface WorkflowRunsQuery {
   repositoryId?: string;
   status?: string;
+  workflowName?: string;
   page?: number;
   perPage?: number;
 }
@@ -50,6 +51,7 @@ export function getWorkflowRuns(
   const params = new URLSearchParams();
   if (query.repositoryId) params.set("repositoryId", query.repositoryId);
   if (query.status) params.set("status", query.status);
+  if (query.workflowName) params.set("workflowName", query.workflowName);
   if (query.page) params.set("page", String(query.page));
   if (query.perPage) params.set("perPage", String(query.perPage));
   const qs = params.toString();
@@ -81,8 +83,9 @@ export function getInstallations(): Promise<AccountInstallation[]> {
 
 // ── Secrets ───────────────────────────────────────────────────────────────────
 
-export function getSecrets(repositoryId: string): Promise<SecretMeta[]> {
-  return apiFetch<SecretMeta[]>(`/secrets?repositoryId=${encodeURIComponent(repositoryId)}`);
+export function getSecrets(repositoryId?: string): Promise<SecretMeta[]> {
+  const qs = repositoryId ? `?repositoryId=${encodeURIComponent(repositoryId)}` : "";
+  return apiFetch<SecretMeta[]>(`/secrets${qs}`);
 }
 
 export function updateSecret(
@@ -151,4 +154,39 @@ export interface AuditLogResponse {
 
 export function getAuditLog(page = 1): Promise<AuditLogResponse> {
   return apiFetch<AuditLogResponse>(`/audit-log?page=${page}&perPage=25`);
+}
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+
+export interface AnalyticsData {
+  byRepo: { repositoryId: string; total: number; success: number; failure: number }[];
+  byDay: { date: string; total: number; success: number }[];
+}
+
+export function getAnalytics(days = 30): Promise<AnalyticsData> {
+  return apiFetch<AnalyticsData>(`/analytics?days=${days}`);
+}
+
+// ── Releases ──────────────────────────────────────────────────────────────────
+
+export interface ReleasesQuery {
+  repositoryId?: string;
+  page?: number;
+  perPage?: number;
+}
+
+export function getReleases(opts: ReleasesQuery = {}): Promise<PaginatedResponse<Release>> {
+  const params = new URLSearchParams();
+  if (opts.repositoryId) params.set("repositoryId", opts.repositoryId);
+  if (opts.page) params.set("page", String(opts.page));
+  if (opts.perPage) params.set("perPage", String(opts.perPage));
+  const qs = params.toString();
+  return apiFetch<PaginatedResponse<Release>>(`/releases${qs ? `?${qs}` : ""}`);
+}
+
+export function syncReleases(repositoryId: string): Promise<void> {
+  return apiFetch<void>("/releases/sync", {
+    method: "POST",
+    body: JSON.stringify({ repositoryId }),
+  });
 }

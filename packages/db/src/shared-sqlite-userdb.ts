@@ -7,6 +7,7 @@ import type {
   SecretMeta,
   Package,
   Repository,
+  Release,
   AuditLogEntry,
   WebhookEvent,
   PaginatedResponse,
@@ -139,6 +140,25 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
       );
       CREATE INDEX IF NOT EXISTS idx_webhook_events_received_at ON webhook_events(received_at DESC);
       CREATE INDEX IF NOT EXISTS idx_webhook_events_status ON webhook_events(status);
+
+      CREATE TABLE IF NOT EXISTS releases (
+        id TEXT PRIMARY KEY,
+        repository_id TEXT NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL,
+        github_release_id INTEGER NOT NULL,
+        tag_name TEXT NOT NULL,
+        name TEXT,
+        body TEXT,
+        draft INTEGER NOT NULL DEFAULT 0,
+        prerelease INTEGER NOT NULL DEFAULT 0,
+        html_url TEXT NOT NULL,
+        published_at TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(repository_id, github_release_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_releases_repository_id ON releases(repository_id);
+      CREATE INDEX IF NOT EXISTS idx_releases_published_at ON releases(published_at DESC);
     `);
     return Promise.resolve();
   }
@@ -312,6 +332,7 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
   listWorkflowRuns(opts: {
     repositoryId?: string;
     status?: string;
+    workflowName?: string;
     page?: number;
     perPage?: number;
   }): Promise<PaginatedResponse<WorkflowRun>> {
@@ -323,6 +344,7 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
     const params: unknown[] = [];
     if (opts.repositoryId) { conditions.push("repository_id = ?"); params.push(opts.repositoryId); }
     if (opts.status) { conditions.push("status = ?"); params.push(opts.status); }
+    if (opts.workflowName) { conditions.push("LOWER(workflow_name) LIKE ?"); params.push(`%${opts.workflowName.toLowerCase()}%`); }
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
@@ -396,10 +418,14 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
     return Promise.resolve({ id, ...secret, createdAt: now, updatedAt: now } as SecretMeta);
   }
 
-  listSecretMeta(repositoryId: string): Promise<SecretMeta[]> {
-    const rows = this.db
-      .prepare(`SELECT * FROM secret_meta WHERE repository_id = ? ORDER BY name ASC`)
-      .all(repositoryId) as Record<string, unknown>[];
+  listSecretMeta(repositoryId?: string): Promise<SecretMeta[]> {
+    const rows = repositoryId
+      ? (this.db
+          .prepare(`SELECT * FROM secret_meta WHERE repository_id = ? ORDER BY name ASC`)
+          .all(repositoryId) as Record<string, unknown>[])
+      : (this.db
+          .prepare(`SELECT * FROM secret_meta ORDER BY name ASC`)
+          .all() as Record<string, unknown>[]);
     return Promise.resolve(
       rows.map((row) => {
         const userId = row["user_id"] as string | null;
@@ -694,6 +720,104 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
       error: (row["error"] as string | null) ?? null,
       receivedAt: row["received_at"] as string,
     };
+  }
+
+  upsertRelease(release: Omit<Release, "id" | "createdAt" | "updatedAt">): Promise<Release> {
+    const now = new Date().toISOString();
+    const id = randomUUID();
+    this.db.prepare(`
+      INSERT INTO releases (
+        id, repository_id, user_id, github_release_id, tag_name, name, body,
+        draft, prerelease, html_url, published_at, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(repository_id, github_release_id)
+      DO UPDATE SET
+        tag_name = excluded.tag_name,
+        name = excluded.name,
+        body = excluded.body,
+        draft = excluded.draft,
+        prerelease = excluded.prerelease,
+        html_url = excluded.html_url,
+        published_at = excluded.published_at,
+        updated_at = excluded.updated_at
+    `).run(
+      id, release.repositoryId, release.userId, release.githubReleaseId,
+      release.tagName, release.name ?? null, release.body ?? null,
+      release.draft ? 1 : 0, release.prerelease ? 1 : 0,
+      release.htmlUrl, release.publishedAt ?? null, now, now,
+    );
+    const row = this.db.prepare(`SELECT * FROM releases WHERE repository_id = ? AND github_release_id = ?`)
+      .get(release.repositoryId, release.githubReleaseId) as Record<string, unknown>;
+    return Promise.resolve(this.mapRelease(row));
+  }
+
+  listReleases(opts: { repositoryId?: string; page?: number; perPage?: number }): Promise<PaginatedResponse<Release>> {
+    const page = opts.page ?? 1;
+    const perPage = opts.perPage ?? 25;
+    const offset = (page - 1) * perPage;
+    const where = opts.repositoryId ? "WHERE repository_id = ?" : "";
+    const params: unknown[] = opts.repositoryId ? [opts.repositoryId] : [];
+
+    const countRow = this.db.prepare(`SELECT COUNT(*) as total FROM releases ${where}`).get(...params) as { total: number } | undefined;
+    const total = countRow?.total ?? 0;
+    const rows = this.db.prepare(`SELECT * FROM releases ${where} ORDER BY published_at DESC LIMIT ? OFFSET ?`)
+      .all(...params, perPage, offset) as Record<string, unknown>[];
+
+    return Promise.resolve({
+      items: rows.map((r) => this.mapRelease(r)),
+      total, page, perPage, hasMore: total > page * perPage,
+    });
+  }
+
+  private mapRelease(row: Record<string, unknown>): Release {
+    return {
+      id: row["id"] as string,
+      repositoryId: row["repository_id"] as string,
+      userId: row["user_id"] as string,
+      githubReleaseId: row["github_release_id"] as number,
+      tagName: row["tag_name"] as string,
+      name: (row["name"] as string | null) ?? null,
+      body: (row["body"] as string | null) ?? null,
+      draft: Boolean(row["draft"]),
+      prerelease: Boolean(row["prerelease"]),
+      htmlUrl: row["html_url"] as string,
+      publishedAt: (row["published_at"] as string | null) ?? null,
+      createdAt: row["created_at"] as string,
+      updatedAt: row["updated_at"] as string,
+    };
+  }
+
+  getAnalytics(opts: { days?: number }): Promise<{
+    byRepo: { repositoryId: string; total: number; success: number; failure: number }[];
+    byDay: { date: string; total: number; success: number }[];
+  }> {
+    const days = opts.days ?? 30;
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+    const byRepo = this.db.prepare(`
+      SELECT
+        repository_id as repositoryId,
+        COUNT(*) as total,
+        SUM(CASE WHEN conclusion = 'success' THEN 1 ELSE 0 END) as success,
+        SUM(CASE WHEN conclusion IN ('failure','timed_out') THEN 1 ELSE 0 END) as failure
+      FROM workflow_runs
+      WHERE started_at >= ?
+      GROUP BY repository_id
+      ORDER BY total DESC
+    `).all(since) as { repositoryId: string; total: number; success: number; failure: number }[];
+
+    const byDay = this.db.prepare(`
+      SELECT
+        DATE(started_at) as date,
+        COUNT(*) as total,
+        SUM(CASE WHEN conclusion = 'success' THEN 1 ELSE 0 END) as success
+      FROM workflow_runs
+      WHERE started_at >= ?
+      GROUP BY DATE(started_at)
+      ORDER BY date ASC
+    `).all(since) as { date: string; total: number; success: number }[];
+
+    return Promise.resolve({ byRepo, byDay });
   }
 }
 

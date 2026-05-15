@@ -4,6 +4,9 @@ export type { GitHubAppConfig } from "./app.js";
 export { getRepo, getRepoPullsCount } from "./repos.js";
 export type { RepoMeta } from "./repos.js";
 
+export { listRepoReleases } from "./releases.js";
+export type { GitHubRelease } from "./releases.js";
+
 export {
   listWorkflowRuns,
   listWorkflows,

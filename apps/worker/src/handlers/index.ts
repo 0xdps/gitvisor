@@ -7,6 +7,7 @@ import { handleSyncWorkflowRuns } from "./sync-workflow-runs.js";
 import { handleSyncWorkflows } from "./sync-workflows.js";
 import { handleSyncSecrets } from "./sync-secrets.js";
 import { handleSyncPackages } from "./sync-packages.js";
+import { handleSyncReleases } from "./sync-releases.js";
 
 const log = createLogger("worker");
 
@@ -122,6 +123,10 @@ export async function dispatch(
 
     case "sync:packages":
       await handleSyncPackages(job.data, getUserDb);
+      break;
+
+    case "sync:releases":
+      await handleSyncReleases(job.data, getUserDb);
       break;
 
     case "uninstall:app": {

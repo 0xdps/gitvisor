@@ -20,12 +20,14 @@ export function createWorkflowsRouter(
     const user = c.get("user");
     const repositoryId = c.req.query("repositoryId");
     const status = c.req.query("status");
+    const workflowName = c.req.query("workflowName");
     const page = Math.max(1, Number(c.req.query("page") ?? 1));
     const perPage = Math.min(100, Math.max(1, Number(c.req.query("perPage") ?? 25)));
     const userDb = await getUserDb(user.id);
     const result = await userDb.listWorkflowRuns({
       ...(repositoryId !== undefined ? { repositoryId } : {}),
       ...(status !== undefined ? { status } : {}),
+      ...(workflowName ? { workflowName } : {}),
       page,
       perPage,
     });

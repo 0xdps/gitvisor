@@ -4,6 +4,7 @@ import type {
   SecretMeta,
   Package,
   Repository,
+  Release,
   AuditLogEntry,
   WebhookEvent,
   PaginatedResponse,
@@ -28,18 +29,23 @@ export interface UserDbRepository {
   listWorkflowRuns(opts: {
     repositoryId?: string;
     status?: string;
+    workflowName?: string;
     page?: number;
     perPage?: number;
   }): Promise<PaginatedResponse<WorkflowRun>>;
 
   // Secrets (metadata only — no raw values ever stored)
   upsertSecretMeta(secret: Omit<SecretMeta, "id" | "createdAt" | "updatedAt">): Promise<SecretMeta>;
-  listSecretMeta(repositoryId: string): Promise<SecretMeta[]>;
+  listSecretMeta(repositoryId?: string): Promise<SecretMeta[]>;
   deleteSecretMeta(repositoryId: string, name: string): Promise<void>;
 
   // Packages
   upsertPackage(pkg: Omit<Package, "id" | "createdAt" | "updatedAt">): Promise<Package>;
   listPackages(repositoryId?: string): Promise<Package[]>;
+
+  // Releases
+  upsertRelease(release: Omit<Release, "id" | "createdAt" | "updatedAt">): Promise<Release>;
+  listReleases(opts: { repositoryId?: string; page?: number; perPage?: number }): Promise<PaginatedResponse<Release>>;
 
   // Workflows (definitions — not runs)
   upsertWorkflow(workflow: Omit<Workflow, "id" | "createdAt" | "updatedAt">): Promise<Workflow>;
@@ -66,6 +72,12 @@ export interface UserDbRepository {
     page?: number;
     perPage?: number;
   }): Promise<PaginatedResponse<WebhookEvent>>;
+
+  // Analytics
+  getAnalytics(opts: { days?: number }): Promise<{
+    byRepo: { repositoryId: string; total: number; success: number; failure: number }[];
+    byDay: { date: string; total: number; success: number }[];
+  }>;
 
   // Schema migration
   migrate(): Promise<void>;

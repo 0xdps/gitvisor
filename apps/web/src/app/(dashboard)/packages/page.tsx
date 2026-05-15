@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Package, RefreshCw, Lock, Globe, Download } from "lucide-react";
+import { Package, RefreshCw, Lock, Globe, Download, Check, Copy, ExternalLink } from "lucide-react";
 import { getRepositories, getPackages } from "@/lib/api-client";
 import type { Package as PackageType, Repository } from "@gitvisor/shared";
 
@@ -173,81 +174,123 @@ function fmtDownloads(n: number): string {
   return String(n);
 }
 
+function getInstallCommand(pkg: PackageType, repo: Repository | null): string | null {
+  const owner = repo?.owner.toLowerCase() ?? "owner";
+  const ver = pkg.latestVersion ? `@${pkg.latestVersion}` : "";
+  const verTag = pkg.latestVersion ?? "latest";
+  switch (pkg.ecosystem) {
+    case "npm":
+      return `npm install ${pkg.name}${ver}`;
+    case "docker":
+    case "container":
+      return `docker pull ghcr.io/${owner}/${pkg.name}:${verTag}`;
+    case "maven":
+      return `<!-- Maven -->
+<dependency>
+  <groupId>${owner}</groupId>
+  <artifactId>${pkg.name}</artifactId>
+  <version>${verTag}</version>
+</dependency>`;
+    case "rubygems":
+      return `gem install ${pkg.name}${pkg.latestVersion ? ` -v ${pkg.latestVersion}` : ""}`;
+    case "nuget":
+      return `dotnet add package ${pkg.name}${pkg.latestVersion ? ` --version ${pkg.latestVersion}` : ""}`;
+    default:
+      return null;
+  }
+}
+
 function PackageCard({ pkg, repo }: { pkg: PackageType; repo: Repository | null }) {
+  const [copied, setCopied] = useState(false);
   const ecoColor = ECO_COLORS[pkg.ecosystem] ?? "#6b7280";
-  // GitHub package page: github.com/{owner}/{repo}/pkgs/{ecosystem}/{name}
   const ghUrl = repo
     ? `https://github.com/${repo.fullName}/pkgs/${pkg.ecosystem}/${pkg.name}`
     : null;
+  const installCmd = getInstallCommand(pkg, repo);
+
+  function copyCommand() {
+    if (!installCmd) return;
+    void navigator.clipboard.writeText(installCmd).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 space-y-3 hover:bg-accent/10 transition-colors">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className="h-2.5 w-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: ecoColor }}
-            />
-            {ghUrl ? (
-              <a
-                href={ghUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-semibold truncate hover:text-blue transition-colors"
-              >
-                {pkg.name}
-              </a>
-            ) : (
-              <p className="text-sm font-semibold truncate">{pkg.name}</p>
-            )}
-            {pkg.latestVersion && (
-              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground shrink-0">
-                v{pkg.latestVersion}
-              </span>
-            )}
-          </div>
-          {repo?.description && (
-            <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 pl-4 leading-relaxed">
-              {repo.description}
-            </p>
-          )}
-          {repo && !repo.description && (
-            <p className="text-xs text-muted-foreground mt-1 truncate pl-4">{repo.fullName}</p>
+    <div className="rounded-xl border border-border bg-card overflow-hidden hover:border-foreground/15 transition-colors">
+      {/* Repo context header */}
+      {repo && (
+        <div className="flex items-center gap-2 border-b border-border px-4 py-2 bg-muted/20">
+          <span className="text-[10px] font-mono text-muted-foreground truncate flex-1">{repo.fullName}</span>
+          {repo.private ? (
+            <Lock className="h-3 w-3 text-muted-foreground/60 shrink-0" />
+          ) : (
+            <Globe className="h-3 w-3 text-muted-foreground/60 shrink-0" />
           )}
         </div>
-        {pkg.visibility === "private" ? (
-          <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
-        ) : (
-          <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
-        )}
-      </div>
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="capitalize font-medium" style={{ color: ecoColor }}>
-          {pkg.ecosystem}
-        </span>
-        {pkg.downloadCount != null && pkg.downloadCount > 0 && (
-          <span className="flex items-center gap-1">
-            <Download className="h-3 w-3" />
-            {fmtDownloads(pkg.downloadCount)}
-          </span>
-        )}
-        {ghUrl && (
-          <a
-            href={ghUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-auto flex items-center gap-1 hover:text-foreground transition-colors"
-          >
-            <Download className="h-3 w-3" />
-            Download
-          </a>
-        )}
-        {!ghUrl && (
+      )}
+
+      <div className="p-4 space-y-3">
+        {/* Package name + version + ecosystem */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: ecoColor }} />
+              {ghUrl ? (
+                <a href={ghUrl} target="_blank" rel="noopener noreferrer"
+                  className="text-sm font-semibold truncate hover:text-blue transition-colors">
+                  {pkg.name}
+                </a>
+              ) : (
+                <p className="text-sm font-semibold truncate">{pkg.name}</p>
+              )}
+              {pkg.latestVersion && (
+                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground shrink-0">
+                  v{pkg.latestVersion}
+                </span>
+              )}
+            </div>
+            {repo?.description && (
+              <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
+                {repo.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Ecosystem + stats row */}
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="capitalize font-medium" style={{ color: ecoColor }}>{pkg.ecosystem}</span>
+          {pkg.downloadCount != null && pkg.downloadCount > 0 && (
+            <span className="flex items-center gap-1">
+              <Download className="h-3 w-3" />
+              {fmtDownloads(pkg.downloadCount)}
+            </span>
+          )}
           <span className="ml-auto">{timeAgo(pkg.updatedAt)}</span>
-        )}
-        {ghUrl && (
-          <span className="text-muted-foreground/50">{timeAgo(pkg.updatedAt)}</span>
+          {ghUrl && (
+            <a href={ghUrl} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1 hover:text-foreground transition-colors">
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
+
+        {/* Install command */}
+        {installCmd && (
+          <div className="rounded-md bg-muted/40 border border-border/60">
+            <div className="flex items-center justify-between gap-2 px-3 py-1.5 border-b border-border/40">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium">Install</span>
+              <button
+                onClick={copyCommand}
+                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {copied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+            <pre className="px-3 py-2 text-[11px] font-mono text-muted-foreground overflow-x-auto whitespace-pre-wrap leading-relaxed">{installCmd}</pre>
+          </div>
         )}
       </div>
     </div>

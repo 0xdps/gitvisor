@@ -162,6 +162,24 @@ export interface AuditLogEntry {
   createdAt: string;
 }
 
+// ── Release ───────────────────────────────────────────────────────────────────
+
+export interface Release {
+  id: string;
+  repositoryId: string;
+  userId: string;
+  githubReleaseId: number;
+  tagName: string;
+  name: string | null;
+  body: string | null;
+  draft: boolean;
+  prerelease: boolean;
+  htmlUrl: string;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── Queue Jobs ────────────────────────────────────────────────────────────────
 
 export interface SyncRepoJobData {
@@ -201,6 +219,13 @@ export interface SyncWorkflowsJobData {
   fullName: string;
 }
 
+export interface SyncReleasesJobData {
+  userId: string;
+  installationId: number;
+  repositoryId: string;
+  fullName: string;
+}
+
 export interface UninstallAppJobData {
   githubInstallationId: number;
   userId: string;
@@ -221,6 +246,7 @@ export type JobData =
   | { type: "sync:secrets"; data: SyncSecretsJobData }
   | { type: "sync:packages"; data: SyncPackagesJobData }
   | { type: "sync:workflows"; data: SyncWorkflowsJobData }
+  | { type: "sync:releases"; data: SyncReleasesJobData }
   | { type: "uninstall:app"; data: UninstallAppJobData }
   | { type: "install:app"; data: InstallAppJobData };
 

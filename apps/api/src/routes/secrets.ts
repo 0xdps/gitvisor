@@ -39,8 +39,7 @@ export function createSecretsRouter(
    */
   router.get("/", async (c) => {
     const user = c.get("user");
-    const repositoryId = c.req.query("repositoryId") ?? "";
-    if (!repositoryId) return c.json({ ok: false, error: "repositoryId required" }, 400);
+    const repositoryId = c.req.query("repositoryId") || undefined;
     const userDb = await getUserDb(user.id);
     const secrets = await userDb.listSecretMeta(repositoryId);
     return c.json({ ok: true, data: secrets });

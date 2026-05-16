@@ -1,0 +1,26 @@
+apps/web/src/lib/auth-client.ts
+  s_cb2f5acd96c505::t_7fd21c17c6f2bb 90
+apps/api/src/routes/repositories.ts
+  s_cb2f5acd96c505::t_7fd21c17c6f2bb 57-59,69-77
+  s_cb2f5acd96c505::t_47044c6d617d49 63-65
+apps/web/src/lib/api-client.ts
+  s_cb2f5acd96c505::t_7fd21c17c6f2bb 34-40
+apps/web/src/app/(dashboard)/repositories/page.tsx
+  s_cb2f5acd96c505::t_47044c6d617d49 64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "52bb35b69df1d41769a4ae347d4ba8472adc1090",
+  "prompts": {},
+  "sessions": {
+    "s_cb2f5acd96c505": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2b0c1cb4-d150-4fc2-bd22-d4e5c4f2c370",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

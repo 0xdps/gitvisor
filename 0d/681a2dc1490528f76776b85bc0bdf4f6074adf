@@ -1,0 +1,23 @@
+.github/workflows/docker-publish.yml
+  s_350786453174b0::t_ad742f207f275c 1-62
+.github/workflows/ci.yml
+  s_350786453174b0::t_e6da1790b0dc5d 31
+infra/docker/standalone.Dockerfile
+  s_350786453174b0::t_9c853fa2160eb5 1-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "0d681a2dc1490528f76776b85bc0bdf4f6074adf",
+  "prompts": {},
+  "sessions": {
+    "s_350786453174b0": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d092a11e-d8f9-4364-bd98-6c3c8d7768c6",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

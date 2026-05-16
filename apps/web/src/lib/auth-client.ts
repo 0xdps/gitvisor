@@ -87,5 +87,5 @@ export async function finalizeInstallation(installationId: number): Promise<void
 
   if (!res.ok) throw new Error("Installation finalize failed");
 
-  await syncRepositories();
+  await syncRepositories(installationId);
 }

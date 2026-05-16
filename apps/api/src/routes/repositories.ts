@@ -54,13 +54,27 @@ export function createRepositoriesRouter(
    * POST /repositories/sync
    * Discovers all repos accessible via the user's GitHub App installations
    * and enqueues a sync:repo job for each one.
+   *
+   * Body: { installationId?: number }
+   * When installationId is provided, only that installation is synced.
    */
   router.post("/sync", async (c) => {
     const user = c.get("user");
+    const body: { installationId?: number } = await c.req
+      .json<{ installationId?: number }>()
+      .catch(() => ({}));
     if (!syncLimiter(user.id)) {
       return c.json({ ok: false, error: "Too many requests" }, 429);
     }
-    const installations = await registry.listInstallationsByUser(user.id);
+    const userInstallations = await registry.listInstallationsByUser(user.id);
+    const installations = body.installationId !== undefined
+      ? userInstallations.filter((installation) => installation.githubInstallationId === body.installationId)
+      : userInstallations;
+
+    if (body.installationId !== undefined && installations.length === 0) {
+      return c.json({ ok: false, error: "Installation not found" }, 404);
+    }
+
     if (installations.length === 0) {
       return c.json({ ok: true, data: { queued: 0 } });
     }

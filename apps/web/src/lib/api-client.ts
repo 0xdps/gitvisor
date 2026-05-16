@@ -31,8 +31,13 @@ export function getRepository(githubRepoId: number): Promise<Repository> {
   return apiFetch<Repository>(`/repositories/${githubRepoId}`);
 }
 
-export function syncRepositories(): Promise<{ queued: number }> {
-  return apiFetch<{ queued: number }>("/repositories/sync", { method: "POST" });
+export function syncRepositories(installationId?: number): Promise<{ queued: number }> {
+  return apiFetch<{ queued: number }>("/repositories/sync", {
+    method: "POST",
+    ...(installationId !== undefined
+      ? { body: JSON.stringify({ installationId }) }
+      : {}),
+  });
 }
 
 // ── Workflow Runs ─────────────────────────────────────────────────────────────

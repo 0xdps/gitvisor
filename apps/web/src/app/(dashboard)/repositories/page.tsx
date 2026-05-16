@@ -61,7 +61,7 @@ export default function RepositoriesPage() {
   });
 
   const sync = useMutation({
-    mutationFn: syncRepositories,
+    mutationFn: () => syncRepositories(),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["repositories"] });
     },

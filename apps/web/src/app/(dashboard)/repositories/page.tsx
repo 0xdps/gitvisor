@@ -17,6 +17,7 @@ import { getRepositories, syncRepositories } from "@/lib/api-client";
 import type { Repository } from "@gitvisor/shared";
 import { InstallAccountsPanel } from "@/components/install-accounts-panel";
 import { useAccount } from "@/lib/account-context";
+import { useUpgradeModal } from "@/components/upgrade-modal";
 
 const LANG_COLORS: Record<string, string> = {
   TypeScript: "#3178c6", JavaScript: "#f1e05a", Python: "#3572A5", Go: "#00ADD8",
@@ -175,7 +176,51 @@ export default function RepositoriesPage() {
 // ── RepoCard ───────────────────────────────────────────────────────────────────
 
 function RepoCard({ repo }: { repo: Repository }) {
+  const { openUpgradeModal } = useUpgradeModal();
   const langColor = repo.language ? (LANG_COLORS[repo.language] ?? "#888888") : null;
+
+  if (repo.locked) {
+    return (
+      <button
+        onClick={openUpgradeModal}
+        className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3 relative overflow-hidden text-left w-full hover:border-blue/30 transition-colors group"
+        title="Upgrade to unlock private repositories"
+      >
+        {/* Blur overlay */}
+        <div className="absolute inset-0 backdrop-blur-[2px] bg-background/40 z-10 flex flex-col items-center justify-center gap-2">
+          <div className="flex items-center gap-1.5 rounded-full border border-blue/30 bg-blue/10 px-3 py-1.5">
+            <Lock className="h-3.5 w-3.5 text-blue" />
+            <span className="text-xs font-medium text-blue">Upgrade to unlock</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">Private repos require the Private plan</p>
+        </div>
+
+        {/* Blurred background content */}
+        <div className="flex items-start justify-between gap-2 blur-sm pointer-events-none select-none" aria-hidden>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Lock className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+              <p className="text-sm font-semibold truncate">{repo.name}</p>
+            </div>
+            <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">{repo.owner}</p>
+          </div>
+        </div>
+        {repo.description && (
+          <p className="text-xs text-muted-foreground/70 blur-sm pointer-events-none select-none line-clamp-2" aria-hidden>
+            {repo.description}
+          </p>
+        )}
+        <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-auto blur-sm pointer-events-none select-none" aria-hidden>
+          {langColor && (
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: langColor }} />
+              {repo.language}
+            </span>
+          )}
+        </div>
+      </button>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3 hover:border-foreground/15 transition-colors">

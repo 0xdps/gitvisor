@@ -21,6 +21,7 @@ import { getWorkflowRuns, getRepositories, getPullRequests, getReleases } from "
 import type { Repository, WorkflowRun, WorkflowRunConclusion, RepoPullRequest } from "@gitvisor/shared";
 import { InstallAccountsPanel } from "@/components/install-accounts-panel";
 import { useAccount } from "@/lib/account-context";
+import { useUpgradeModal } from "@/components/upgrade-modal";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -106,6 +107,9 @@ export default function DashboardPage() {
   const allRepos = reposData ?? [];
   const recentReleases = releasesData?.items ?? [];
 
+  // Build locked repo set before filtering
+  const lockedRepoIds = new Set(allRepos.filter((r) => r.locked).map((r) => r.id));
+
   // Scope to selected account
   const scopedRepos = selectedAccount
     ? allRepos.filter((r) =>
@@ -163,12 +167,12 @@ export default function DashboardPage() {
     recentReleases.map((r) => [r.repositoryId, r]),
   );
 
-  // Situational counts
-  const liveCount = scopedRuns.filter((r) => r.status === "in_progress").length;
-  const failingMainCount = repoRows.filter((x) => x.failingOnMain).length;
+  // Situational counts — exclude locked repos (we don't know their real CI state)
+  const liveCount = scopedRuns.filter((r) => r.status === "in_progress" && !lockedRepoIds.has(r.repositoryId)).length;
+  const failingMainCount = repoRows.filter((x) => x.failingOnMain && !x.repo.locked).length;
   const totalPRs = scopedPRs.length;
-  const totalIssues = scopedRepos.reduce((s, r) => s + r.openIssuesCount, 0);
-  const blockingDeploy = repoRows.filter((x) => x.failingOnMain).slice(0, 5);
+  const totalIssues = scopedRepos.filter((r) => !r.locked).reduce((s, r) => s + r.openIssuesCount, 0);
+  const blockingDeploy = repoRows.filter((x) => x.failingOnMain && !x.repo.locked).slice(0, 5);
 
   // PR priority: needs review → non-draft → draft
   const sortedPRs = [...scopedPRs].sort((a, b) => {
@@ -371,7 +375,7 @@ export default function DashboardPage() {
             </div>
             <div className="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border/50">
               {recentRuns.map((run) => (
-                <RunRow key={run.id} run={run} repoName={repoMap.get(run.repositoryId) ?? null} />
+                <RunRow key={run.id} run={run} repoName={repoMap.get(run.repositoryId) ?? null} locked={lockedRepoIds.has(run.repositoryId)} />
               ))}
             </div>
           </div>
@@ -437,6 +441,35 @@ function RepoTableRow({
   repo, lastRun, last5, isLive, failingOnMain, latestRelease,
 }: RepoRow & { latestRelease: import("@gitvisor/shared").Release | null }) {
   const langColor = repo.language ? (LANG_COLORS[repo.language] ?? "#555") : "#333";
+  const { openUpgradeModal } = useUpgradeModal();
+
+  if (repo.locked) {
+    return (
+      <button
+        onClick={openUpgradeModal}
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/[0.015] transition-colors text-left group"
+        title="Upgrade to unlock private repositories"
+      >
+        <span className="h-2 w-2 rounded-full shrink-0 bg-muted/20 mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-medium text-muted-foreground/40 truncate">{repo.name}</span>
+            <Lock className="h-2.5 w-2.5 text-muted-foreground/30 shrink-0" />
+          </div>
+          <p className="text-[11px] text-muted-foreground/25 mt-0.5">private · upgrade to unlock</p>
+        </div>
+        <div className="flex items-center gap-0.5 shrink-0 blur-sm" aria-hidden>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <span key={i} className="h-[14px] w-[5px] rounded-sm bg-muted/15" />
+          ))}
+        </div>
+        <div className="shrink-0 flex items-center gap-1 rounded-full border border-blue/20 bg-blue/5 px-2 py-0.5">
+          <Lock className="h-2.5 w-2.5 text-blue/60" />
+          <span className="text-[10px] font-medium text-blue/60">Upgrade</span>
+        </div>
+      </button>
+    );
+  }
 
   return (
     <div className={`flex items-center gap-3 px-4 py-3 hover:bg-white/[0.015] transition-colors ${
@@ -603,11 +636,38 @@ function PRRow({ pr }: { pr: RepoPullRequest }) {
 
 // ── RunRow ────────────────────────────────────────────────────────────────────
 
-function RunRow({ run, repoName }: { run: WorkflowRun; repoName: string | null }) {
+function RunRow({ run, repoName, locked }: { run: WorkflowRun; repoName: string | null; locked?: boolean }) {
+  const { openUpgradeModal } = useUpgradeModal();
   const isRunning = run.status === "in_progress";
   const repoShort = repoName ? (repoName.split("/")[1] ?? repoName) : null;
   const dotClass = conclusionBg(run.conclusion, run.status);
   const isRetry = run.runAttempt > 1;
+
+  if (locked) {
+    return (
+      <button
+        onClick={openUpgradeModal}
+        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.015] transition-colors relative overflow-hidden text-left"
+        title="Upgrade to view runs from private repositories"
+      >
+        <div className="absolute inset-0 backdrop-blur-[1px] bg-background/30 z-10 flex items-center justify-center">
+          <div className="flex items-center gap-1.5 rounded-full border border-blue/30 bg-blue/10 px-2.5 py-0.5">
+            <Lock className="h-3 w-3 text-blue" />
+            <span className="text-[11px] font-medium text-blue">Upgrade to unlock</span>
+          </div>
+        </div>
+        <span className="relative flex h-2 w-2 shrink-0 mt-0.5 blur-sm" aria-hidden>
+          <span className="relative h-2 w-2 rounded-full bg-muted/20" />
+        </span>
+        <div className="flex-1 min-w-0 blur-sm pointer-events-none" aria-hidden>
+          <p className="text-xs font-medium truncate text-muted-foreground/20">workflow run</p>
+          <p className="text-[11px] text-muted-foreground/15 mt-0.5">
+            {repoShort ?? "private repo"}
+          </p>
+        </div>
+      </button>
+    );
+  }
 
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.015] transition-colors">

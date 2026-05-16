@@ -15,6 +15,7 @@ import {
   GitFork,
   KeyRound,
   LayoutDashboard,
+  Lock,
   LogOut,
   Package,
   PanelLeft,
@@ -41,6 +42,7 @@ import {
 import { me, logout as authLogout } from "../lib/auth-client";
 import { getInstallations, getWorkflowRuns } from "../lib/api-client";
 import { useAccount } from "../lib/account-context";
+import { useUpgradeModal } from "./upgrade-modal";
 
 interface AppShellProps {
   children: ReactNode;
@@ -86,6 +88,7 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   const { selected: selectedAccount, select: selectAccount } = useAccount();
+  const { openUpgradeModal } = useUpgradeModal();
 
   const { data: user } = useQuery({
     queryKey: ["auth", "me"],
@@ -204,24 +207,43 @@ export function AppShell({ children }: AppShellProps) {
                 {installedAccounts.length > 0 && (
                   <>
                     <DropdownMenuSeparator />
-                    {installedAccounts.map((acct) => (
-                      <DropdownMenuItem
-                        key={acct.login}
-                        onClick={() => selectAccount(acct)}
-                        className={`flex items-center gap-2 text-xs cursor-pointer ${selectedAccount?.login === acct.login ? "text-blue font-medium" : ""}`}
-                      >
-                        {acct.avatarUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={acct.avatarUrl} alt={acct.login} className="h-5 w-5 rounded-full shrink-0" />
-                        ) : (
-                          <div className="h-5 w-5 rounded-full bg-muted/40 flex items-center justify-center shrink-0">
-                            <Building2 className="h-3 w-3 text-muted-foreground" />
-                          </div>
-                        )}
-                        <span className="truncate flex-1">{acct.login}</span>
-                        {selectedAccount?.login === acct.login && <span className="ml-auto text-blue">✓</span>}
-                      </DropdownMenuItem>
-                    ))}
+                    {installedAccounts.map((acct) =>
+                      acct.locked ? (
+                        <DropdownMenuItem
+                          key={acct.login}
+                          onClick={openUpgradeModal}
+                          className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground/60"
+                        >
+                          {acct.avatarUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={acct.avatarUrl} alt={acct.login} className="h-5 w-5 rounded-full shrink-0 opacity-40 grayscale" />
+                          ) : (
+                            <div className="h-5 w-5 rounded-full bg-muted/40 flex items-center justify-center shrink-0">
+                              <Building2 className="h-3 w-3 text-muted-foreground/40" />
+                            </div>
+                          )}
+                          <span className="truncate flex-1 line-through">{acct.login}</span>
+                          <Lock className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          key={acct.login}
+                          onClick={() => selectAccount(acct)}
+                          className={`flex items-center gap-2 text-xs cursor-pointer ${selectedAccount?.login === acct.login ? "text-blue font-medium" : ""}`}
+                        >
+                          {acct.avatarUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={acct.avatarUrl} alt={acct.login} className="h-5 w-5 rounded-full shrink-0" />
+                          ) : (
+                            <div className="h-5 w-5 rounded-full bg-muted/40 flex items-center justify-center shrink-0">
+                              <Building2 className="h-3 w-3 text-muted-foreground" />
+                            </div>
+                          )}
+                          <span className="truncate flex-1">{acct.login}</span>
+                          {selectedAccount?.login === acct.login && <span className="ml-auto text-blue">✓</span>}
+                        </DropdownMenuItem>
+                      ),
+                    )}
                   </>
                 )}
                 {/* Uninstalled accounts (install prompts) */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import {
@@ -36,13 +36,13 @@ function ReleasesContent({
   }>({});
   const [paramsLoaded, setParamsLoaded] = useState(false);
 
-  // Resolve the Promise<searchParams> once on mount
-  if (!paramsLoaded) {
+  // Resolve the Promise<searchParams> on mount only
+  useEffect(() => {
     searchParams.then((p) => {
       setResolvedParams(p);
       setParamsLoaded(true);
     });
-  }
+  }, [searchParams]);
 
   const repositoryId = resolvedParams.repositoryId || undefined;
   const page = Math.max(1, Number(resolvedParams.page ?? 1));

@@ -1,8 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, PlusCircle, RefreshCw } from "lucide-react";
+import { CheckCircle2, Lock, PlusCircle, RefreshCw } from "lucide-react";
 import { getInstallations } from "@/lib/api-client";
+import { useUpgradeModal } from "./upgrade-modal";
 
 export function InstallAccountsPanel() {
   const { data: installations = [], isLoading, refetch } = useQuery({
@@ -11,6 +12,7 @@ export function InstallAccountsPanel() {
     staleTime: 60_000,
     refetchOnWindowFocus: true,
   });
+  const { openUpgradeModal } = useUpgradeModal();
 
   const baseInstallUrl =
     installations.find((a) => a.installUrl)?.installUrl?.replace(
@@ -71,7 +73,7 @@ export function InstallAccountsPanel() {
                 <img
                   src={account.avatarUrl}
                   alt={account.login}
-                  className="h-6 w-6 rounded-full shrink-0"
+                  className={`h-6 w-6 rounded-full shrink-0 ${account.locked ? "opacity-40 grayscale" : ""}`}
                 />
               ) : (
                 <div className="h-6 w-6 rounded-full bg-muted/40 flex items-center justify-center text-[11px] font-bold text-muted-foreground shrink-0">
@@ -79,11 +81,18 @@ export function InstallAccountsPanel() {
                 </div>
               )}
               <div className="min-w-0">
-                <p className="text-xs font-medium truncate">{account.login}</p>
+                <p className={`text-xs font-medium truncate ${account.locked ? "text-muted-foreground/50" : ""}`}>{account.login}</p>
                 <p className="text-[10px] text-muted-foreground">{account.type}</p>
               </div>
             </div>
-            {account.installed ? (
+            {account.locked ? (
+              <button
+                onClick={openUpgradeModal}
+                className="shrink-0 inline-flex items-center gap-1 rounded-md border border-border bg-background/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:border-blue/30 hover:text-blue transition-colors"
+              >
+                <Lock className="h-3 w-3" /> Upgrade
+              </button>
+            ) : account.installed ? (
               <span className="shrink-0 flex items-center gap-1 text-[11px] text-success font-medium">
                 <CheckCircle2 className="h-3 w-3" /> Connected
               </span>

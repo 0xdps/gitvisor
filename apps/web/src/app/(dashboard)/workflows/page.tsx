@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  Lock,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import { getWorkflowRuns, getRepositories, rerunWorkflow, cancelWorkflow } from "@/lib/api-client";
 import type { WorkflowRun } from "@gitvisor/shared";
+import { useUpgradeModal } from "@/components/upgrade-modal";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -129,6 +131,8 @@ function WorkflowsContent() {
   });
 
   const repoMap = new Map(repos?.map((r) => [r.id, r.fullName]) ?? []);
+  const lockedRepoIds = new Set(repos?.filter((r) => r.locked).map((r) => r.id) ?? []);
+  const unlockedRepos = repos?.filter((r) => !r.locked) ?? [];
 
   const items = runData?.items ?? [];
   const filtered = needsClientFilter
@@ -194,7 +198,7 @@ function WorkflowsContent() {
               className="appearance-none rounded-lg border border-border bg-card text-xs text-muted-foreground pl-3 pr-7 py-1.5 hover:text-foreground hover:border-foreground/20 transition-colors disabled:opacity-60 cursor-pointer focus:outline-none"
             >
               <option value="">All repos</option>
-              {repos.map((r) => (
+              {unlockedRepos.map((r) => (
                 <option key={r.id} value={r.id}>{r.fullName}</option>
               ))}
             </select>
@@ -235,6 +239,7 @@ function WorkflowsContent() {
               key={run.id}
               run={run}
               repoName={repoMap.get(run.repositoryId) ?? null}
+              locked={lockedRepoIds.has(run.repositoryId)}
             />
           ))}
         </div>
@@ -270,8 +275,41 @@ function WorkflowsContent() {
 
 // ── RunRow ─────────────────────────────────────────────────────────────────────
 
-function RunRow({ run, repoName }: { run: WorkflowRun; repoName: string | null }) {
+function RunRow({ run, repoName, locked }: { run: WorkflowRun; repoName: string | null; locked?: boolean }) {
   const queryClient = useQueryClient();
+  const { openUpgradeModal } = useUpgradeModal();
+
+  if (locked) {
+    const repoShortLocked = repoName ? (repoName.split("/")[1] ?? repoName) : null;
+    return (
+      <button
+        onClick={openUpgradeModal}
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/2 transition-colors group relative overflow-hidden text-left"
+        title="Upgrade to view runs from private repositories"
+      >
+        {/* Blur overlay */}
+        <div className="absolute inset-0 backdrop-blur-[2px] bg-background/40 z-10 flex items-center justify-center">
+          <div className="flex items-center gap-1.5 rounded-full border border-blue/30 bg-blue/10 px-3 py-1">
+            <Lock className="h-3 w-3 text-blue" />
+            <span className="text-xs font-medium text-blue">Upgrade to unlock</span>
+          </div>
+        </div>
+        {/* Blurred background content */}
+        <div className="shrink-0 blur-sm pointer-events-none" aria-hidden>
+          <RefreshCw className="h-3.5 w-3.5 text-muted-foreground/30" />
+        </div>
+        <span className="shrink-0 inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold w-18 justify-center text-muted-foreground/30 blur-sm pointer-events-none" aria-hidden>
+          Private
+        </span>
+        <div className="flex-1 min-w-0 blur-sm pointer-events-none" aria-hidden>
+          <p className="text-sm font-medium truncate text-muted-foreground/30">workflow run</p>
+          <p className="text-xs text-muted-foreground/20 mt-0.5">
+            {repoShortLocked ?? "private repo"}
+          </p>
+        </div>
+      </button>
+    );
+  }
 
   const rerun = useMutation({
     mutationFn: () => rerunWorkflow(run.githubRunId),

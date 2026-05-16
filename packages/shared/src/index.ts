@@ -23,6 +23,8 @@ export interface Installation {
   uninstalledAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Cloud only: true when the user's current plan does not include org accounts. */
+  locked?: boolean;
 }
 
 // ── Repository ────────────────────────────────────────────────────────────────
@@ -49,6 +51,8 @@ export interface Repository {
   syncedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Cloud only: true when the user's current plan does not include private repositories. */
+  locked?: boolean;
 }
 
 // ── Workflow ──────────────────────────────────────────────────────────────────

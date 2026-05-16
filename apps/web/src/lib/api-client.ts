@@ -80,6 +80,8 @@ export interface AccountInstallation {
   type: "User" | "Organization";
   installed: boolean;
   installUrl: string;
+  /** Cloud only: true when this account type is not included in the user's current plan. */
+  locked?: boolean;
 }
 
 export function getInstallations(): Promise<AccountInstallation[]> {
@@ -197,6 +199,33 @@ export function syncReleases(repositoryId: string): Promise<void> {
 }
 
 export type { RepoPullRequest };
+
+// ── Billing (cloud only) ──────────────────────────────────────────────────────────
+// These functions are only available when deployed with the cloud API.
+// They will throw with a 404 in core deployments — catch and ignore as needed.
+
+export interface TrialEligibility {
+  eligible: boolean;
+  reason?: string;
+}
+
+export function getBillingTrialEligibility(): Promise<TrialEligibility> {
+  return apiFetch<TrialEligibility>("/billing/trial/eligibility");
+}
+
+export function getBillingCheckout(
+  planId: string,
+  returnUrl: string,
+): Promise<{ url: string }> {
+  return apiFetch<{ url: string }>("/billing/checkout", {
+    method: "POST",
+    body: JSON.stringify({ planId, returnUrl }),
+  });
+}
+
+export function claimTwitterTrial(): Promise<unknown> {
+  return apiFetch("/billing/trial/twitter", { method: "POST" });
+}
 
 // ── Pull Requests ─────────────────────────────────────────────────────────────
 

@@ -17,6 +17,10 @@ export const config = {
     // Full URL that GitHub will redirect back to after OAuth.
     // Must be registered in your GitHub App's callback URL list.
     oauthRedirectUri: requireEnv("GITHUB_OAUTH_REDIRECT_URI"),
+    // The slug of the GitHub App (the {slug} part of github.com/apps/{slug}).
+    // Used to build the unified installation + OAuth URL so signup and App
+    // installation happen in a single GitHub screen.
+    appSlug: requireEnv("GITHUB_APP_SLUG"),
   },
 
   redis: {

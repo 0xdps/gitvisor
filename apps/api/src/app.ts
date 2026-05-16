@@ -18,6 +18,7 @@ import { createProfileRouter } from "./routes/profile.js";
 import { createAuditLogRouter } from "./routes/audit-log.js";
 import { createAnalyticsRouter } from "./routes/analytics.js";
 import { createReleasesRouter } from "./routes/releases.js";
+import { createPullRequestsRouter } from "./routes/pull-requests.js";
 
 const log = createLogger("api");
 
@@ -92,6 +93,7 @@ export function createCoreApp({
   app.route("/audit-log",      createAuditLogRouter(getUserDb, requireAuth));
   app.route("/analytics",      createAnalyticsRouter(getUserDb, requireAuth));
   app.route("/releases",       createReleasesRouter(getUserDb, requireAuth, queue));
+  app.route("/pull-requests",  createPullRequestsRouter(getUserDb, requireAuth));
   app.route("/public",         createPublicRouter(registry, getUserDb));
 
   // ── Error handling ─────────────────────────────────────────────────────────

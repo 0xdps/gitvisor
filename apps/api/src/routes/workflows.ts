@@ -3,12 +3,16 @@ import type { MiddlewareHandler } from "hono";
 import { getInstallationOctokit, rerunWorkflow, cancelWorkflowRun } from "@gitvisor/github";
 import type { UserDbRepository } from "@gitvisor/db";
 import type { AuthEnv } from "../middleware/auth.js";
+import { makeUserRateLimiter } from "../middleware/rate-limit.js";
 
 export function createWorkflowsRouter(
   getUserDb: (userId: string) => Promise<UserDbRepository>,
   requireAuth: MiddlewareHandler<AuthEnv>,
 ) {
   const router = new Hono<AuthEnv>();
+
+  // 20 GitHub-API actions per minute per user — rerun/cancel hit the GitHub API
+  const actionLimiter = makeUserRateLimiter(20, 60_000);
 
   router.use("*", requireAuth);
 
@@ -40,6 +44,7 @@ export function createWorkflowsRouter(
    */
   router.post("/:runId/rerun", async (c) => {
     const user = c.get("user");
+    if (!actionLimiter(user.id)) return c.json({ ok: false, error: "Too many requests" }, 429);
     const runId = Number(c.req.param("runId"));
     if (!Number.isFinite(runId)) return c.json({ ok: false, error: "Invalid run ID" }, 400);
     const userDb = await getUserDb(user.id);
@@ -58,6 +63,7 @@ export function createWorkflowsRouter(
    */
   router.post("/:runId/cancel", async (c) => {
     const user = c.get("user");
+    if (!actionLimiter(user.id)) return c.json({ ok: false, error: "Too many requests" }, 429);
     const runId = Number(c.req.param("runId"));
     if (!Number.isFinite(runId)) return c.json({ ok: false, error: "Invalid run ID" }, 400);
     const userDb = await getUserDb(user.id);

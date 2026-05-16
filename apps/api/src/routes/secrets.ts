@@ -15,6 +15,7 @@ const _require = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const sodium: typeof SodiumType = _require("libsodium-wrappers");
 import type { UserDbRepository } from "@gitvisor/db";
+import { makeUserRateLimiter } from "../middleware/rate-limit.js";
 
 async function encryptSecret(publicKeyB64: string, value: string): Promise<string> {
   await sodium.ready;
@@ -29,6 +30,9 @@ export function createSecretsRouter(
   requireAuth: MiddlewareHandler<AuthEnv>,
 ) {
   const router = new Hono<AuthEnv>();
+
+  // 30 secret operations per minute per user — each operation calls the GitHub API
+  const secretsLimiter = makeUserRateLimiter(30, 60_000);
 
   router.use("*", requireAuth);
 
@@ -53,6 +57,7 @@ export function createSecretsRouter(
    */
   router.put("/:repoId/:secretName", async (c) => {
     const user = c.get("user");
+    if (!secretsLimiter(user.id)) return c.json({ ok: false, error: "Too many requests" }, 429);
     const repoId = Number(c.req.param("repoId"));
     if (!Number.isFinite(repoId)) return c.json({ ok: false, error: "Invalid repository ID" }, 400);
     const secretName = c.req.param("secretName");
@@ -93,6 +98,7 @@ export function createSecretsRouter(
    */
   router.delete("/:repoId/:secretName", async (c) => {
     const user = c.get("user");
+    if (!secretsLimiter(user.id)) return c.json({ ok: false, error: "Too many requests" }, 429);
     const repoId = Number(c.req.param("repoId"));
     if (!Number.isFinite(repoId)) return c.json({ ok: false, error: "Invalid repository ID" }, 400);
     const secretName = c.req.param("secretName");

@@ -4,6 +4,8 @@ export type { GitHubAppConfig } from "./app.js";
 export { getRepo, getRepoPullsCount } from "./repos.js";
 export type { RepoMeta } from "./repos.js";
 
+export { listOpenPullRequests } from "./pulls.js";
+
 export { listRepoReleases } from "./releases.js";
 export type { GitHubRelease } from "./releases.js";
 
@@ -33,4 +35,4 @@ export {
 } from "./packages.js";
 
 export { createWebhookHandler } from "./webhooks.js";
-export type { WebhookJobEnqueuer } from "./webhooks.js";
+export type { WebhookJobEnqueuer, WebhookEnqueueOptions } from "./webhooks.js";

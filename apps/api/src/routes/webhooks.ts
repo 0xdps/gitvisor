@@ -1,12 +1,14 @@
 import { Hono } from "hono";
 import type { MiddlewareHandler } from "hono";
 import { createWebhookHandler } from "@gitvisor/github";
+import type { WebhookEnqueueOptions } from "@gitvisor/github";
 import type { QueueRepository } from "@gitvisor/queue";
 import type { UserDbRepository } from "@gitvisor/db";
 import { randomUUID } from "node:crypto";
 import { config } from "../config.js";
 import type { JobData } from "@gitvisor/shared";
 import type { AuthEnv } from "../middleware/auth.js";
+import { makeUserRateLimiter } from "../middleware/rate-limit.js";
 
 export function createWebhookRouter(
   queue: QueueRepository,
@@ -15,12 +17,24 @@ export function createWebhookRouter(
 ) {
   const router = new Hono<AuthEnv>();
 
+  // 5 replays per minute per user — prevents queue flooding
+  const replayLimiter = makeUserRateLimiter(5, 60_000);
+
   const webhooks = createWebhookHandler(
     config.github.webhookSecret,
-    async (job: JobData) => {
-      const resourceId = "repositoryId" in job.data ? job.data.repositoryId : job.data.githubInstallationId;
+    async (job: JobData, opts?: WebhookEnqueueOptions) => {
+      // Derive a stable resource identifier for deduplication in the job queue.
+      let resourceId: string | number;
+      if ("repositoryId" in job.data) {
+        resourceId = job.data.repositoryId;
+      } else if ("githubRepoId" in job.data) {
+        resourceId = job.data.githubRepoId;
+      } else {
+        resourceId = job.data.githubInstallationId;
+      }
       await queue.enqueue(job, {
         jobId: `${job.type}:${resourceId}:${Date.now()}`,
+        ...(opts?.delay !== undefined ? { delay: opts.delay } : {}),
       });
     },
   );
@@ -53,15 +67,19 @@ export function createWebhookRouter(
   /**
    * GET /webhooks/events?status=&eventName=&resourceId=&page=&perPage=
    * Lists stored webhook events for the current user.
+   * Returns 501 in the core build — webhook event storage is a cloud-only feature.
    */
   router.get("/events", requireAuth, async (c) => {
     const user = c.get("user");
+    const userDb = await getUserDb(user.id);
+    if (typeof userDb.listWebhookEvents !== "function") {
+      return c.json({ ok: false, error: "Webhook event storage is not available in this deployment" }, 501);
+    }
     const status = c.req.query("status");
     const eventName = c.req.query("eventName");
     const resourceId = c.req.query("resourceId");
     const page = Math.max(1, Number(c.req.query("page") ?? 1));
     const perPage = Math.min(100, Math.max(1, Number(c.req.query("perPage") ?? 50)));
-    const userDb = await getUserDb(user.id);
     const result = await userDb.listWebhookEvents({
       ...(status !== undefined ? { status } : {}),
       ...(eventName !== undefined ? { eventName } : {}),
@@ -75,11 +93,18 @@ export function createWebhookRouter(
   /**
    * POST /webhooks/events/:deliveryId/replay
    * Re-dispatches a stored webhook event through the handler (no signature check).
+   * Returns 501 in the core build — webhook event storage is a cloud-only feature.
    */
   router.post("/events/:deliveryId/replay", requireAuth, async (c) => {
     const user = c.get("user");
-    const deliveryId = c.req.param("deliveryId");
     const userDb = await getUserDb(user.id);
+    if (typeof userDb.getWebhookEvent !== "function") {
+      return c.json({ ok: false, error: "Webhook event storage is not available in this deployment" }, 501);
+    }
+    if (!replayLimiter(user.id)) {
+      return c.json({ ok: false, error: "Too many requests" }, 429);
+    }
+    const deliveryId = c.req.param("deliveryId");
     const event = await userDb.getWebhookEvent(deliveryId);
     if (!event) return c.json({ ok: false, error: "Webhook event not found" }, 404);
 
@@ -93,9 +118,10 @@ export function createWebhookRouter(
       await userDb.updateWebhookEventStatus(deliveryId, "processed");
       return c.json({ ok: true, data: { replayed: true } });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      await userDb.updateWebhookEventStatus(deliveryId, "failed", msg);
-      return c.json({ ok: false, error: msg }, 500);
+      // Log full error server-side; never expose internal details to the client.
+      console.error("[webhooks] replay failed", { deliveryId, err });
+      await userDb.updateWebhookEventStatus(deliveryId, "failed", "Replay failed");
+      return c.json({ ok: false, error: "Replay failed" }, 500);
     }
   });
 

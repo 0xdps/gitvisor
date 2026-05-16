@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { login } from "@/lib/auth-client";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { finalizeInstallation, login, me } from "@/lib/auth-client";
 import { LogoIcon } from "@/components/logo-icon";
 
 function GitHubIcon() {
@@ -13,9 +14,37 @@ function GitHubIcon() {
   );
 }
 
-export default function LoginPage() {
+function LoginContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const rawInstallationId = searchParams.get("installation_id");
+    const installationId = rawInstallationId ? Number(rawInstallationId) : undefined;
+    const setupAction = searchParams.get("setup_action");
+
+    void me()
+      .then((user) => {
+        if (user) {
+          if (installationId !== undefined && setupAction === "install") {
+            void finalizeInstallation(installationId)
+              .catch(() => {
+                // Fall through to the dashboard even if the post-install sync
+                // kickoff fails; the user is already authenticated.
+              })
+              .finally(() => router.replace("/dashboard"));
+            return;
+          }
+
+          router.replace("/dashboard");
+        }
+      })
+      .catch(() => {
+        // Stay on the login page if the session is missing or invalid.
+      });
+  }, [router, searchParams]);
 
   async function handleLogin() {
     setLoading(true);
@@ -86,5 +115,20 @@ export default function LoginPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
+          <div className="saas-glow" aria-hidden="true" />
+          <div className="absolute inset-0 grid-bg" aria-hidden="true" />
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

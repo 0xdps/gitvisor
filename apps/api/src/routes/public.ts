@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { RegistryRepository } from "@gitvisor/db";
 import type { UserDbRepository } from "@gitvisor/db";
+import { makeIpRateLimiter, getClientIp } from "../middleware/rate-limit.js";
 
 interface PublicProfile {
   githubUsername: string;
@@ -29,7 +30,14 @@ export function createPublicRouter(
 ) {
   const router = new Hono();
 
+  // 30 lookups per minute per IP — prevents automated username enumeration
+  const profileLimiter = makeIpRateLimiter(30, 60_000);
+
   router.get("/:username", async (c) => {
+    const ip = getClientIp(c.req);
+    if (!profileLimiter(ip)) {
+      return c.json({ ok: false, error: "Too many requests" }, 429);
+    }
     const username = c.req.param("username");
 
     if (!registry || !getUserDb) {

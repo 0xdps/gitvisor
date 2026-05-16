@@ -3,6 +3,7 @@ import type { MiddlewareHandler } from "hono";
 import type { UserDbRepository, RegistryRepository } from "@gitvisor/db";
 import type { QueueRepository } from "@gitvisor/queue";
 import type { AuthEnv } from "../middleware/auth.js";
+import { makeUserRateLimiter } from "../middleware/rate-limit.js";
 
 export function createPackagesRouter(
   getUserDb: (userId: string) => Promise<UserDbRepository>,
@@ -11,6 +12,9 @@ export function createPackagesRouter(
   queue: QueueRepository,
 ) {
   const router = new Hono<AuthEnv>();
+
+  // 10 package syncs per minute per user
+  const syncLimiter = makeUserRateLimiter(10, 60_000);
 
   router.use("*", requireAuth);
 
@@ -33,6 +37,7 @@ export function createPackagesRouter(
    */
   router.post("/sync", async (c) => {
     const user = c.get("user");
+    if (!syncLimiter(user.id)) return c.json({ ok: false, error: "Too many requests" }, 429);
     const { repositoryId, fullName, installationId } = await c.req.json<{
       repositoryId: string;
       fullName: string;

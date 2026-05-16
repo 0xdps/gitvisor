@@ -18,6 +18,7 @@ export class BullMQQueueRepository implements QueueRepository {
   constructor(config: BullMQQueueConfig) {
     this.queue = new Queue(QUEUE_NAME, {
       connection: config.redis,
+      prefix: "gitvisor:",
       defaultJobOptions: {
         attempts: 3,
         backoff: {
@@ -46,6 +47,7 @@ export class BullMQQueueRepository implements QueueRepository {
       },
       {
         connection: this.queue.opts.connection as ConnectionOptions,
+        prefix: "gitvisor:",
         concurrency: 5,
       },
     );

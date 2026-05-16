@@ -4,6 +4,8 @@ import { getInstallationOctokit } from "@gitvisor/github";
 import type { UserDbRepository, RegistryRepository } from "@gitvisor/db";
 import type { QueueRepository } from "@gitvisor/queue";
 import type { AuthEnv } from "../middleware/auth.js";
+import { makeUserRateLimiter } from "../middleware/rate-limit.js";
+import { createLogger } from "@gitvisor/logger";
 
 export function createRepositoriesRouter(
   getUserDb: (userId: string) => Promise<UserDbRepository>,
@@ -12,6 +14,10 @@ export function createRepositoriesRouter(
   queue: QueueRepository,
 ) {
   const router = new Hono<AuthEnv>();
+  const log = createLogger("repositories");
+
+  // 3 full syncs per minute per user — each sync may enqueue hundreds of jobs
+  const syncLimiter = makeUserRateLimiter(3, 60_000);
 
   router.use("*", requireAuth);
 
@@ -51,6 +57,9 @@ export function createRepositoriesRouter(
    */
   router.post("/sync", async (c) => {
     const user = c.get("user");
+    if (!syncLimiter(user.id)) {
+      return c.json({ ok: false, error: "Too many requests" }, 429);
+    }
     const installations = await registry.listInstallationsByUser(user.id);
     if (installations.length === 0) {
       return c.json({ ok: true, data: { queued: 0 } });
@@ -87,8 +96,12 @@ export function createRepositoriesRouter(
           if (data.repositories.length < 100) break;
           page++;
         }
-      } catch {
+      } catch (err) {
         // Non-fatal: log and continue with next installation
+        log.warn(
+          { err, installationId: installation.githubInstallationId },
+          "sync failed for installation — it may be stale or have no repo access",
+        );
       }
     }
 

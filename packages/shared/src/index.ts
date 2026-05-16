@@ -226,9 +226,46 @@ export interface SyncReleasesJobData {
   fullName: string;
 }
 
+// ── Pull Requests ─────────────────────────────────────────────────────────────
+
+/**
+ * A lean summary of a GitHub pull request. Fetched live from GitHub API
+ * (not stored in DB) so it is always fresh.
+ */
+export interface PullRequestSummary {
+  /** GitHub PR id (not number) */
+  id: number;
+  number: number;
+  title: string;
+  draft: boolean;
+  authorLogin: string;
+  authorAvatarUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+  htmlUrl: string;
+  /** Target branch */
+  baseRef: string;
+  /** Source branch */
+  headRef: string;
+  commentsCount: number;
+  requestedReviewersCount: number;
+}
+
+/** PullRequestSummary enriched with the owning repo context */
+export interface RepoPullRequest extends PullRequestSummary {
+  repoId: string;
+  repoFullName: string;
+}
+
 export interface UninstallAppJobData {
   githubInstallationId: number;
   userId: string;
+}
+
+export interface DeleteRepoJobData {
+  userId: string;
+  installationId: number;
+  githubRepoId: number;
 }
 
 export interface InstallAppJobData {
@@ -248,6 +285,7 @@ export type JobData =
   | { type: "sync:workflows"; data: SyncWorkflowsJobData }
   | { type: "sync:releases"; data: SyncReleasesJobData }
   | { type: "uninstall:app"; data: UninstallAppJobData }
+  | { type: "delete:repo"; data: DeleteRepoJobData }
   | { type: "install:app"; data: InstallAppJobData };
 
 // ── API Response Envelope ─────────────────────────────────────────────────────

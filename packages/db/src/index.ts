@@ -50,7 +50,21 @@ export async function createSharedSqliteRepositories(opts: {
   const userDb = await createSharedSqliteUserDb(opts.dataPath);
   return {
     registry,
-    // userId is intentionally ignored — single-user SQLite, see JSDoc above.
-    getUserDb: (_userId: string) => Promise.resolve(userDb),
+    getUserDb: (_userId: string) => {
+      // Guard against accidental multi-user deployments on the shared SQLite instance.
+      // If more than one user has signed in, all data is co-mingled — reject immediately
+      // so the operator is forced to either use the cloud (per-user MesaHub DB) or
+      // deploy a fresh single-user instance.
+      const userCount = registry.countUsers();
+      if (userCount > 1) {
+        throw new Error(
+          `OSS core single-user guard: ${userCount} users found in the registry. ` +
+            "The shared SQLite instance does not support multiple users — " +
+            "data cross-contamination would occur. " +
+            "For multi-user support deploy the cloud edition (gitvisor.dev).",
+        );
+      }
+      return Promise.resolve(userDb);
+    },
   };
 }

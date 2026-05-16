@@ -1,4 +1,4 @@
-import type { Repository, WorkflowRun, SecretMeta, PaginatedResponse, Release } from "@gitvisor/shared";
+import type { Repository, WorkflowRun, SecretMeta, PaginatedResponse, Release, RepoPullRequest } from "@gitvisor/shared";
 
 // Client-side calls use the /api proxy (Next.js rewrites → API service).
 // Server-side calls bypass the proxy and hit the API directly.
@@ -189,4 +189,16 @@ export function syncReleases(repositoryId: string): Promise<void> {
     method: "POST",
     body: JSON.stringify({ repositoryId }),
   });
+}
+
+export type { RepoPullRequest };
+
+// ── Pull Requests ─────────────────────────────────────────────────────────────
+
+/**
+ * Fetches open pull requests across all tracked repos (live from GitHub).
+ * Cached for 2 minutes — stale is acceptable since this is a live proxy.
+ */
+export function getPullRequests(limit = 50): Promise<RepoPullRequest[]> {
+  return apiFetch<RepoPullRequest[]>(`/pull-requests?limit=${limit}`);
 }

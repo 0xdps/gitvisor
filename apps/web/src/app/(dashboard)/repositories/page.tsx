@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
-  CheckCircle2,
   GitFork,
   Globe,
   Lock,
@@ -14,9 +13,10 @@ import {
   SlidersHorizontal,
   Star,
 } from "lucide-react";
-import { getInstallations, getRepositories, syncRepositories } from "@/lib/api-client";
-import type { AccountInstallation } from "@/lib/api-client";
+import { getRepositories, syncRepositories } from "@/lib/api-client";
 import type { Repository } from "@gitvisor/shared";
+import { InstallAccountsPanel } from "@/components/install-accounts-panel";
+import { useAccount } from "@/lib/account-context";
 
 const LANG_COLORS: Record<string, string> = {
   TypeScript: "#3178c6", JavaScript: "#f1e05a", Python: "#3572A5", Go: "#00ADD8",
@@ -52,17 +52,12 @@ export default function RepositoriesPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("pushed");
+  const { selected: selectedAccount } = useAccount();
 
   const { data: repos, isLoading } = useQuery({
     queryKey: ["repositories"],
     queryFn: getRepositories,
     staleTime: 30_000,
-  });
-
-  const { data: installations } = useQuery({
-    queryKey: ["installations"],
-    queryFn: getInstallations,
-    staleTime: 60_000,
   });
 
   const sync = useMutation({
@@ -74,8 +69,13 @@ export default function RepositoriesPage() {
 
   const filtered = useMemo(() => {
     if (!repos) return [];
+    const accountPrefix = selectedAccount ? `${selectedAccount.login}/` : null;
     const q = search.toLowerCase();
-    const list = q ? repos.filter((r) => r.fullName.toLowerCase().includes(q) || (r.description ?? "").toLowerCase().includes(q)) : repos;
+    const list = repos.filter((r) => {
+      if (accountPrefix && !r.fullName.toLowerCase().startsWith(accountPrefix.toLowerCase())) return false;
+      if (q && !r.fullName.toLowerCase().includes(q) && !(r.description ?? "").toLowerCase().includes(q)) return false;
+      return true;
+    });
     return [...list].sort((a, b) => {
       if (sort === "name")   return a.fullName.localeCompare(b.fullName);
       if (sort === "pushed") return (b.pushedAt ?? "").localeCompare(a.pushedAt ?? "");
@@ -139,7 +139,7 @@ export default function RepositoriesPage() {
       </div>
 
       {/* ── GitHub App install panel ─────────────────────────────── */}
-      <InstallAccountsPanel installations={installations ?? []} />
+      <InstallAccountsPanel />
 
       {/* ── Repo grid ─────────────────────────────────────────────────── */}
       {isLoading ? (
@@ -247,57 +247,4 @@ function RepoCard({ repo }: { repo: Repository }) {
   );
 }
 
-// ── InstallAccountsPanel ───────────────────────────────────────────────────────
 
-function InstallAccountsPanel({ installations }: { installations: AccountInstallation[] }) {
-  if (installations.length === 0) return null;
-
-  const allInstalled = installations.every((a) => a.installed);
-
-  return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <h2 className="text-sm font-semibold">GitHub App</h2>
-        {allInstalled && (
-          <span className="flex items-center gap-1 text-xs text-success font-medium">
-            <CheckCircle2 className="h-3.5 w-3.5" /> All accounts connected
-          </span>
-        )}
-      </div>
-      <div className="divide-y divide-border/50">
-        {installations.map((account) => (
-          <div key={account.login} className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-2.5">
-              {account.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={account.avatarUrl} alt={account.login} className="h-7 w-7 rounded-full" />
-              ) : (
-                <div className="h-7 w-7 rounded-full bg-muted/40 flex items-center justify-center text-[11px] font-bold text-muted-foreground">
-                  {account.login.slice(0, 1).toUpperCase()}
-                </div>
-              )}
-              <div>
-                <p className="text-sm font-medium">{account.login}</p>
-                <p className="text-[11px] text-muted-foreground">{account.type}</p>
-              </div>
-            </div>
-            {account.installed ? (
-              <span className="flex items-center gap-1 text-xs text-success font-medium">
-                <CheckCircle2 className="h-3.5 w-3.5" /> Installed
-              </span>
-            ) : (
-              <a
-                href={account.installUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-blue/30 bg-blue/10 px-3 py-1.5 text-xs font-medium text-blue hover:bg-blue/20 transition-colors"
-              >
-                Install App
-              </a>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}

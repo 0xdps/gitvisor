@@ -66,5 +66,5 @@ export function verifySession(token: string, secret: string): SessionPayload | n
   return payload;
 }
 
-/** Session TTL: 7 days in seconds */
-export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
+/** Session TTL: 24 hours in seconds (down from 7 days — reduces the window for a stolen session) */
+export const SESSION_TTL_SECONDS = 60 * 60 * 24;

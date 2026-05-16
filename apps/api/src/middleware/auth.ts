@@ -1,6 +1,13 @@
 import { createMiddleware } from "hono/factory";
 import { getCookie } from "hono/cookie";
-import { verifySession, type TokenStore } from "@gitvisor/auth";
+import {
+  verifySession,
+  deserializeToken,
+  serializeToken,
+  refreshGitHubToken,
+  SESSION_TTL_SECONDS,
+  type TokenStore,
+} from "@gitvisor/auth";
 import { config } from "../config.js";
 import type { User } from "@gitvisor/shared";
 
@@ -35,9 +42,40 @@ export function createRequireAuth(tokenStore: TokenStore) {
     // Verify the server-side store still has a valid entry.
     // Returns null if the token was explicitly revoked (logout) or the process
     // restarted (InMemoryTokenStore), forcing the user to re-authenticate.
-    const githubToken = await tokenStore.get(payload.sessionId);
-    if (!githubToken) {
+    const rawToken = await tokenStore.get(payload.sessionId);
+    const stored = deserializeToken(rawToken);
+    if (!stored) {
       return c.json({ ok: false, error: "Unauthorized" }, 401);
+    }
+
+    // Auto-refresh the access token if it has expired (or is within 5 minutes
+    // of expiry).  Only possible when a refresh token was stored at login, which
+    // requires "Expire user authorization tokens" to be enabled on the GitHub App.
+    let accessToken = stored.accessToken;
+    if (stored.refreshToken && stored.expiresAt && Date.now() > stored.expiresAt - 5 * 60_000) {
+      try {
+        const refreshed = await refreshGitHubToken(
+          stored.refreshToken,
+          config.github.clientId,
+          config.github.clientSecret,
+        );
+        accessToken = refreshed.accessToken;
+        const newTtl = refreshed.refreshTokenExpiresIn ?? SESSION_TTL_SECONDS;
+        await tokenStore.set(
+          payload.sessionId,
+          serializeToken({
+            accessToken: refreshed.accessToken,
+            refreshToken: refreshed.refreshToken ?? stored.refreshToken,
+            ...(refreshed.expiresIn !== undefined
+              ? { expiresAt: Date.now() + refreshed.expiresIn * 1000 }
+              : {}),
+          }),
+          newTtl,
+        );
+      } catch {
+        // Refresh token invalid or expired — force re-authentication.
+        return c.json({ ok: false, error: "Unauthorized" }, 401);
+      }
     }
 
     const user: User = {
@@ -49,7 +87,7 @@ export function createRequireAuth(tokenStore: TokenStore) {
       createdAt: payload.createdAt,
     };
     c.set("user", user);
-    c.set("githubToken", githubToken);
+    c.set("githubToken", accessToken);
     return await next();
   });
 }

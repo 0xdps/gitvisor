@@ -112,6 +112,12 @@ export class SharedSqliteRegistryRepository implements RegistryRepository {
     return Promise.resolve(row ? this.mapUser(row) : null);
   }
 
+  /** Returns the number of registered users. Used by the single-user guard. */
+  countUsers(): number {
+    const row = this.db.prepare(`SELECT COUNT(*) AS n FROM users`).get() as { n: number };
+    return row.n;
+  }
+
   private mapUser(row: Record<string, unknown>): User {
     return {
       id: row["id"] as string,

@@ -9,6 +9,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   BarChart2,
+  Building2,
+  ChevronDown,
+  ExternalLink,
   GitFork,
   KeyRound,
   LayoutDashboard,
@@ -36,7 +39,8 @@ import {
   TooltipTrigger,
 } from "@gitvisor/ui";
 import { me, logout as authLogout } from "../lib/auth-client";
-import { getWorkflowRuns } from "../lib/api-client";
+import { getInstallations, getWorkflowRuns } from "../lib/api-client";
+import { useAccount } from "../lib/account-context";
 
 interface AppShellProps {
   children: ReactNode;
@@ -81,12 +85,24 @@ export function AppShell({ children }: AppShellProps) {
     });
   }
 
+  const { selected: selectedAccount, select: selectAccount } = useAccount();
+
   const { data: user } = useQuery({
     queryKey: ["auth", "me"],
     queryFn: () => me(),
     staleTime: 60_000,
     retry: false,
   });
+
+  const { data: installations } = useQuery({
+    queryKey: ["installations"],
+    queryFn: getInstallations,
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  const installedAccounts = installations?.filter((a) => a.installed) ?? [];
+  const uninstalledAccounts = installations?.filter((a) => !a.installed && a.installUrl) ?? [];
 
   const { data: liveRuns } = useQuery({
     queryKey: ["workflows", "live"],
@@ -116,7 +132,7 @@ export function AppShell({ children }: AppShellProps) {
           } transition-[width] duration-200 ease-in-out border-r border-border flex flex-col shrink-0 bg-sidebar py-3 overflow-hidden`}
         >
           {/* Logo */}
-          <div className={`flex items-center ${expanded ? "gap-2.5 px-3 mb-5" : "justify-center mb-5"}`}>
+          <div className={`flex items-center ${expanded ? "gap-2.5 px-3 mb-3" : "justify-center mb-3"}`}>
             <Link
               href="/dashboard"
               className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-white/5 transition-colors shrink-0"
@@ -126,6 +142,120 @@ export function AppShell({ children }: AppShellProps) {
             {expanded && (
               <span className="text-sm font-semibold text-foreground truncate">Gitvisor</span>
             )}
+          </div>
+
+          {/* Account switcher */}
+          <div className={`${expanded ? "px-2 mb-3" : "flex justify-center mb-3"}`}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                {expanded ? (
+                  <button className="w-full flex items-center gap-2 rounded-lg border border-border/60 bg-white/3 px-2 py-1.5 hover:bg-white/6 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    {selectedAccount?.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={selectedAccount.avatarUrl} alt={selectedAccount.login} className="h-5 w-5 rounded-full shrink-0" />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full bg-blue/20 flex items-center justify-center shrink-0">
+                        {selectedAccount ? (
+                          <Building2 className="h-3 w-3 text-blue" />
+                        ) : (
+                          <User className="h-3 w-3 text-muted-foreground" />
+                        )}
+                      </div>
+                    )}
+                    <span className="text-xs font-medium truncate flex-1 text-left text-foreground/80">
+                      {selectedAccount?.login ?? "All accounts"}
+                    </span>
+                    <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                  </button>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-white/3 hover:bg-white/6 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                        {selectedAccount?.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={selectedAccount.avatarUrl} alt={selectedAccount.login} className="h-5 w-5 rounded-full" />
+                        ) : (
+                          <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={10} className="text-xs">
+                      {selectedAccount?.login ?? "All accounts"}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="start" sideOffset={8} className="w-52 bg-card border-border">
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold py-1.5">
+                  Switch account
+                </DropdownMenuLabel>
+                {/* "All accounts" option */}
+                <DropdownMenuItem
+                  onClick={() => selectAccount(null)}
+                  className={`flex items-center gap-2 text-xs cursor-pointer ${!selectedAccount ? "text-blue font-medium" : ""}`}
+                >
+                  <div className="h-5 w-5 rounded-full bg-muted/40 flex items-center justify-center shrink-0">
+                    <User className="h-3 w-3 text-muted-foreground" />
+                  </div>
+                  All accounts
+                  {!selectedAccount && <span className="ml-auto text-blue">✓</span>}
+                </DropdownMenuItem>
+                {/* Installed accounts */}
+                {installedAccounts.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    {installedAccounts.map((acct) => (
+                      <DropdownMenuItem
+                        key={acct.login}
+                        onClick={() => selectAccount(acct)}
+                        className={`flex items-center gap-2 text-xs cursor-pointer ${selectedAccount?.login === acct.login ? "text-blue font-medium" : ""}`}
+                      >
+                        {acct.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={acct.avatarUrl} alt={acct.login} className="h-5 w-5 rounded-full shrink-0" />
+                        ) : (
+                          <div className="h-5 w-5 rounded-full bg-muted/40 flex items-center justify-center shrink-0">
+                            <Building2 className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                        )}
+                        <span className="truncate flex-1">{acct.login}</span>
+                        {selectedAccount?.login === acct.login && <span className="ml-auto text-blue">✓</span>}
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+                {/* Uninstalled accounts (install prompts) */}
+                {uninstalledAccounts.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold py-1">
+                      Not installed
+                    </DropdownMenuLabel>
+                    {uninstalledAccounts.map((acct) => (
+                      <DropdownMenuItem key={acct.login} asChild>
+                        <a
+                          href={acct.installUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground"
+                        >
+                          {acct.avatarUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={acct.avatarUrl} alt={acct.login} className="h-5 w-5 rounded-full shrink-0 opacity-60" />
+                          ) : (
+                            <div className="h-5 w-5 rounded-full bg-muted/40 flex items-center justify-center shrink-0">
+                              <Building2 className="h-3 w-3 text-muted-foreground/50" />
+                            </div>
+                          )}
+                          <span className="truncate flex-1">{acct.login}</span>
+                          <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
+                        </a>
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Nav */}

@@ -16,7 +16,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@gitvisor/shared": "workspace:*"
+    "@gitvisor/shared": "workspace:*",
+    "ioredis": "^5.0.0"
   },
   "devDependencies": {
     "typescript": "^5.8.3",

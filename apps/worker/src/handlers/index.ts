@@ -12,6 +12,25 @@ import { handleSyncReleases } from "./sync-releases.js";
 const log = createLogger("worker");
 
 /**
+ * Resolves the canonical userId for a given GitHub installation.
+ *
+ * Webhook events for org repos use payload.sender.id as userId now, but
+ * historical records may still have the org GitHub ID stored.  This lookup
+ * corrects that at job-processing time: the installation record written by
+ * install:app always carries the real userId.  Falls back to the hint from
+ * the job data if the installation isn't found yet (e.g. race condition on
+ * first install — install:app has a 3 s head start so this is rare).
+ */
+async function resolveUserId(
+  hintUserId: string,
+  installationId: number,
+  registry: RegistryRepository,
+): Promise<string> {
+  const installation = await registry.getInstallationByGitHubId(installationId);
+  return installation?.userId ?? hintUserId;
+}
+
+/**
  * Central job dispatcher.
  * Receives a typed job from the queue and routes to the correct handler.
  * getUserDb and registry are injected — implementation provided by the db package.
@@ -24,7 +43,19 @@ export async function dispatch(
 ): Promise<void> {
   switch (job.type) {
     case "sync:repo": {
-      const { userId, installationId, repositoryId, githubRepoId, fullName } = job.data;
+      const { installationId, repositoryId, githubRepoId, fullName } = job.data;
+
+      // Verify the installation isn't suspended before hitting GitHub.
+      const installation = await registry.getInstallationByGitHubId(installationId);
+      if (installation?.suspended) {
+        log.warn({ installationId }, "sync:repo skipped — installation is suspended");
+        break;
+      }
+
+      // Resolve the correct userId from the registry (fixes org installation
+      // records that had the org GitHub ID stored as userId before the fix).
+      const userId = installation?.userId ?? job.data.userId;
+
       const [owner = "", name = ""] = fullName.split("/");
 
       // Fetch real repo metadata from GitHub in parallel with PR count.
@@ -109,25 +140,51 @@ export async function dispatch(
       break;
     }
 
-    case "sync:workflow-runs":
-      await handleSyncWorkflowRuns(job.data, getUserDb, enqueue);
+    case "sync:workflow-runs": {
+      const userId = await resolveUserId(job.data.userId, job.data.installationId, registry);
+      await handleSyncWorkflowRuns({ ...job.data, userId }, getUserDb, enqueue);
       break;
+    }
 
-    case "sync:workflows":
-      await handleSyncWorkflows(job.data, getUserDb);
+    case "sync:workflows": {
+      const userId = await resolveUserId(job.data.userId, job.data.installationId, registry);
+      await handleSyncWorkflows({ ...job.data, userId }, getUserDb);
       break;
+    }
 
-    case "sync:secrets":
-      await handleSyncSecrets(job.data, getUserDb);
+    case "sync:secrets": {
+      const userId = await resolveUserId(job.data.userId, job.data.installationId, registry);
+      await handleSyncSecrets({ ...job.data, userId }, getUserDb);
       break;
+    }
 
-    case "sync:packages":
-      await handleSyncPackages(job.data, getUserDb);
+    case "sync:packages": {
+      const userId = await resolveUserId(job.data.userId, job.data.installationId, registry);
+      await handleSyncPackages({ ...job.data, userId }, getUserDb);
       break;
+    }
 
-    case "sync:releases":
-      await handleSyncReleases(job.data, getUserDb);
+    case "sync:releases": {
+      const userId = await resolveUserId(job.data.userId, job.data.installationId, registry);
+      await handleSyncReleases({ ...job.data, userId }, getUserDb);
       break;
+    }
+
+    case "delete:repo": {
+      const { installationId, githubRepoId } = job.data;
+      const userId = await resolveUserId(job.data.userId, installationId, registry);
+      const userDb = await getUserDb(userId);
+      await userDb.deleteRepository(githubRepoId);
+      await userDb.appendAuditLog({
+        userId,
+        action: "repository.deleted",
+        resourceType: "repository",
+        resourceId: String(githubRepoId),
+        metadata: { githubRepoId },
+      });
+      log.info({ githubRepoId }, "delete:repo completed");
+      break;
+    }
 
     case "uninstall:app": {
       const { githubInstallationId } = job.data;
@@ -148,7 +205,7 @@ export async function dispatch(
         suspended,
         uninstalledAt: null,
       });
-      log.info({ githubInstallationId, userId }, "install:app persisted installation");
+      log.info({ githubInstallationId, userId, suspended }, "install:app persisted installation");
       break;
     }
 

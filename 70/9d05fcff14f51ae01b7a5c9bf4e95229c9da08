@@ -1,0 +1,193 @@
+apps/web/src/app/(dashboard)/repositories/page.tsx
+  s_6808e09c3319ff::t_1d045e4ad42e33 19,55,72,74-78
+  s_4a9f70e4f1ed27::t_0bfc623ac5426f 18
+  s_6808e09c3319ff::t_b05cd3d7422587 16,142
+apps/web/src/components/install-accounts-panel.tsx
+  s_6808e09c3319ff::t_d40ca29b2f58be 3-5
+  s_6808e09c3319ff::t_18ccca61c4270a 7-112
+apps/web/src/app/(dashboard)/dashboard/page.tsx
+  s_6808e09c3319ff::t_8a3386e89d664c 7,10,12-18,20-23,25-27,35-37,48-75,77,81,83,92-102,105-120,122-126,128-183,186,188-204,207-234,237-240,242-250,253,255-259,263-272,279-292,294-311,313-314,317-318,320-331,333-348,350-353,358-427,429,434-440,442-550,552-581,583-600,604-605,609-610,613,615-616,619-627,639,642-644
+apps/api/src/routes/public.ts
+  s_0843133db69033::t_30204b33d0e775 4,33-35,37-40
+packages/github/src/webhooks.ts
+  s_63d57fe84f4528::t_da782a46c9d4b3 115-116,120,128,131-132,136,150,162-163,169,183,191-212,215,217,220-250,261
+  s_63d57fe84f4528::t_6b4455c1d0397e 111-112,179
+  s_63d57fe84f4528::t_9b6ccd04f3d174 7-11
+  s_63d57fe84f4528::t_7ed33135802e11 130
+  s_63d57fe84f4528::t_ff03954bb20dab 34-38,41-42,55,57-66,68-69,75,92-101,103-104
+packages/auth/src/session.ts
+  s_0843133db69033::t_c5978a0eb497cb 69-70
+packages/auth/package.json
+  s_0843133db69033::t_6c63298e25ee1e 19-20
+packages/db/src/shared-sqlite-registry.ts
+  s_0843133db69033::t_762d897441b30e 115-120
+apps/web/src/components/app-shell.tsx
+  s_6808e09c3319ff::t_54459a334dd4c2 88-89,97-105
+  s_6808e09c3319ff::t_b3b29d0cb7a476 42-43
+  s_6808e09c3319ff::t_2d6e8b824793ce 135,147-258
+  s_6808e09c3319ff::t_df5de02e9f917b 12-14
+apps/api/src/config.ts
+  s_056c82c5ab56e4::t_46126de4a44611 20-23
+apps/web/src/app/providers.tsx
+  s_6808e09c3319ff::t_f69a44310b8e36 5,21-23
+apps/api/src/middleware/auth.ts
+  s_63d57fe84f4528::t_4d99b3a42de4ce 45-47,51-68,72-78
+  s_63d57fe84f4528::t_a509a1696f31cd 69-71
+  s_63d57fe84f4528::t_eaf0e05f3e423c 90
+  s_63d57fe84f4528::t_ccf602f38dd1cf 3-10
+apps/api/src/routes/secrets.ts
+  s_0843133db69033::t_90803a742f95f3 18,34-35
+  s_0843133db69033::t_45aef74aa77a53 60,101
+apps/api/src/routes/repositories.ts
+  s_6808e09c3319ff::t_b9f19df5d2469d 8
+  s_6808e09c3319ff::t_80e2815369db91 17
+  s_6808e09c3319ff::t_0a590c6e6254ea 99,101-104
+  s_0843133db69033::t_90803a742f95f3 7,19-20,60-62
+apps/worker/src/handlers/index.ts
+  s_63d57fe84f4528::t_81e2fef9ba00e0 15-32,46-58,143-151,153,155-157,159,161-163,165,167-169,171,173-185,187,208
+packages/github/src/index.ts
+  s_6808e09c3319ff::t_09e69a716b2f6b 7-8
+  s_63d57fe84f4528::t_ea2d6d7f282776 38
+packages/queue/src/bullmq.ts
+  s_63d57fe84f4528::t_0f99886728c8cd 21,50
+apps/web/src/app/auth/callback/page.tsx
+  s_cb2f5acd96c505::t_1bf4c001e3841e 17,20,24-26
+  s_6808e09c3319ff::t_3a89112b1bc083 31-38
+  s_cb2f5acd96c505::t_df6d63fee55821 39-44
+  s_056c82c5ab56e4::t_b7f8553713a8ab 15-16,18,30
+  s_cb2f5acd96c505::t_345fa780aa7629 6,21-23
+apps/api/src/routes/packages.ts
+  s_0843133db69033::t_45aef74aa77a53 6
+  s_0843133db69033::t_023c37eb561c97 16-18,40
+packages/auth/src/token-store.ts
+  s_63d57fe84f4528::t_fb9e807fee30da 96-142
+  s_0843133db69033::t_6c63298e25ee1e 2,62-73,75-88
+  s_63d57fe84f4528::t_0f99886728c8cd 74
+apps/api/src/middleware/rate-limit.ts
+  s_0843133db69033::t_cd74867955370a 1-50
+apps/web/src/lib/auth-client.ts
+  s_056c82c5ab56e4::t_b7f8553713a8ab 54-58,60-63,69-73
+  s_cb2f5acd96c505::t_e3560cdd11fc5a 64,76-77
+  s_cb2f5acd96c505::t_345fa780aa7629 2,78-90
+apps/web/src/app/login/page.tsx
+  s_cb2f5acd96c505::t_420ab3580d1fe4 18,23,28-30,41-46
+  s_cb2f5acd96c505::t_7ca9053d747b49 4,17,120-132
+  s_cb2f5acd96c505::t_a7a973d8cca2c5 5-6,19,24-27,31-40,47
+apps/api/src/routes/webhooks.ts
+  s_63d57fe84f4528::t_2b59e1a04b7d5b 4
+  s_0843133db69033::t_726215260066bc 11,20-22,104-107,121-124
+  s_63d57fe84f4528::t_39ddc4c6e156ce 26-34
+  s_63d57fe84f4528::t_e3cde0573453ea 25,37
+  s_63d57fe84f4528::t_544a085d086c07 70,74-77,96,101-103
+apps/api/src/routes/pull-requests.ts
+  s_6808e09c3319ff::t_cd77a07840f135 1-71
+apps/api/src/routes/installations.ts
+  s_63d57fe84f4528::t_3c767d42751731 177
+  s_6808e09c3319ff::t_b1fb2a8869c2de 93-98,112-125,127-128,133,136,160-165,167,171,176,204,208-214
+  s_63d57fe84f4528::t_f5e308a6c0210b 8-9,91-92,102-105,178-179,182,203,207,215-223,232-233,251
+  s_cb2f5acd96c505::t_ee2fda21cb5b44 99-101,126,147-157,187-194,205-206,224-231
+  s_63d57fe84f4528::t_c4d628aa684072 139-146,180-181,183-184,195-202
+  s_6808e09c3319ff::t_d29e6ce9d4ab75 166,168-170,172-175
+  s_cb2f5acd96c505::t_345fa780aa7629 19-86
+  s_6808e09c3319ff::t_af15e3b1378600 242-246,248,258
+apps/web/src/lib/account-context.tsx
+  s_6808e09c3319ff::t_c57270f6f23aed 1-59
+apps/web/src/lib/api-client.ts
+  s_6808e09c3319ff::t_9c212b91c8c37d 1,193-203
+apps/api/src/routes/workflows.ts
+  s_0843133db69033::t_90803a742f95f3 6,14-16,47
+  s_0843133db69033::t_45aef74aa77a53 66
+apps/api/src/routes/auth.ts
+  s_056c82c5ab56e4::t_46126de4a44611 31-38,50,79-81,93,132
+  s_cb2f5acd96c505::t_bd183515c50c13 51-55,77-78,82-84,115,136-161,179-184,227
+  s_4a9f70e4f1ed27::t_669cd550e3b4a3 64
+  s_63d57fe84f4528::t_a509a1696f31cd 196-197
+  s_cb2f5acd96c505::t_420ab3580d1fe4 219-222
+  h_7a2f4c8f0473b8 12-13,106,112,187-189,191,194,198-199,273-275,280,299-301,306
+  s_63d57fe84f4528::t_0fbb925486244d 264-272,276-279,281-298,302-305,307-314
+  s_0843133db69033::t_85e424451e0411 18,20,88
+  s_6808e09c3319ff::t_649661612b28c1 162-178
+apps/api/src/app.ts
+  s_6808e09c3319ff::t_9c212b91c8c37d 21,96
+packages/github/src/pulls.ts
+  s_6808e09c3319ff::t_a91d634c3f0e0b 27-47
+  s_6808e09c3319ff::t_65f1e90e0b2dee 1-26,48
+packages/db/src/index.ts
+  s_0843133db69033::t_11435e33db1031 53-68
+packages/shared/src/index.ts
+  s_6808e09c3319ff::t_916054cc7a996b 229-259
+  s_63d57fe84f4528::t_76c377c6e2babf 288
+  s_63d57fe84f4528::t_6826992c3ee1c6 265-270
+packages/auth/src/github-oauth.ts
+  s_4a9f70e4f1ed27::t_195d4b70e54c07 16
+  s_4a9f70e4f1ed27::t_6262f38ddc530a 27-28,36-39,44-48,51
+  s_63d57fe84f4528::t_18d3794f3b74ea 60-65,101-103,121-173
+  s_056c82c5ab56e4::t_f6092a4169800b 22-26,29-35,40-43,49-50,52-55
+  s_63d57fe84f4528::t_546cfab7e0bf08 118-120
+  s_63d57fe84f4528::t_093fd51c6eeb70 174-176
+packages/auth/src/index.ts
+  s_0843133db69033::t_6c63298e25ee1e 20
+  s_63d57fe84f4528::t_db034b23907968 12,22-23,25
+  s_056c82c5ab56e4::t_f6092a4169800b 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "709d05fcff14f51ae01b7a5c9bf4e95229c9da08",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_056c82c5ab56e4": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "8bef6f47-e9be-4548-8dc4-1f965da6242b",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    },
+    "s_0843133db69033": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "4b23631a-9559-45f0-92fa-7516b127c744",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    },
+    "s_4a9f70e4f1ed27": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b4856e2b-da94-4661-a2c4-c1f18bc766d5",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    },
+    "s_63d57fe84f4528": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "08d4f1f2-fbbc-4a67-a541-4391f7c87720",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    },
+    "s_6808e09c3319ff": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "0f8590e4-7ecf-47e0-99bc-ead1dcbea0fd",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    },
+    "s_cb2f5acd96c505": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2b0c1cb4-d150-4fc2-bd22-d4e5c4f2c370",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

@@ -11,11 +11,25 @@ export async function listPackages(
   owner: string,
   packageType: PackageEcosystem,
 ) {
-  const { data } = await octokit.rest.packages.listPackagesForUser({
-    username: owner,
-    package_type: packageType,
-  });
-  return data;
+  try {
+    const { data } = await octokit.rest.packages.listPackagesForUser({
+      username: owner,
+      package_type: packageType,
+    });
+    return data;
+  } catch (err) {
+    if (typeof err === "object" && err !== null && "status" in err) {
+      const status = (err as { status?: unknown }).status;
+      if (status === 403 || status === 404) {
+        const { data } = await octokit.rest.packages.listPackagesForOrganization({
+          org: owner,
+          package_type: packageType,
+        });
+        return data;
+      }
+    }
+    throw err;
+  }
 }
 
 export function mapPackage(

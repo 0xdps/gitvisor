@@ -2,6 +2,7 @@ import type { JobData, SyncWorkflowRunsJobData } from "@gitvisor/shared";
 import { getInstallationOctokit, listWorkflowRuns, mapWorkflowRun } from "@gitvisor/github";
 import type { UserDbRepository } from "@gitvisor/db";
 import { createLogger } from "@gitvisor/logger";
+import { getGitHubErrorStatus, isExpectedGitHubError } from "./github-errors.js";
 
 const log = createLogger("worker");
 
@@ -15,7 +16,19 @@ export async function handleSyncWorkflowRuns(
   const userDb = await getUserDb(data.userId);
 
   const page = data.page ?? 1;
-  const { workflow_runs } = await listWorkflowRuns(octokit as never, owner, repo, page);
+  let workflow_runs: Awaited<ReturnType<typeof listWorkflowRuns>>["workflow_runs"] = [];
+  try {
+    ({ workflow_runs } = await listWorkflowRuns(octokit as never, owner, repo, page));
+  } catch (err) {
+    if (isExpectedGitHubError(err, [403, 404])) {
+      log.info(
+        { fullName: data.fullName, page, status: getGitHubErrorStatus(err) },
+        "workflow runs sync skipped due to missing Actions access or unavailable endpoint",
+      );
+      return;
+    }
+    throw err;
+  }
 
   for (const run of workflow_runs) {
     const mapped = mapWorkflowRun(

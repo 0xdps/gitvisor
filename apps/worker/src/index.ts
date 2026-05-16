@@ -28,6 +28,7 @@ const queue = new BullMQQueueRepository({
     port: Number(process.env["REDIS_PORT"] ?? 6379),
     password: process.env["REDIS_PASSWORD"],
   },
+  prefix: process.env["QUEUE_PREFIX"] ?? "gitvisor:",
 });
 
 // ── Database ─────────────────────────────────────────────────────────────────

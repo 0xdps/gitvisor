@@ -13,7 +13,10 @@ const log = createLogger("api");
 createGitHubApp(config.github);
 
 // ── Infrastructure ────────────────────────────────────────────────────────────
-const queue = new BullMQQueueRepository({ redis: config.redis });
+const queue = new BullMQQueueRepository({
+  redis: config.redis,
+  prefix: process.env["QUEUE_PREFIX"] ?? "gitvisor:",
+});
 
 const { getUserDb, registry } = await createSharedSqliteRepositories({
   registryPath: process.env["REGISTRY_DB_PATH"] ?? "./registry.sqlite",

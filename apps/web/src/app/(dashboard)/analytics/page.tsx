@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAnalytics, getRepositories } from "@/lib/api-client";
 import { TrendingUp, TrendingDown, Activity, GitBranch, CheckCircle2, XCircle } from "lucide-react";
 import type React from "react";
+import { useAccount } from "@/lib/account-context";
 
 export default function AnalyticsPage() {
   const { data: analytics, isLoading } = useQuery({
@@ -18,7 +19,14 @@ export default function AnalyticsPage() {
     staleTime: 60_000,
   });
 
-  const repoMap = new Map(repos?.map((r) => [r.id, r.fullName]) ?? []);
+  const { selected: selectedAccount } = useAccount();
+  const allRepos = repos ?? [];
+  const scopedRepos = selectedAccount
+    ? allRepos.filter((r) => r.fullName.toLowerCase().startsWith(selectedAccount.login.toLowerCase() + "/"))
+    : allRepos;
+  const scopedRepoIds = new Set(scopedRepos.map((r) => r.id));
+
+  const repoMap = new Map(allRepos.map((r) => [r.id, r.fullName]));
 
   if (isLoading) {
     return (
@@ -31,7 +39,10 @@ export default function AnalyticsPage() {
     );
   }
 
-  const byRepo = analytics?.byRepo ?? [];
+  const allByRepo = analytics?.byRepo ?? [];
+  const byRepo = selectedAccount
+    ? allByRepo.filter((r) => scopedRepoIds.has(r.repositoryId))
+    : allByRepo;
   const byDay  = analytics?.byDay ?? [];
 
   const total   = byRepo.reduce((s, r) => s + r.total, 0);

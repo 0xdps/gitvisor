@@ -146,7 +146,7 @@ export function createInstallationsRouter(
         type: "User" as const,
         installed: userInstalledLogins.has(user.githubUsername.toLowerCase()),
         installUrl: appSlug
-          ? `https://github.com/apps/${appSlug}/installations/new?target_id=${user.id}&target_type=User`
+          ? `https://github.com/apps/${appSlug}/installations/new/permissions?target_id=${user.id}&target_type=User`
           : null,
       },
     ];

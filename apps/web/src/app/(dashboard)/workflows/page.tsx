@@ -20,6 +20,7 @@ import {
 import { getWorkflowRuns, getRepositories, rerunWorkflow, cancelWorkflow } from "@/lib/api-client";
 import type { WorkflowRun } from "@gitvisor/shared";
 import { useUpgradeModal } from "@/components/upgrade-modal";
+import { useAccount } from "@/lib/account-context";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -130,9 +131,15 @@ function WorkflowsContent() {
     staleTime: 60_000,
   });
 
-  const repoMap = new Map(repos?.map((r) => [r.id, r.fullName]) ?? []);
-  const lockedRepoIds = new Set(repos?.filter((r) => r.locked).map((r) => r.id) ?? []);
-  const unlockedRepos = repos?.filter((r) => !r.locked) ?? [];
+  const { selected: selectedAccount } = useAccount();
+  const allRepos = repos ?? [];
+  const scopedRepos = selectedAccount
+    ? allRepos.filter((r) => r.fullName.toLowerCase().startsWith(selectedAccount.login.toLowerCase() + "/"))
+    : allRepos;
+
+  const repoMap = new Map(scopedRepos.map((r) => [r.id, r.fullName]));
+  const lockedRepoIds = new Set(scopedRepos.filter((r) => r.locked).map((r) => r.id));
+  const unlockedRepos = scopedRepos.filter((r) => !r.locked);
 
   const items = runData?.items ?? [];
   const filtered = needsClientFilter

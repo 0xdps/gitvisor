@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { getReleases, syncReleases, getRepositories } from "@/lib/api-client";
+import { useAccount } from "@/lib/account-context";
 
 interface ReleasesPageProps {
   searchParams: Promise<{ repositoryId?: string; page?: string }>;
@@ -82,10 +83,18 @@ function ReleasesContent({
     },
   });
 
+  const { selected: selectedAccount } = useAccount();
   const repos = reposQuery.data ?? [];
+  const scopedRepos = selectedAccount
+    ? repos.filter((r) => r.fullName.toLowerCase().startsWith(selectedAccount.login.toLowerCase() + "/"))
+    : repos;
+  const scopedRepoIds = new Set(scopedRepos.map((r) => r.id));
   const result = releasesQuery.data;
-  const releases = result?.items ?? [];
-  const total = result?.total ?? 0;
+  const allReleases = result?.items ?? [];
+  const releases = selectedAccount && !repositoryId
+    ? allReleases.filter((r) => scopedRepoIds.has(r.repositoryId))
+    : allReleases;
+  const total = selectedAccount && !repositoryId ? releases.length : (result?.total ?? 0);
   const hasMore = result?.hasMore ?? false;
 
   return (
@@ -124,7 +133,7 @@ function ReleasesContent({
           className="h-8 rounded-md border border-border bg-card px-2 text-sm text-white focus:outline-none focus:border-blue min-w-[200px]"
         >
           <option value="">All repositories</option>
-          {repos.map((r) => (
+          {scopedRepos.map((r) => (
             <option key={r.id} value={r.id}>
               {r.fullName}
             </option>

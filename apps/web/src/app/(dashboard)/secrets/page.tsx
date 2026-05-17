@@ -13,10 +13,12 @@ import {
 } from "@/lib/api-client";
 import type { SecretMeta } from "@gitvisor/shared";
 import { useState } from "react";
+import { useAccount } from "@/lib/account-context";
 
 function SecretsContent() {
   const searchParams = useSearchParams();
   const repositoryId = searchParams.get("repositoryId") ?? undefined;
+  const { selected: selectedAccount } = useAccount();
 
   const { data: repos } = useQuery({
     queryKey: ["repositories"],
@@ -49,9 +51,13 @@ function SecretsContent() {
   }
 
   // Only show repos that have at least one secret. Fall back to all repos while allSecrets is loading.
+  const allRepos = repos ?? [];
+  const scopedRepos = selectedAccount
+    ? allRepos.filter((r) => r.fullName.toLowerCase().startsWith(selectedAccount.login.toLowerCase() + "/"))
+    : allRepos;
   const reposWithSecrets = allSecrets
-    ? (repos?.filter((r) => secretCountByRepo.has(r.id)) ?? [])
-    : (repos ?? []);
+    ? scopedRepos.filter((r) => secretCountByRepo.has(r.id))
+    : scopedRepos;
 
   if (!repositoryId) {
     return (

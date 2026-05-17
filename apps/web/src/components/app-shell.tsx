@@ -105,7 +105,19 @@ export function AppShell({ children }: AppShellProps) {
   });
 
   const installedAccounts = installations?.filter((a) => a.installed) ?? [];
-  const uninstalledAccounts = installations?.filter((a) => !a.installed && a.installUrl) ?? [];
+  const uninstalledAccounts = installations?.filter((a) => !a.installed && (a.installUrl || a.locked)) ?? [];
+
+  // If the user's plan was downgraded and the selected org is now locked,
+  // clear the stale localStorage selection so locked data is never shown.
+  useEffect(() => {
+    if (!selectedAccount || !installations) return;
+    const match = installations.find(
+      (a) => a.login.toLowerCase() === selectedAccount.login.toLowerCase(),
+    );
+    if (match?.locked) {
+      selectAccount(null);
+    }
+  }, [installations, selectedAccount, selectAccount]);
 
   const { data: liveRuns } = useQuery({
     queryKey: ["workflows", "live"],
@@ -253,27 +265,46 @@ export function AppShell({ children }: AppShellProps) {
                     <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold py-1">
                       Not installed
                     </DropdownMenuLabel>
-                    {uninstalledAccounts.map((acct) => (
-                      <DropdownMenuItem key={acct.login} asChild>
-                        <a
-                          href={acct.installUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground"
+                    {uninstalledAccounts.map((acct) =>
+                      acct.locked ? (
+                        <DropdownMenuItem
+                          key={acct.login}
+                          onClick={openUpgradeModal}
+                          className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground/60"
                         >
                           {acct.avatarUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={acct.avatarUrl} alt={acct.login} className="h-5 w-5 rounded-full shrink-0 opacity-60" />
+                            <img src={acct.avatarUrl} alt={acct.login} className="h-5 w-5 rounded-full shrink-0 opacity-40 grayscale" />
                           ) : (
                             <div className="h-5 w-5 rounded-full bg-muted/40 flex items-center justify-center shrink-0">
-                              <Building2 className="h-3 w-3 text-muted-foreground/50" />
+                              <Building2 className="h-3 w-3 text-muted-foreground/40" />
                             </div>
                           )}
-                          <span className="truncate flex-1">{acct.login}</span>
-                          <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
-                        </a>
-                      </DropdownMenuItem>
-                    ))}
+                          <span className="truncate flex-1 line-through">{acct.login}</span>
+                          <Lock className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem key={acct.login} asChild>
+                          <a
+                            href={acct.installUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-xs cursor-pointer text-muted-foreground hover:text-foreground"
+                          >
+                            {acct.avatarUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={acct.avatarUrl} alt={acct.login} className="h-5 w-5 rounded-full shrink-0 opacity-60" />
+                            ) : (
+                              <div className="h-5 w-5 rounded-full bg-muted/40 flex items-center justify-center shrink-0">
+                                <Building2 className="h-3 w-3 text-muted-foreground/50" />
+                              </div>
+                            )}
+                            <span className="truncate flex-1">{acct.login}</span>
+                            <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
+                          </a>
+                        </DropdownMenuItem>
+                      ),
+                    )}
                   </>
                 )}
               </DropdownMenuContent>

@@ -8,11 +8,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Package, RefreshCw, Lock, Globe, Download, Check, Copy, ExternalLink } from "lucide-react";
 import { getRepositories, getPackages } from "@/lib/api-client";
 import type { Package as PackageType, Repository } from "@gitvisor/shared";
+import { useAccount } from "@/lib/account-context";
 
 function PackagesContent() {
   const searchParams = useSearchParams();
   const repositoryId = searchParams.get("repositoryId") ?? undefined;
   const queryClient = useQueryClient();
+
+  const { selected: selectedAccount } = useAccount();
 
   const { data: repos } = useQuery({
     queryKey: ["repositories"],
@@ -41,9 +44,13 @@ function PackagesContent() {
   const repoIdsWithPackages = new Set(
     allPackages?.map((p) => p.repositoryId).filter(Boolean) ?? [],
   );
+  const allRepos = repos ?? [];
+  const scopedRepos = selectedAccount
+    ? allRepos.filter((r) => r.fullName.toLowerCase().startsWith(selectedAccount.login.toLowerCase() + "/"))
+    : allRepos;
   const reposWithPackages = allPackages
-    ? (repos?.filter((r) => repoIdsWithPackages.has(r.id)) ?? [])
-    : (repos ?? []);
+    ? scopedRepos.filter((r) => repoIdsWithPackages.has(r.id))
+    : scopedRepos;
   // Always include the currently-selected repo in the tabs (even if its packages
   // haven't been counted yet) so the active tab never disappears.
   const tabRepos =

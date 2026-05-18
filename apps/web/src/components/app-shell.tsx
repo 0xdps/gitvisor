@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   Lock,
   LogOut,
+  MessageSquare,
   Package,
   PanelLeft,
   PanelLeftClose,
@@ -57,6 +58,7 @@ const navItems = [
   { label: "Secrets",      to: "/secrets",      icon: KeyRound },
   { label: "Packages",     to: "/packages",     icon: Package },
   { label: "Audit Log",    to: "/audit-log",    icon: ScrollText },
+  { label: "Feedback",     to: "/feedback",     icon: MessageSquare },
 ];
 
 function getInitials(name: string | null | undefined, email: string | undefined) {

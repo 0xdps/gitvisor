@@ -40,4 +40,17 @@ export const config = {
       return s;
     })(),
   },
+
+  /**
+   * Cloudflare Turnstile bot-protection (optional).
+   * Set CF_TURNSTILE_SECRET_KEY in the API environment to enable server-side
+   * token verification on the login endpoint.  The corresponding site key
+   * (NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY) must also be set in the web app.
+   *
+   * When unset, Turnstile verification is skipped — safe for self-hosted
+   * deployments that do not use Cloudflare.
+   */
+  turnstile: {
+    secretKey: process.env["CF_TURNSTILE_SECRET_KEY"] ?? null,
+  },
 } as const;

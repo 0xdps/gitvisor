@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { setCookie, deleteCookie, getCookie } from "hono/cookie";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 import {
   buildGitHubOAuthUrl,
   exchangeGitHubCode,
@@ -13,11 +13,43 @@ import {
   deserializeToken,
   type TokenStore,
 } from "@gitvisor/auth";
-import type { RegistryRepository } from "@gitvisor/db";
+import type { RegistryRepository, UserDbRepository } from "@gitvisor/db";
 import { config } from "../config.js";
 import { makeIpRateLimiter, getClientIp } from "../middleware/rate-limit.js";
 
 const authCallbackLimiter = makeIpRateLimiter(10, 60_000);
+const loginStartLimiter = makeIpRateLimiter(20, 60_000);
+
+/**
+ * Verify a Cloudflare Turnstile challenge token.
+ * Returns true when Turnstile is not configured (skipped) or when the token
+ * is accepted.  Fails open on network errors so a Cloudflare outage cannot
+ * lock users out.
+ */
+async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
+  if (!config.turnstile.secretKey) return true;
+  const body = new URLSearchParams({
+    secret: config.turnstile.secretKey,
+    response: token,
+    remoteip: ip,
+  });
+  try {
+    const res = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      { method: "POST", body, signal: AbortSignal.timeout(5_000) },
+    );
+    const data = (await res.json()) as { success: boolean };
+    return data.success === true;
+  } catch {
+    // Fail open — a Cloudflare outage should not prevent logins
+    return true;
+  }
+}
+
+/** Return first 16 hex chars of SHA-256(value) — used for UA fingerprinting. */
+function shortHash(value: string): string {
+  return createHash("sha256").update(value).digest("hex").slice(0, 16);
+}
 
 /**
  * Called after the user has been upserted in the registry but before the
@@ -42,6 +74,7 @@ export function createAuthRouter(
   registry: RegistryRepository,
   tokenStore: TokenStore,
   onAuthSuccess?: (ctx: AuthSuccessContext) => Promise<void>,
+  getUserDb?: (userId: string) => Promise<UserDbRepository>,
 ) {
   const router = new Hono();
 
@@ -54,7 +87,25 @@ export function createAuthRouter(
   * whether to send the user to the dashboard directly or to the GitHub App
   * installation screen for first-time setup.
    */
-  router.get("/login", (c) => {
+  router.get("/login", async (c) => {
+    const ip = getClientIp(c.req);
+    if (!loginStartLimiter(ip)) {
+      return c.json({ ok: false, error: "Too many requests" }, 429);
+    }
+
+    // Verify Cloudflare Turnstile challenge when configured.
+    // Self-hosted deployments that do not set CF_TURNSTILE_SECRET_KEY skip this.
+    if (config.turnstile.secretKey) {
+      const turnstileToken = c.req.query("turnstile_token");
+      if (!turnstileToken) {
+        return c.json({ ok: false, error: "Security challenge required" }, 403);
+      }
+      const valid = await verifyTurnstile(turnstileToken, ip);
+      if (!valid) {
+        return c.json({ ok: false, error: "Security challenge failed" }, 403);
+      }
+    }
+
     const state = randomBytes(16).toString("hex");
     setCookie(c, "oauth_state", state, {
       httpOnly: true,
@@ -113,10 +164,15 @@ export function createAuthRouter(
 
     const user = await fetchGitHubUser(accessToken);
     const appId = Number(config.github.appId);
+    const userId = String(user.id);
+
+    // Fetch the existing registry record BEFORE upsert so we can detect
+    // credential changes that may indicate GitHub account compromise.
+    const existingUser = await registry.getUserById(userId).catch(() => null);
 
     // Persist / update the user in the registry on every login
     await registry.upsertUser({
-      id: String(user.id),
+      id: userId,
       githubUsername: user.githubUsername,
       email: user.email ?? "",
       name: user.name ?? null,
@@ -126,11 +182,49 @@ export function createAuthRouter(
     // Cloud extension hook: NubeAuth provisioning, installation sync, etc.
     if (onAuthSuccess) {
       await onAuthSuccess({
-        userId: String(user.id),
+        userId,
         githubToken: accessToken,
         githubUsername: user.githubUsername,
         ...(body.installation_id !== undefined ? { installationId: body.installation_id } : {}),
       });
+    }
+
+    // ── GitHub account compromise detection ──────────────────────────────────
+    // Compare the live GitHub data with what was last stored in the registry.
+    // A changed username or email can indicate account hijacking or OAuth app
+    // abuse — record a security alert in the audit log for review.
+    if (existingUser && getUserDb) {
+      const alerts: Record<string, unknown>[] = [];
+      if (existingUser.githubUsername !== user.githubUsername) {
+        alerts.push({
+          type: "github_username_changed",
+          previous: existingUser.githubUsername,
+          current: user.githubUsername,
+        });
+      }
+      if (existingUser.email && user.email && existingUser.email !== user.email) {
+        alerts.push({
+          type: "github_email_changed",
+          previous: existingUser.email,
+          current: user.email,
+        });
+      }
+      if (alerts.length > 0) {
+        const userDb = await getUserDb(userId).catch(() => null);
+        if (userDb) {
+          for (const alert of alerts) {
+            await userDb
+              .appendAuditLog({
+                userId,
+                action: "security.alert",
+                resourceType: "account",
+                resourceId: userId,
+                metadata: { ...alert, ip: getClientIp(c.req) },
+              })
+              .catch(() => {}); // Never block login on audit failure
+          }
+        }
+      }
     }
 
     let nextUrl = "/dashboard";
@@ -199,16 +293,23 @@ export function createAuthRouter(
       storeTtl,
     );
 
+    // UA fingerprint — stored in the session so the auth middleware can emit
+    // a security alert when the User-Agent changes between requests (which can
+    // indicate session token theft).  We intentionally do NOT block on mismatch
+    // because browsers auto-update and change their UA silently.
+    const uaHash = shortHash(c.req.header("user-agent") ?? "");
+
     const token = signSession(
       {
         sessionId,
-        userId: String(user.id),
+        userId,
         githubUsername: user.githubUsername,
         name: user.name,
         email: user.email,
         avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
         exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
+        uaHash,
       },
       config.session.secret,
     );
@@ -223,6 +324,27 @@ export function createAuthRouter(
       path: "/",
       maxAge: SESSION_TTL_SECONDS,
     });
+
+    // Audit: record the successful login with IP + UA so suspicious sessions
+    // can be identified when reviewing the audit log.
+    if (getUserDb) {
+      const userDb = await getUserDb(userId).catch(() => null);
+      if (userDb) {
+        await userDb
+          .appendAuditLog({
+            userId,
+            action: "auth.login",
+            resourceType: "session",
+            resourceId: sessionId,
+            metadata: {
+              ip: getClientIp(c.req),
+              ua: (c.req.header("user-agent") ?? "").slice(0, 200),
+              newUser: !existingUser,
+            },
+          })
+          .catch(() => {});
+      }
+    }
 
     return c.json({ ok: true, data: { userId: user.id, nextUrl } });
   });
@@ -263,9 +385,12 @@ export function createAuthRouter(
   /**
    * GET /auth/github/user
    * Proxies GET /user to GitHub using the current session token.
-   * Returns the raw GitHub response for debugging.
+   * Development / debugging only — not available in production.
    */
   router.get("/github/user", async (c) => {
+    if (config.nodeEnv === "production") {
+      return c.json({ ok: false, error: "Not found" }, 404);
+    }
     const token = getCookie(c, config.session.cookieName);
     if (!token) return c.json({ ok: false, error: "Not authenticated" }, 401);
     const payload = verifySession(token, config.session.secret);
@@ -289,9 +414,12 @@ export function createAuthRouter(
   /**
    * GET /auth/github/orgs
    * Proxies GET /user/orgs to GitHub using the current session token.
-   * Returns the raw GitHub response for debugging.
+   * Development / debugging only — not available in production.
    */
   router.get("/github/orgs", async (c) => {
+    if (config.nodeEnv === "production") {
+      return c.json({ ok: false, error: "Not found" }, 404);
+    }
     const token = getCookie(c, config.session.cookieName);
     if (!token) return c.json({ ok: false, error: "Not authenticated" }, 401);
     const payload = verifySession(token, config.session.secret);
@@ -322,6 +450,21 @@ export function createAuthRouter(
       const payload = verifySession(token, config.session.secret);
       if (payload) {
         await tokenStore.del(payload.sessionId);
+        // Audit the logout event
+        if (getUserDb) {
+          const userDb = await getUserDb(payload.userId).catch(() => null);
+          if (userDb) {
+            await userDb
+              .appendAuditLog({
+                userId: payload.userId,
+                action: "auth.logout",
+                resourceType: "session",
+                resourceId: payload.sessionId,
+                metadata: { ip: getClientIp(c.req) },
+              })
+              .catch(() => {});
+          }
+        }
       }
     }
     deleteCookie(c, config.session.cookieName, { path: "/" });

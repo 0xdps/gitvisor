@@ -14,6 +14,9 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
+  LogIn,
+  LogOut,
+  ShieldAlert,
 } from "lucide-react";
 import { getAuditLog } from "@/lib/api-client";
 import type { AuditEntry } from "@/lib/api-client";
@@ -28,16 +31,20 @@ type ActionMeta = {
 
 function getActionMeta(action: string): ActionMeta {
   const map: Record<string, ActionMeta> = {
-    "repository.synced_first":        { label: "New repo synced",      icon: GitBranch, category: "Repository", dot: "bg-blue" },
-    "repository.synced_with_changes": { label: "Repo updated",         icon: RefreshCw, category: "Repository", dot: "bg-blue/60" },
-    "repository.privatized":          { label: "Repo privatized",      icon: Lock,      category: "Repository", dot: "bg-muted-foreground/40" },
-    "repository.publicized":          { label: "Repo made public",     icon: Globe,     category: "Repository", dot: "bg-muted-foreground/40" },
-    "secret.upserted":                { label: "Secret set",           icon: KeyRound,  category: "Secret",     dot: "bg-warning" },
-    "secret.deleted":                 { label: "Secret deleted",       icon: Trash2,    category: "Secret",     dot: "bg-destructive" },
-    "workflow_run.rerun":             { label: "Workflow re-run",      icon: RefreshCw, category: "Workflow",   dot: "bg-success" },
-    "workflow_run.cancelled":         { label: "Workflow cancelled",   icon: Zap,       category: "Workflow",   dot: "bg-muted-foreground/40" },
-    "installation.created":           { label: "App installed",        icon: Package,   category: "App",        dot: "bg-success" },
-    "installation.deleted":           { label: "App removed",          icon: Trash2,    category: "App",        dot: "bg-destructive" },
+    "repository.synced_first":        { label: "New repo synced",      icon: GitBranch,  category: "Repository", dot: "bg-blue" },
+    "repository.synced_with_changes": { label: "Repo updated",         icon: RefreshCw,  category: "Repository", dot: "bg-blue/60" },
+    "repository.privatized":          { label: "Repo privatized",      icon: Lock,       category: "Repository", dot: "bg-muted-foreground/40" },
+    "repository.publicized":          { label: "Repo made public",     icon: Globe,      category: "Repository", dot: "bg-muted-foreground/40" },
+    "secret.upserted":                { label: "Secret set",           icon: KeyRound,   category: "Secret",     dot: "bg-warning" },
+    "secret.deleted":                 { label: "Secret deleted",       icon: Trash2,     category: "Secret",     dot: "bg-destructive" },
+    "workflow_run.rerun":             { label: "Workflow re-run",      icon: RefreshCw,  category: "Workflow",   dot: "bg-success" },
+    "workflow_run.cancelled":         { label: "Workflow cancelled",   icon: Zap,        category: "Workflow",   dot: "bg-muted-foreground/40" },
+    "installation.created":           { label: "App installed",        icon: Package,    category: "App",        dot: "bg-success" },
+    "installation.deleted":           { label: "App removed",          icon: Trash2,     category: "App",        dot: "bg-destructive" },
+    // Auth / security events
+    "auth.login":                     { label: "Signed in",            icon: LogIn,      category: "Auth",       dot: "bg-blue/70" },
+    "auth.logout":                    { label: "Signed out",           icon: LogOut,     category: "Auth",       dot: "bg-muted-foreground/40" },
+    "security.alert":                 { label: "Security alert",       icon: ShieldAlert, category: "Security",  dot: "bg-destructive" },
   };
   return map[action] ?? { label: action, icon: Zap, category: "System", dot: "bg-muted-foreground/30" };
 }

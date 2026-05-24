@@ -12,6 +12,12 @@ export interface SessionPayload {
   createdAt: string;
   /** Unix timestamp seconds */
   exp: number;
+  /**
+   * First 16 hex chars of SHA-256(User-Agent) captured at login.
+   * Used as a soft fingerprint — a mismatch is logged as a security event
+   * but does NOT invalidate the session (browser auto-updates change the UA).
+   */
+  uaHash?: string;
 }
 
 const SEP = ".";

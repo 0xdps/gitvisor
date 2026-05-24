@@ -1,5 +1,6 @@
 import { createMiddleware } from "hono/factory";
 import { getCookie } from "hono/cookie";
+import { createHash } from "node:crypto";
 import {
   verifySession,
   deserializeToken,
@@ -9,7 +10,10 @@ import {
   type TokenStore,
 } from "@gitvisor/auth";
 import { config } from "../config.js";
+import { createLogger } from "@gitvisor/logger";
 import type { User } from "@gitvisor/shared";
+
+const log = createLogger("auth-middleware");
 
 export interface AuthEnv {
   Variables: {
@@ -46,6 +50,23 @@ export function createRequireAuth(tokenStore: TokenStore) {
     const stored = deserializeToken(rawToken);
     if (!stored) {
       return c.json({ ok: false, error: "Unauthorized" }, 401);
+    }
+
+    // Soft User-Agent fingerprint check.
+    // A mismatch is logged as a potential session hijack but does NOT invalidate
+    // the session — browser auto-updates silently change the UA string and we
+    // must not lock legitimate users out.
+    if (payload.uaHash) {
+      const currentUaHash = createHash("sha256")
+        .update(c.req.header("user-agent") ?? "")
+        .digest("hex")
+        .slice(0, 16);
+      if (currentUaHash !== payload.uaHash) {
+        log.warn(
+          { userId: payload.userId, sessionId: payload.sessionId },
+          "Session UA fingerprint mismatch — possible session hijacking",
+        );
+      }
     }
 
     // Auto-refresh the access token if it has expired (or is within 5 minutes

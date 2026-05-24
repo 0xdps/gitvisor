@@ -6,6 +6,7 @@ import type { RegistryRepository, UserDbRepository } from "@gitvisor/db";
 import type { TokenStore } from "@gitvisor/auth";
 import { createLogger } from "@gitvisor/logger";
 import { createRequireAuth } from "./middleware/auth.js";
+import { securityHeaders } from "./middleware/security-headers.js";
 import { createAuthRouter, type AuthSuccessContext } from "./routes/auth.js";
 import { createWorkflowsRouter } from "./routes/workflows.js";
 import { createSecretsRouter } from "./routes/secrets.js";
@@ -70,6 +71,7 @@ export function createCoreApp({
   const app = new Hono();
 
   app.use("*", logger());
+  app.use("*", securityHeaders);
   app.use(
     "*",
     cors({
@@ -82,7 +84,7 @@ export function createCoreApp({
   app.get("/health", (c) => c.json({ ok: true, service: "gitvisor-api" }));
 
   // ── Routes ─────────────────────────────────────────────────────────────────
-  app.route("/auth",           createAuthRouter(registry, tokenStore, onAuthSuccess));
+  app.route("/auth",           createAuthRouter(registry, tokenStore, onAuthSuccess, getUserDb));
   app.route("/repositories",   createRepositoriesRouter(getUserDb, requireAuth, registry, queue));
   app.route("/workflows",      createWorkflowsRouter(getUserDb, requireAuth));
   app.route("/secrets",        createSecretsRouter(getUserDb, requireAuth));

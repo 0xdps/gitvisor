@@ -11,10 +11,17 @@ const API_URL =
 /**
  * Fetch the GitHub OAuth URL from the API and redirect the browser there.
  * The API owns the redirect URI; the frontend just follows.
+ * Pass `turnstileToken` when Cloudflare Turnstile is enabled so the API can
+ * verify the challenge server-side before issuing the OAuth state.
  */
-export async function login(): Promise<void> {
-  const res = await fetch(`${API_URL}/auth/login`, { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to start login");
+export async function login(turnstileToken?: string): Promise<void> {
+  const url = new URL(`${API_URL}/auth/login`, window.location.href);
+  if (turnstileToken) url.searchParams.set("turnstile_token", turnstileToken);
+  const res = await fetch(url.toString(), { credentials: "include" });
+  if (!res.ok) {
+    if (res.status === 403) throw new Error("Security challenge failed");
+    throw new Error("Failed to start login");
+  }
   const { data } = (await res.json()) as { data: { url: string } };
   window.location.href = data.url;
 }

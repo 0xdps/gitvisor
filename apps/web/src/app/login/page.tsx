@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import Script from "next/script";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { finalizeInstallation, login, me } from "@/lib/auth-client";
 import { LogoIcon } from "@/components/logo-icon";
@@ -19,6 +20,12 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+
+  // Cloudflare Turnstile site key — only set in cloud deployments.
+  // Self-hosted deployments leave this unset and the widget is not shown.
+  const siteKey = process.env.NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY ?? null;
 
   useEffect(() => {
     const rawInstallationId = searchParams.get("installation_id");
@@ -46,11 +53,32 @@ function LoginContent() {
       });
   }, [router, searchParams]);
 
+  // Register the Turnstile success / expiry callbacks on the window so the
+  // implicit-render widget can invoke them.
+  useEffect(() => {
+    if (!siteKey) return;
+    (window as unknown as Record<string, unknown>)["onTurnstileSuccess"] = (token: string) => {
+      setTurnstileToken(token);
+    };
+    (window as unknown as Record<string, unknown>)["onTurnstileExpired"] = () => {
+      setTurnstileToken(null);
+    };
+    return () => {
+      delete (window as unknown as Record<string, unknown>)["onTurnstileSuccess"];
+      delete (window as unknown as Record<string, unknown>)["onTurnstileExpired"];
+    };
+  }, [siteKey]);
+
   async function handleLogin() {
+    // If Turnstile is configured and the challenge is not yet solved, wait.
+    if (siteKey && !turnstileToken) {
+      setError("Please complete the security check below.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      await login();
+      await login(turnstileToken ?? undefined);
     } catch {
       setError("Failed to start login. Please try again.");
       setLoading(false);
@@ -59,6 +87,15 @@ function LoginContent() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
+      {/* Load Turnstile JS only when a site key is configured */}
+      {siteKey && (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+          strategy="afterInteractive"
+          async
+          defer
+        />
+      )}
       <div className="saas-glow" aria-hidden="true" />
       <div className="absolute inset-0 grid-bg" aria-hidden="true" />
 
@@ -88,6 +125,18 @@ function LoginContent() {
               <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-center text-sm text-destructive">
                 {error}
               </p>
+            )}
+
+            {/* Cloudflare Turnstile — only rendered when NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY is set */}
+            {siteKey && (
+              <div
+                ref={turnstileRef}
+                className="cf-turnstile mb-4 flex justify-center"
+                data-sitekey={siteKey}
+                data-callback="onTurnstileSuccess"
+                data-expired-callback="onTurnstileExpired"
+                data-theme="dark"
+              />
             )}
 
             <button

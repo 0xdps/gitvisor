@@ -5,6 +5,7 @@ import type {
   WorkflowRun,
   Workflow,
   SecretMeta,
+  SecretGroup,
   Package,
   Repository,
   Release,
@@ -159,6 +160,25 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
       );
       CREATE INDEX IF NOT EXISTS idx_releases_repository_id ON releases(repository_id);
       CREATE INDEX IF NOT EXISTS idx_releases_published_at ON releases(published_at DESC);
+
+      CREATE TABLE IF NOT EXISTS secret_groups (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        secret_names TEXT NOT NULL DEFAULT '[]',
+        last_rotated_at TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(user_id, name)
+      );
+
+      CREATE TABLE IF NOT EXISTS secret_group_repos (
+        group_id TEXT NOT NULL REFERENCES secret_groups(id) ON DELETE CASCADE,
+        repository_id TEXT NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,
+        PRIMARY KEY (group_id, repository_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_secret_group_repos_group_id ON secret_group_repos(group_id);
     `);
     return Promise.resolve();
   }
@@ -448,6 +468,107 @@ export class SharedSqliteUserDbRepository implements UserDbRepository {
     this.db
       .prepare(`DELETE FROM secret_meta WHERE repository_id = ? AND name = ?`)
       .run(repositoryId, name);
+    return Promise.resolve();
+  }
+
+  // ── Secret Groups ──────────────────────────────────────────────────────────
+
+  private mapSecretGroup(row: Record<string, unknown>, repoIds: string[]): SecretGroup {
+    return {
+      id: row.id as string,
+      userId: row.user_id as string,
+      name: row.name as string,
+      description: (row.description as string | null) ?? null,
+      secretNames: JSON.parse(row.secret_names as string) as string[],
+      repoIds,
+      lastRotatedAt: (row.last_rotated_at as string | null) ?? null,
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
+    };
+  }
+
+  private getGroupRepoIds(groupId: string): string[] {
+    return (
+      this.db
+        .prepare(`SELECT repository_id FROM secret_group_repos WHERE group_id = ?`)
+        .all(groupId) as { repository_id: string }[]
+    ).map((r) => r.repository_id);
+  }
+
+  listSecretGroups(): Promise<SecretGroup[]> {
+    const rows = this.db
+      .prepare(`SELECT * FROM secret_groups ORDER BY name ASC`)
+      .all() as Record<string, unknown>[];
+    return Promise.resolve(
+      rows.map((row) => this.mapSecretGroup(row, this.getGroupRepoIds(row.id as string))),
+    );
+  }
+
+  getSecretGroup(groupId: string): Promise<SecretGroup | null> {
+    const row = this.db
+      .prepare(`SELECT * FROM secret_groups WHERE id = ? LIMIT 1`)
+      .get(groupId) as Record<string, unknown> | undefined;
+    if (!row) return Promise.resolve(null);
+    return Promise.resolve(this.mapSecretGroup(row, this.getGroupRepoIds(groupId)));
+  }
+
+  createSecretGroup(
+    group: Omit<SecretGroup, "id" | "createdAt" | "updatedAt" | "lastRotatedAt">,
+  ): Promise<SecretGroup> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    this.db.transaction(() => {
+      this.db
+        .prepare(
+          `INSERT INTO secret_groups (id, user_id, name, description, secret_names, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        )
+        .run(id, group.userId, group.name, group.description ?? null, JSON.stringify(group.secretNames), now, now);
+      for (const repoId of group.repoIds) {
+        this.db
+          .prepare(`INSERT OR IGNORE INTO secret_group_repos (group_id, repository_id) VALUES (?, ?)`)
+          .run(id, repoId);
+      }
+    })();
+    return this.getSecretGroup(id) as Promise<SecretGroup>;
+  }
+
+  updateSecretGroup(
+    groupId: string,
+    patch: Partial<Pick<SecretGroup, "name" | "description" | "secretNames" | "repoIds">>,
+  ): Promise<SecretGroup | null> {
+    const now = new Date().toISOString();
+    this.db.transaction(() => {
+      const updates: string[] = ["updated_at = ?"];
+      const params: unknown[] = [now];
+      if (patch.name !== undefined) { updates.push("name = ?"); params.push(patch.name); }
+      if ("description" in patch) { updates.push("description = ?"); params.push(patch.description ?? null); }
+      if (patch.secretNames !== undefined) { updates.push("secret_names = ?"); params.push(JSON.stringify(patch.secretNames)); }
+      params.push(groupId);
+      this.db.prepare(`UPDATE secret_groups SET ${updates.join(", ")} WHERE id = ?`).run(...params);
+
+      if (patch.repoIds !== undefined) {
+        this.db.prepare(`DELETE FROM secret_group_repos WHERE group_id = ?`).run(groupId);
+        for (const repoId of patch.repoIds) {
+          this.db
+            .prepare(`INSERT OR IGNORE INTO secret_group_repos (group_id, repository_id) VALUES (?, ?)`)
+            .run(groupId, repoId);
+        }
+      }
+    })();
+    return this.getSecretGroup(groupId);
+  }
+
+  deleteSecretGroup(groupId: string): Promise<void> {
+    this.db.prepare(`DELETE FROM secret_groups WHERE id = ?`).run(groupId);
+    return Promise.resolve();
+  }
+
+  touchSecretGroupRotatedAt(groupId: string): Promise<void> {
+    const now = new Date().toISOString();
+    this.db
+      .prepare(`UPDATE secret_groups SET last_rotated_at = ?, updated_at = ? WHERE id = ?`)
+      .run(now, now, groupId);
     return Promise.resolve();
   }
 

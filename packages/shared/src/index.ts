@@ -105,6 +105,23 @@ export interface SecretMeta {
   updatedAt: string;
 }
 
+// ── Secret Groups ─────────────────────────────────────────────────────────────
+
+/** A named set of repos + secret names that should share the same values. */
+export interface SecretGroup {
+  id: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  /** Secret names (uppercase) that belong to this group. */
+  secretNames: string[];
+  /** Repository IDs included in this group. */
+  repoIds: string[];
+  createdAt: string;
+  updatedAt: string;
+  lastRotatedAt: string | null;
+}
+
 // ── Package ───────────────────────────────────────────────────────────────────
 
 export type PackageEcosystem = "npm" | "docker" | "container" | "maven" | "rubygems" | "nuget";

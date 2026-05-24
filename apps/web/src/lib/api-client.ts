@@ -1,4 +1,4 @@
-import type { Repository, WorkflowRun, SecretMeta, PaginatedResponse, Release, RepoPullRequest } from "@gitvisor/shared";
+import type { Repository, WorkflowRun, SecretMeta, SecretGroup, PaginatedResponse, Release, RepoPullRequest } from "@gitvisor/shared";
 
 // Client-side calls use the /api proxy (Next.js rewrites → API service).
 // Server-side calls bypass the proxy and hit the API directly.
@@ -109,6 +109,48 @@ export function updateSecret(
 export function deleteSecret(repoId: number, secretName: string): Promise<void> {
   return apiFetch<void>(`/secrets/${repoId}/${encodeURIComponent(secretName)}`, {
     method: "DELETE",
+  });
+}
+
+// ── Secret Groups ─────────────────────────────────────────────────────────────
+
+export function getSecretGroups(): Promise<SecretGroup[]> {
+  return apiFetch<SecretGroup[]>("/secrets/groups");
+}
+
+export function createSecretGroup(payload: {
+  name: string;
+  description?: string;
+  secretNames: string[];
+  repoIds: string[];
+}): Promise<SecretGroup> {
+  return apiFetch<SecretGroup>("/secrets/groups", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateSecretGroup(
+  groupId: string,
+  patch: Partial<Pick<SecretGroup, "name" | "description" | "secretNames" | "repoIds">>,
+): Promise<SecretGroup> {
+  return apiFetch<SecretGroup>(`/secrets/groups/${groupId}`, {
+    method: "PUT",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function deleteSecretGroup(groupId: string): Promise<void> {
+  return apiFetch<void>(`/secrets/groups/${groupId}`, { method: "DELETE" });
+}
+
+export function rotateSecretGroup(
+  groupId: string,
+  secrets: Record<string, string>,
+): Promise<{ results: { repoId: string; ok: boolean; error?: string }[] }> {
+  return apiFetch(`/secrets/groups/${groupId}/rotate`, {
+    method: "POST",
+    body: JSON.stringify({ secrets }),
   });
 }
 

@@ -2,6 +2,7 @@ import type {
   WorkflowRun,
   Workflow,
   SecretMeta,
+  SecretGroup,
   Package,
   Repository,
   Release,
@@ -38,6 +39,14 @@ export interface UserDbRepository {
   upsertSecretMeta(secret: Omit<SecretMeta, "id" | "createdAt" | "updatedAt">): Promise<SecretMeta>;
   listSecretMeta(repositoryId?: string): Promise<SecretMeta[]>;
   deleteSecretMeta(repositoryId: string, name: string): Promise<void>;
+
+  // Secret Groups
+  listSecretGroups(): Promise<SecretGroup[]>;
+  getSecretGroup(groupId: string): Promise<SecretGroup | null>;
+  createSecretGroup(group: Omit<SecretGroup, "id" | "createdAt" | "updatedAt" | "lastRotatedAt">): Promise<SecretGroup>;
+  updateSecretGroup(groupId: string, patch: Partial<Pick<SecretGroup, "name" | "description" | "secretNames" | "repoIds">>): Promise<SecretGroup | null>;
+  deleteSecretGroup(groupId: string): Promise<void>;
+  touchSecretGroupRotatedAt(groupId: string): Promise<void>;
 
   // Packages
   upsertPackage(pkg: Omit<Package, "id" | "createdAt" | "updatedAt">): Promise<Package>;

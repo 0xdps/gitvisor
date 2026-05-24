@@ -12,9 +12,9 @@ import {
   Building2,
   ChevronDown,
   ExternalLink,
+  Flame,
   GitFork,
   KeyRound,
-  LayoutDashboard,
   Lock,
   LogOut,
   MessageSquare,
@@ -49,14 +49,19 @@ interface AppShellProps {
   children: ReactNode;
 }
 
-const navItems = [
-  { label: "Dashboard",    to: "/dashboard",    icon: LayoutDashboard },
-  { label: "Repositories", to: "/repositories", icon: GitFork },
+type NavItem = { label: string; to: string; icon: React.ElementType } | null;
+
+const navItems: NavItem[] = [
+  { label: "Ops Center",   to: "/dashboard",    icon: Flame },
+  null,
   { label: "Workflows",    to: "/workflows",    icon: Activity },
   { label: "Releases",     to: "/releases",     icon: Tag },
-  { label: "Analytics",    to: "/analytics",    icon: BarChart2 },
-  { label: "Secrets",      to: "/secrets",      icon: KeyRound },
   { label: "Packages",     to: "/packages",     icon: Package },
+  null,
+  { label: "Repositories", to: "/repositories", icon: GitFork },
+  { label: "Secrets",      to: "/secrets",      icon: KeyRound },
+  null,
+  { label: "Analytics",    to: "/analytics",    icon: BarChart2 },
   { label: "Audit Log",    to: "/audit-log",    icon: ScrollText },
   { label: "Feedback",     to: "/feedback",     icon: MessageSquare },
 ];
@@ -315,7 +320,18 @@ export function AppShell({ children }: AppShellProps) {
 
           {/* Nav */}
           <nav className={`flex flex-col flex-1 gap-0.5 ${expanded ? "px-2" : "items-center px-0"}`}>
-            {navItems.map(({ label, to, icon: Icon }) => {
+            {navItems.map((item, idx) => {
+              // Divider
+              if (item === null) {
+                return (
+                  <div
+                    key={`divider-${idx}`}
+                    className={`shrink-0 my-1 ${expanded ? "mx-1 border-t border-border/50" : "w-5 border-t border-border/50"}`}
+                  />
+                );
+              }
+
+              const { label, to, icon: Icon } = item;
               const isActive =
                 pathname === to ||
                 pathname.startsWith(to + "/") ||

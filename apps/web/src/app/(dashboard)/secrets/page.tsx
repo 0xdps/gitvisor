@@ -274,14 +274,23 @@ function GroupForm({
 
   async function submit() {
     if (!name.trim()) return;
-    const payload = {
+    const base = {
       name: name.trim(),
-      description: description.trim() || undefined,
       secretNames,
       repoIds: Array.from(selectedRepoIds),
     };
-    if (initial) { await updateMutation.mutateAsync(payload); }
-    else { await createMutation.mutateAsync(payload); }
+    const desc = description.trim();
+    if (initial) {
+      await updateMutation.mutateAsync({
+        ...base,
+        description: desc || null,
+      });
+    } else {
+      await createMutation.mutateAsync({
+        ...base,
+        ...(desc ? { description: desc } : {}),
+      });
+    }
     onSaved();
   }
 

@@ -1,0 +1,44 @@
+packages/ui/src/components/input.tsx
+  h_7a2f4c8f0473b8 1-21
+packages/ui/package.json
+  h_7a2f4c8f0473b8 1-45
+packages/ui/src/lib/utils.ts
+  h_7a2f4c8f0473b8 1-6
+packages/ui/src/components/separator.tsx
+  h_7a2f4c8f0473b8 1-23
+packages/ui/src/components/card.tsx
+  h_7a2f4c8f0473b8 1-50
+packages/ui/src/components/table.tsx
+  h_7a2f4c8f0473b8 1-64
+packages/ui/src/components/skeleton.tsx
+  h_7a2f4c8f0473b8 1-13
+packages/ui/src/components/tooltip.tsx
+  h_7a2f4c8f0473b8 1-27
+packages/ui/src/components/dialog.tsx
+  h_7a2f4c8f0473b8 1-89
+packages/ui/src/index.ts
+  h_7a2f4c8f0473b8 1-55
+packages/ui/src/globals.css
+  h_7a2f4c8f0473b8 1-50
+packages/ui/src/components/badge.tsx
+  h_7a2f4c8f0473b8 1-32
+packages/ui/src/components/button.tsx
+  h_7a2f4c8f0473b8 1-52
+packages/ui/src/components/dropdown-menu.tsx
+  h_7a2f4c8f0473b8 1-82
+packages/ui/tsconfig.json
+  h_7a2f4c8f0473b8 1-11
+packages/ui/src/components/avatar.tsx
+  h_7a2f4c8f0473b8 1-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "729697383d50e5abb0de287019ff22d0650d1230",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

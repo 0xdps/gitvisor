@@ -1,0 +1,106 @@
+apps/worker/src/handlers/sync-packages.ts
+  h_7a2f4c8f0473b8 4,6,24,31
+apps/worker/src/handlers/sync-secrets.ts
+  h_7a2f4c8f0473b8 4,6,23
+apps/api/src/index.ts
+  s_3fe6a57a14bddc::t_c5fd4b136cd497 9-11,67,73
+  s_3fe6a57a14bddc::t_ed7428e7954d8b 8,20,34-39,56-59
+  s_3fe6a57a14bddc::t_289ce865a5a5f2 47
+packages/auth/src/index.ts
+  s_3fe6a57a14bddc::t_30f291d7e2d79a 15-20
+apps/web/src/lib/auth-client.ts
+  s_3fe6a57a14bddc::t_ce598ae3618d58 50-51,54,59
+apps/api/src/routes/repositories.ts
+  s_3fe6a57a14bddc::t_81a92dbc09f282 2,4,8
+apps/api/src/routes/workflows.ts
+  s_3fe6a57a14bddc::t_81a92dbc09f282 2,5,9
+  s_3fe6a57a14bddc::t_5bb6fcbf907028 42,60
+packages/queue/package.json
+  s_3fe6a57a14bddc::t_e7b2f7958a3301 19
+packages/auth/src/token-store.ts
+  s_3fe6a57a14bddc::t_4405f80f0c11b4 30-41
+  h_7a2f4c8f0473b8 1-29,42-64
+packages/db/src/user-db.repository.ts
+  s_3fe6a57a14bddc::t_30f291d7e2d79a 22-23
+packages/db/src/shared-sqlite-userdb.ts
+  s_3fe6a57a14bddc::t_f5d6e4e0a56cdc 219-234
+packages/auth/src/github-oauth.ts
+  s_3fe6a57a14bddc::t_553b17f4cffa36 40
+apps/worker/package.json
+  s_3fe6a57a14bddc::t_e7b2f7958a3301 18
+apps/api/src/routes/auth.ts
+  s_3fe6a57a14bddc::t_34aa2a73c6d59e 20-27,136
+  s_3fe6a57a14bddc::t_5bb6fcbf907028 149,160-162
+  s_3fe6a57a14bddc::t_81049117c635de 3,11-12,17-19,28-43,48-49,52-59,63,70-72,75-82,84-93,95,115-118,121,127,163-165,179,181-188
+apps/web/src/app/auth/callback/page.tsx
+  s_3fe6a57a14bddc::t_ce598ae3618d58 14-15,19
+packages/logger/tsconfig.json
+  h_7a2f4c8f0473b8 1-8
+packages/logger/package.json
+  h_7a2f4c8f0473b8 1-18,20-21,23-25
+  s_3fe6a57a14bddc::t_4830996b1a3619 19,22
+apps/api/src/routes/secrets.ts
+  s_3fe6a57a14bddc::t_c2cbb95110c6c2 64-71
+  s_3fe6a57a14bddc::t_5bb6fcbf907028 58,98
+  s_3fe6a57a14bddc::t_7dee2c1ff3cacf 101-107
+  s_3fe6a57a14bddc::t_81a92dbc09f282 2-3,29
+apps/worker/src/index.ts
+  s_3fe6a57a14bddc::t_00a9a7d9d1c0f4 4,7-8,44
+apps/worker/src/handlers/sync-workflows.ts
+  h_7a2f4c8f0473b8 4,6,22
+apps/worker/src/handlers/index.ts
+  h_7a2f4c8f0473b8 5,11-12,107,130,146
+packages/github/src/webhooks.ts
+  s_3fe6a57a14bddc::t_e9b20034392df7 30-31,33-35,68-69,71-73
+  s_3fe6a57a14bddc::t_e04ad7026b3653 105-107,109-110,114-115,125-126,128-129,133,144-145,147-148,152,163-165,167-168,172,174,183-184,186-187,191,202-203,205-206,210,221-222,224-225,230
+  h_7a2f4c8f0473b8 3,5,32,70,108,127,146,166,185,204,223
+packages/github/package.json
+  s_3fe6a57a14bddc::t_e7b2f7958a3301 19
+apps/api/src/middleware/auth.ts
+  s_3fe6a57a14bddc::t_d5b3dc168b3217 3,14-18,20-22,24-26,28-31,33-52
+apps/web/next.config.mjs
+  s_3fe6a57a14bddc::t_adcad8f6c511ca 5-20
+packages/queue/src/bullmq.ts
+  s_3fe6a57a14bddc::t_a8d99ac61cd8b3 4-6,54
+packages/logger/src/index.ts
+  h_7a2f4c8f0473b8 1-31
+README.md
+  s_3fe6a57a14bddc::t_69482ffe7f1905 64-65
+packages/db/src/index.ts
+  s_3fe6a57a14bddc::t_69482ffe7f1905 32-42,53
+packages/auth/src/session.ts
+  s_3fe6a57a14bddc::t_553b17f4cffa36 69-70
+  s_3fe6a57a14bddc::t_30f291d7e2d79a 4-5,11-12
+apps/api/package.json
+  s_3fe6a57a14bddc::t_e7b2f7958a3301 14
+apps/worker/src/handlers/sync-workflow-runs.ts
+  s_3fe6a57a14bddc::t_c91a478ed76aeb 30
+  s_3fe6a57a14bddc::t_e9b20034392df7 32,34
+  h_7a2f4c8f0473b8 4,6,43
+  s_3fe6a57a14bddc::t_5066d47b1321e9 36-42,44
+apps/api/src/config.ts
+  s_3fe6a57a14bddc::t_34aa2a73c6d59e 29-30,32-37
+packages/auth/src/github-me.ts
+  s_3fe6a57a14bddc::t_553b17f4cffa36 29,39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b1102c8f1010fca0a795699b002c0d1caaef4e86",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_3fe6a57a14bddc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "a9d02483-4173-4c62-b130-5b00b4da1c95",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

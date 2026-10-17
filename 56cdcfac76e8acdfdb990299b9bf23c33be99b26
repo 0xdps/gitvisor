@@ -1,0 +1,37 @@
+apps/worker/src/handlers/sync-workflow-runs.ts
+  s_cb2f5acd96c505::t_a2224aaf244bca 5,19-31
+packages/queue/src/bullmq.ts
+  s_cb2f5acd96c505::t_7c1ff2bbdb980d 9,13-14,20-21,24-26,28,51,57
+apps/worker/src/handlers/sync-workflows.ts
+  s_cb2f5acd96c505::t_a2224aaf244bca 5,17-29
+apps/worker/src/handlers/sync-releases.ts
+  s_cb2f5acd96c505::t_a2224aaf244bca 5,15-27
+apps/worker/src/handlers/sync-packages.ts
+  s_cb2f5acd96c505::t_a2224aaf244bca 5,27-35
+apps/api/src/index.ts
+  s_cb2f5acd96c505::t_7c1ff2bbdb980d 16-19
+apps/worker/src/handlers/sync-secrets.ts
+  s_cb2f5acd96c505::t_a2224aaf244bca 5,17-29
+apps/worker/src/handlers/github-errors.ts
+  s_cb2f5acd96c505::t_a2224aaf244bca 1-12
+packages/github/src/packages.ts
+  s_cb2f5acd96c505::t_a2224aaf244bca 14-32
+apps/worker/src/index.ts
+  s_cb2f5acd96c505::t_7c1ff2bbdb980d 31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "56cdcfac76e8acdfdb990299b9bf23c33be99b26",
+  "prompts": {},
+  "sessions": {
+    "s_cb2f5acd96c505": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2b0c1cb4-d150-4fc2-bd22-d4e5c4f2c370",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

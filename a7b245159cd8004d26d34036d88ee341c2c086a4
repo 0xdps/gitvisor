@@ -1,0 +1,24 @@
+README.md
+  s_b8dfa068dd27aa::t_200416c379fd30 57,98,100-104,106,110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "a7b245159cd8004d26d34036d88ee341c2c086a4",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_b8dfa068dd27aa": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "a81e7fc5-3e8b-430e-8fc8-1c46e901b51e",
+        "model": "unknown"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+apps/web/src/app/(dashboard)/releases/page.tsx
+  s_350786453174b0::t_658343f2d4a202 3,39-40,45
+apps/web/src/app/(dashboard)/workflows/page.tsx
+  s_350786453174b0::t_8220d9c4f2df40 10,22,134-135,201,242,278,280-312
+apps/web/src/components/app-shell.tsx
+  s_350786453174b0::t_c87b39996bcc10 18,45,91,210-246
+apps/web/src/app/(dashboard)/dashboard/page.tsx
+  s_350786453174b0::t_f4760b52887f13 24,110-112,170-172,174-175,378,444-472,639-640,646-670
+apps/web/src/lib/api-client.ts
+  s_350786453174b0::t_32108ae2cf7363 83-84,203-228
+apps/web/src/components/upgrade-modal.tsx
+  s_350786453174b0::t_4432b6305b5e9b 170,190
+  s_350786453174b0::t_c0be469afdac5e 1-169,171-189,191-234
+apps/web/src/app/(dashboard)/layout.tsx
+  s_350786453174b0::t_fb5176f1da36aa 2,9-13
+apps/api/src/routes/installations.ts
+  s_350786453174b0::t_766ff3a91b1065 71-81
+  s_350786453174b0::t_dbd9cfdfb11fed 10-12
+  s_350786453174b0::t_b1c36bca15d7ef 103-104,106-107,114,126,128,131-138,147
+apps/web/src/components/install-accounts-panel.tsx
+  s_350786453174b0::t_12021de763df84 4,6
+  s_350786453174b0::t_b697a26780cee0 15,76,84,88-95
+packages/shared/src/index.ts
+  s_350786453174b0::t_da3b3cd4102c11 26-27,54-55
+apps/web/src/app/(dashboard)/repositories/page.tsx
+  s_350786453174b0::t_2dca210ae2df5b 20
+  s_350786453174b0::t_bde91698e706f9 179,182-223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "3ab14d382b99fc5e2cb56901d807e3ce6ec06c7a",
+  "prompts": {},
+  "sessions": {
+    "s_350786453174b0": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d092a11e-d8f9-4364-bd98-6c3c8d7768c6",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

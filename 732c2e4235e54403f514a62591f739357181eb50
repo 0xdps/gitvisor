@@ -1,0 +1,41 @@
+apps/web/src/app/(dashboard)/releases/page.tsx
+  s_350786453174b0::t_c0a2fb0f493c20 91,93-97
+  s_350786453174b0::t_8cdd2c29a11c15 15
+  s_350786453174b0::t_386ad2cd7a9b4f 86,88-90
+  s_350786453174b0::t_9a2d95becdabcf 136
+apps/web/src/app/(dashboard)/workflows/page.tsx
+  s_350786453174b0::t_1a03f8ae67415f 23
+  s_350786453174b0::t_daf671b504ad20 134-142
+apps/web/src/app/(dashboard)/secrets/page.tsx
+  s_350786453174b0::t_e482c086077ecd 16
+  s_350786453174b0::t_3925a44245d7d7 21
+  s_350786453174b0::t_67f50ec4d034ca 54-57,59-60
+apps/web/src/components/app-shell.tsx
+  s_350786453174b0::t_b7b83ecec98519 108-120,268-273,277,280,283-307
+apps/web/src/app/(dashboard)/analytics/page.tsx
+  s_350786453174b0::t_91590e61a614f3 7
+  s_350786453174b0::t_b6d4f014a14113 22-29
+  s_350786453174b0::t_78715f42829faa 42-45
+apps/web/src/app/(dashboard)/packages/page.tsx
+  s_350786453174b0::t_c3588c6cf6297c 47-50,52-53
+  s_350786453174b0::t_4a7e7c6979f6ac 11
+  s_350786453174b0::t_6bcb04ff66061f 18-19
+apps/api/src/routes/installations.ts
+  s_350786453174b0::t_0fa93c1ed4b8c2 149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "732c2e4235e54403f514a62591f739357181eb50",
+  "prompts": {},
+  "sessions": {
+    "s_350786453174b0": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d092a11e-d8f9-4364-bd98-6c3c8d7768c6",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

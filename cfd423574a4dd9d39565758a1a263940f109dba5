@@ -1,0 +1,48 @@
+packages/github/src/repos.ts
+  h_7a2f4c8f0473b8 1-53,55
+  s_fe0cc671410527::t_73e793f3c35c2e 54
+packages/github/src/workflows.ts
+  h_7a2f4c8f0473b8 114-121
+  s_fe0cc671410527::t_b02b6f24d70eee 81-113,122-123
+apps/worker/src/handlers/index.ts
+  s_fe0cc671410527::t_3d144685fe5a00 3,5,23-30,40-49,53,55-58,71-72
+packages/github/src/app.ts
+  s_fe0cc671410527::t_d37d58e386b445 2,23-25,36-37,39-41,43
+packages/db/src/user-db.repository.ts
+  s_fe0cc671410527::t_5730935b1c5043 3,41-43
+apps/worker/src/handlers/sync-workflows.ts
+  h_7a2f4c8f0473b8 1-20
+apps/web/package.json
+  s_fe0cc671410527::t_272c8419dc8886 22
+apps/web/src/app/api/[...path]/route.ts
+  h_7a2f4c8f0473b8 1-48
+packages/shared/src/index.ts
+  s_fe0cc671410527::t_d4a111d2496fea 39-46,120-134,179-185,190-191
+apps/web/postcss.config.mjs
+  h_7a2f4c8f0473b8 1-5
+infra/docker/web.Dockerfile
+  s_fe0cc671410527::t_70fc5faa6f4329 30-48
+packages/github/src/index.ts
+  s_fe0cc671410527::t_59f04d65f6ab49 4-6,9,13,15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "cfd423574a4dd9d39565758a1a263940f109dba5",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_fe0cc671410527": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "fa293596-7d72-4f60-8f78-ae9ac0cb3fa4",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

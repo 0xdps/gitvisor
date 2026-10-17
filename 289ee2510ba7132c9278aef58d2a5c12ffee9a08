@@ -1,0 +1,52 @@
+apps/api/src/routes/repositories.ts
+  s_0105f9dade0815::t_7f8762b0892ee7 2,5-8,10,12-21,23-39,41-42
+apps/worker/src/index.ts
+  s_0105f9dade0815::t_8605332ded49aa 3,30-34
+packages/db/package.json
+  s_0105f9dade0815::t_f7272edc3699c1 19-20,23
+apps/web/src/app/page.tsx
+  s_0105f9dade0815::t_b1d421b4a4cebb 5,7-17
+  s_0105f9dade0815::t_92467ff988aa50 3,21-22,30-39,41-49,53-55,57-67
+apps/web/src/app/login/page.tsx
+  s_0105f9dade0815::t_0f01c5daa0c094 76
+README.md
+  s_0105f9dade0815::t_7522065f108992 29,52,58,97,99,106,110,115-118
+  s_0105f9dade0815::t_f1c83c056a7c10 44
+apps/api/src/index.ts
+  s_0105f9dade0815::t_414d1bca47cd55 10,24,45,50
+  s_0105f9dade0815::t_7f8762b0892ee7 7,13,23,25-27,46
+packages/db/src/shared-sqlite-userdb.ts
+  s_0105f9dade0815::t_4b01a9235f8f9b 367-380,430-444
+  s_0105f9dade0815::t_653ea3f4f9739d 1-358,360-366,381-417,419-429,445-562
+  s_0105f9dade0815::t_0559dc112b9392 359,418
+packages/db/src/index.ts
+  s_0105f9dade0815::t_ff626d5791f7c9 4-45
+apps/web/src/components/public-footer.tsx
+  s_0105f9dade0815::t_0f01c5daa0c094 49-50
+packages/db/src/shared-sqlite-registry.ts
+  s_0105f9dade0815::t_fe54b5a9ebcd54 1-269
+apps/api/src/routes/auth.ts
+  s_0105f9dade0815::t_d1119d5f5e9bdc 11,14-55,57-82
+  s_0105f9dade0815::t_0335e6ba165e6b 84-111,114-120,122-124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "289ee2510ba7132c9278aef58d2a5c12ffee9a08",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_0105f9dade0815": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "4988122e-c846-4748-863c-1c3c2b2db0d5",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

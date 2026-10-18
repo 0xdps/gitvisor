@@ -36,6 +36,16 @@ function persistSetCookie(cookie: string, secure: boolean): string {
 }
 
 async function proxy(req: NextRequest): Promise<NextResponse> {
+  // GitHub returns the browser with GET /api/auth/callback?code&state.
+  // The API accepts only POST /auth/callback. The page at /auth/callback
+  // reads the query and completes sign-in.
+  if (req.method === "GET" && req.nextUrl.pathname === "/api/auth/callback") {
+    const origin = process.env["WEB_URL"] ?? "https://www.gitvisor.dev";
+    const url = new URL("/auth/callback", origin);
+    url.search = req.nextUrl.search;
+    return NextResponse.redirect(url);
+  }
+
   // Rewrite /api/<rest> → <API_BASE>/<rest>
   const rest = req.nextUrl.pathname.replace(/^\/api/, "") || "/";
   const target = `${API_BASE}${rest}${req.nextUrl.search}`;

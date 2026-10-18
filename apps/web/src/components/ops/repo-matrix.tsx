@@ -27,6 +27,7 @@ export interface RepoRow {
   packages: number;
   pushedAt: string | null;
   score: number;
+  reasons: string[];
 }
 
 const CI_LABEL: Record<CiState, string> = {
@@ -126,13 +127,18 @@ export function RepoMatrix({ rows }: { rows: RepoRow[] }) {
                   }`}
                 >
                   <td className="px-4 py-2.5">
-                    <Link href={`/workflows?repositoryId=${r.id}`} className="flex items-center gap-1.5 hover:text-blue">
-                      {r.locked && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
-                      <span className="truncate font-mono text-foreground">{r.name}</span>
-                      {r.private && !r.locked && (
-                        <span className="rounded border border-border px-1 text-[9px] uppercase text-muted-foreground">
-                          private
-                        </span>
+                    <Link href={`/repositories/${r.id}`} className="block min-w-0 hover:text-blue">
+                      <span className="flex items-center gap-1.5">
+                        {r.locked && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
+                        <span className="truncate font-mono text-foreground">{r.name}</span>
+                        {r.private && !r.locked && (
+                          <span className="rounded border border-border px-1 text-[9px] uppercase text-muted-foreground">
+                            private
+                          </span>
+                        )}
+                      </span>
+                      {r.reasons.length > 0 && (
+                        <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">{r.reasons.join(" · ")}</span>
                       )}
                     </Link>
                   </td>

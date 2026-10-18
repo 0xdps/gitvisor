@@ -21,6 +21,8 @@ export const config = {
     "/dashboard/:path*",
     "/repositories/:path*",
     "/workflows/:path*",
+    "/pull-requests",
+    "/pull-requests/:path*",
     "/releases/:path*",
     "/secrets/:path*",
     "/feedback/:path*",

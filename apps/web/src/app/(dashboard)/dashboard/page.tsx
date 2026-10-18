@@ -36,6 +36,7 @@ import { PageHeader } from "@/components/page-header";
 import { DomainPanel, Meter, SparkBars, type Tone } from "@/components/ops/domain-panel";
 import { RepoMatrix, type CiState, type RepoRow } from "@/components/ops/repo-matrix";
 import { ActivityFeed, type ActivityItem } from "@/components/ops/activity-feed";
+import { AttentionInbox, type AttentionItem } from "@/components/ops/attention-inbox";
 import { ageInDays, formatDuration, timeAgo } from "@/lib/format";
 
 const STALE_PR_HOURS = 48;
@@ -187,6 +188,13 @@ export default function OpsCenterPage() {
           stalePrs * 5 +
           staleSecrets * 3 +
           (ci === "running" ? 1 : 0);
+      const reasons = [
+        repo.locked ? "Locked by the current plan" : null,
+        ci === "failing" && lastMain ? `${lastMain.workflowName} failed on ${repo.defaultBranch}` : null,
+        successRate != null && successRate < 80 ? `${successRate}% of runs passed in 30 days` : null,
+        stalePrs > 0 ? `${stalePrs} pull request${stalePrs === 1 ? "" : "s"} idle over 48h` : null,
+        staleSecrets > 0 ? `${staleSecrets} secret${staleSecrets === 1 ? "" : "s"} older than 180 days` : null,
+      ].filter((reason): reason is string => Boolean(reason));
 
       return {
         id: repo.id,
@@ -208,6 +216,7 @@ export default function OpsCenterPage() {
         packages: packages.filter((p) => p.repositoryId === repo.id).length,
         pushedAt: repo.pushedAt,
         score,
+        reasons,
       };
     });
 
@@ -323,18 +332,18 @@ export default function OpsCenterPage() {
         detail: `${entry.resourceType} · ${entry.resourceId}`,
       });
     }
-    return items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 40);
+    return items
+      .filter((item) => item.kind !== "run-pass")
+      .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+      .slice(0, 30);
   }, [runs, releases, audit, repoById]);
 
   // ── Verdict ─────────────────────────────────────────────────────────────────
   const hasData = repos.length > 0;
+  const warningCount = rows.filter((row) => row.reasons.some((reason) => !reason.startsWith("Locked") && !reason.includes("failed on"))).length + rows.filter((row) => row.locked).length;
   const verdict = !hasData
     ? "Connect GitHub to fill the board"
-    : failing.length > 0
-      ? `${failing.length} ${failing.length === 1 ? "repo is" : "repos are"} blocking deploys`
-      : inFlight.length > 0
-        ? `Default branches green · ${inFlight.length} building`
-        : "Everything is green";
+    : `${failing.length} blocker${failing.length === 1 ? "" : "s"} · ${warningCount} warning${warningCount === 1 ? "" : "s"} · ${inFlight.length} running`;
 
   const summary = [
     `${repos.length} repos`,
@@ -345,6 +354,66 @@ export default function OpsCenterPage() {
   ]
     .filter(Boolean)
     .join(" · ");
+
+  const attention = useMemo((): AttentionItem[] => {
+    const items: AttentionItem[] = [];
+    for (const item of failing) {
+      items.push({
+        id: `fail-${item.repo.id}`,
+        severity: "critical",
+        category: "ci",
+        repo: item.repo.fullName,
+        title: `${item.run.workflowName} failed`,
+        reason: `${item.repo.defaultBranch} cannot ship until this passes`,
+        when: timeAgo(item.run.completedAt ?? item.run.startedAt),
+        href: `/repositories/${item.repo.id}`,
+      });
+    }
+    for (const pr of prSummary.stale.slice(0, 6)) {
+      items.push({
+        id: `pr-${pr.repoFullName}-${pr.number}`,
+        severity: "warning",
+        category: "reviews",
+        repo: pr.repoFullName,
+        title: pr.title,
+        reason: `No update for ${timeAgo(pr.updatedAt)} · ${pr.requestedReviewersCount} reviewer${pr.requestedReviewersCount === 1 ? "" : "s"} requested`,
+        when: timeAgo(pr.updatedAt),
+        href: pr.htmlUrl,
+        external: true,
+      });
+    }
+    const staleByName = new Map<string, number>();
+    for (const secret of secrets) {
+      if (ageInDays(secret.githubUpdatedAt ?? secret.updatedAt) > STALE_SECRET_DAYS) {
+        staleByName.set(secret.name, (staleByName.get(secret.name) ?? 0) + 1);
+      }
+    }
+    for (const [name, count] of [...staleByName.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4)) {
+      items.push({
+        id: `secret-${name}`,
+        severity: "warning",
+        category: "security",
+        repo: `${count} repositor${count === 1 ? "y" : "ies"}`,
+        title: name,
+        reason: "Older than 180 days. Rotate it once across every repository from Secret groups.",
+        when: "180d+",
+        href: "/secrets",
+      });
+    }
+    for (const repo of repos.filter((item) => item.locked).slice(0, 3)) {
+      items.push({
+        id: `locked-${repo.id}`,
+        severity: "info",
+        category: "setup",
+        repo: repo.fullName,
+        title: "Private repository is locked",
+        reason: "The current plan does not include this repository",
+        when: "plan",
+        href: "/repositories",
+      });
+    }
+    return items;
+  }, [failing, prSummary.stale, secrets, repos]);
 
   const ciTone: Tone =
     failing.length > 0 ? "bad" : ci.rate == null ? "neutral" : ci.rate < 80 ? "warn" : "good";
@@ -369,6 +438,8 @@ export default function OpsCenterPage() {
         </div>
       )}
 
+      <AttentionInbox items={attention} />
+
       {/* ── Domain panels ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <DomainPanel
@@ -392,7 +463,7 @@ export default function OpsCenterPage() {
         <DomainPanel
           icon={GitPullRequest}
           label="Pull requests"
-          href="/repositories"
+          href="/pull-requests"
           value={prs.length}
           unit="open"
           tone={prSummary.stale.length ? "warn" : "neutral"}

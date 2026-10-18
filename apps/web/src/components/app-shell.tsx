@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Flame,
   GitFork,
+  GitPullRequest,
   KeyRound,
   Lock,
   LogOut,
@@ -53,9 +54,10 @@ interface AppShellProps {
 type NavItem = { label: string; to: string; icon: React.ElementType } | null;
 
 const navItems: NavItem[] = [
-  { label: "Ops Center",   to: "/dashboard",    icon: Flame },
+  { label: "Attention",    to: "/dashboard",    icon: Flame },
   null,
   { label: "Workflows",    to: "/workflows",    icon: Activity },
+  { label: "Pull requests", to: "/pull-requests", icon: GitPullRequest },
   { label: "Releases",     to: "/releases",     icon: Tag },
   { label: "Packages",     to: "/packages",     icon: Package },
   null,

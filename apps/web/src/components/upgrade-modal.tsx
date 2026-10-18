@@ -3,6 +3,8 @@
 import {
   createContext,
   useContext,
+  useEffect,
+  useRef,
   useState,
   useCallback,
   type ReactNode,
@@ -97,10 +99,40 @@ function UpgradeModal({ open, onClose }: { open: boolean; onClose: () => void })
       onClose();
     },
   });
+  const claimStarted = useRef(false);
+
+  // Posting the tweet does not call us back. Claim when the user returns to
+  // this tab, and keep the button for a manual retry if that request fails.
+  useEffect(() => {
+    if (!open) {
+      claimStarted.current = false;
+      setShareStep("idle");
+      return;
+    }
+    if (shareStep !== "shared") return;
+
+    function claim() {
+      if (document.visibilityState === "hidden") return;
+      if (claimStarted.current || trialMutation.isPending || trialMutation.isSuccess) return;
+      claimStarted.current = true;
+      trialMutation.mutate(undefined, {
+        onError: () => {
+          claimStarted.current = false;
+        },
+      });
+    }
+
+    window.addEventListener("focus", claim);
+    document.addEventListener("visibilitychange", claim);
+    return () => {
+      window.removeEventListener("focus", claim);
+      document.removeEventListener("visibilitychange", claim);
+    };
+  }, [open, shareStep, trialMutation]);
 
   function handleShare() {
     const text = encodeURIComponent(
-      "I'm using @gitvisor to track my GitHub workflows, secrets, and packages — highly recommend it 🚀 https://gitvisor.app",
+      "I'm using @gitvisor to track my GitHub workflows, secrets, and packages — highly recommend it 🚀 https://gitvisor.dev",
     );
     window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank", "noopener,noreferrer");
     setShareStep("shared");
@@ -161,7 +193,7 @@ function UpgradeModal({ open, onClose }: { open: boolean; onClose: () => void })
               Share Gitvisor on X
             </h3>
             <p className="cds--type-body-01" style={{ marginTop: "0.5rem" }}>
-              Open a prefilled post, then return here to claim the trial.
+              Open a prefilled post. The 15-day trial starts when you come back to this tab.
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "1rem" }}>
               {shareStep === "idle" ? (
@@ -183,7 +215,11 @@ function UpgradeModal({ open, onClose }: { open: boolean; onClose: () => void })
               <InlineNotification
                 kind="error"
                 title="Trial not claimed"
-                subtitle="Try again in a moment."
+                subtitle={
+                  trialMutation.error instanceof Error
+                    ? trialMutation.error.message
+                    : "Try again in a moment."
+                }
                 hideCloseButton
                 lowContrast
                 style={{ marginTop: "1rem" }}

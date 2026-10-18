@@ -101,6 +101,7 @@ export async function dispatch(
         handleSyncWorkflows({ userId, installationId, repositoryId, fullName }, getUserDb),
         handleSyncSecrets({ userId, installationId, repositoryId, fullName }, getUserDb),
         handleSyncPackages({ userId, installationId, repositoryId, fullName }, getUserDb),
+        handleSyncReleases({ userId, installationId, repositoryId, fullName }, getUserDb),
       ]);
 
       // Mark the repo as synced

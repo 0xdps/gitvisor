@@ -174,18 +174,17 @@ export function createWebhookHandler(
     });
   });
 
-  // ── Release events (trigger package re-sync) ─────────────────────────────
+  // ── Release events ───────────────────────────────────────────────────────
   webhooks.on("release", async ({ payload }) => {
     if (!payload.installation || !payload.sender) return;
-    await enqueue({
-      type: "sync:packages",
-      data: {
-        userId: String(payload.sender.id),
-        installationId: payload.installation.id,
-        repositoryId: String(payload.repository.id),
-        fullName: payload.repository.full_name,
-      },
-    });
+    const data = {
+      userId: String(payload.sender.id),
+      installationId: payload.installation.id,
+      repositoryId: String(payload.repository.id),
+      fullName: payload.repository.full_name,
+    };
+    await enqueue({ type: "sync:releases", data });
+    await enqueue({ type: "sync:packages", data });
   });
 
   // ── Repository events ────────────────────────────────────────────────────

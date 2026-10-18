@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Launch, Renew, StopFilledAlt, WarningAlt } from "@carbon/icons-react";
 import { Button, InlineLoading, InlineNotification, Tag } from "@carbon/react";
@@ -23,7 +23,9 @@ import {
   getAuditLog,
   rerunWorkflow,
   cancelWorkflow,
+  syncRepositories,
 } from "@/lib/api-client";
+import { clearFirstSync, firstSyncStartedAt, markFirstSync } from "@/lib/first-sync";
 import type { RepoPullRequest, Repository, WorkflowRun } from "@gitvisor/shared";
 import { useAccount } from "@/lib/account-context";
 import { InstallAccountsPanel } from "@/components/install-accounts-panel";
@@ -49,6 +51,12 @@ function isFailure(run: WorkflowRun): boolean {
 export default function OpsCenterPage() {
   const { selected: selectedAccount } = useAccount();
   const queryClient = useQueryClient();
+  const [syncStartedAt, setSyncStartedAt] = useState<number | null>(null);
+  const syncing = syncStartedAt !== null;
+
+  useEffect(() => {
+    setSyncStartedAt(firstSyncStartedAt());
+  }, []);
 
   const { data: runData } = useQuery({
     queryKey: ["workflows", "ops", 100],
@@ -60,7 +68,9 @@ export default function OpsCenterPage() {
     queryKey: ["repositories"],
     queryFn: getRepositories,
     staleTime: 30_000,
+    refetchInterval: syncing ? 4_000 : false,
   });
+  useFirstSync({ syncing, repoCount: allRepos.length, ready: !repositoriesLoading && !repositoriesError, setSyncStartedAt });
   const { data: pullRequests = [] } = useQuery({
     queryKey: ["pull-requests"],
     queryFn: () => getPullRequests(100),
@@ -335,7 +345,9 @@ export default function OpsCenterPage() {
   // ── Verdict ─────────────────────────────────────────────────────────────────
   const hasData = repos.length > 0;
   const warningCount = rows.filter((row) => row.reasons.some((reason) => !reason.startsWith("Locked") && !reason.includes("failed on"))).length + rows.filter((row) => row.locked).length;
-  const verdict = !hasData
+  const verdict = syncing && !hasData
+    ? "Syncing your repositories"
+    : !hasData
     ? "Connect GitHub to fill the board"
     : `${failing.length} blocker${failing.length === 1 ? "" : "s"} · ${warningCount} warning${warningCount === 1 ? "" : "s"} · ${inFlight.length} running`;
 
@@ -445,15 +457,35 @@ export default function OpsCenterPage() {
         <PageHeader
           kicker={`Ops Center · ${selectedAccount ? selectedAccount.login : "all accounts"}`}
           title={verdict}
-          detail={hasData ? summary : "Install the GitHub App and sync your repositories."}
+          detail={
+            hasData
+              ? summary
+              : syncing
+                ? "Gitvisor is reading your repositories from GitHub. The board fills in as each one finishes."
+                : "Install the GitHub App and sync your repositories."
+          }
         />
         <div className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
-          <span className={`h-1.5 w-1.5 rounded-full ${inFlight.length ? "bg-blue animate-pulse" : "bg-success"}`} />
-          live · refreshes every 30s
+          <span className={`h-1.5 w-1.5 rounded-full ${inFlight.length || syncing ? "bg-blue animate-pulse" : "bg-success"}`} />
+          {syncing ? "syncing · refreshes every 4s" : "live · refreshes every 30s"}
         </div>
       </div>
 
-      {!hasData && (
+      {syncing && (
+        <InlineNotification
+          kind="info"
+          lowContrast
+          hideCloseButton
+          title="First sync in progress"
+          subtitle={
+            hasData
+              ? `${allRepos.length} ${allRepos.length === 1 ? "repository" : "repositories"} loaded so far. Workflow runs, pull requests, and releases follow.`
+              : "Fetching repositories, workflow runs, pull requests, and releases. This usually takes under a minute."
+          }
+        />
+      )}
+
+      {!hasData && !syncing && (
         <div className="max-w-sm">
           <InstallAccountsPanel />
         </div>
@@ -648,6 +680,74 @@ export default function OpsCenterPage() {
       </div>
     </div>
   );
+}
+
+// ── First sync ────────────────────────────────────────────────────────────────
+
+const AUTO_SYNC_KEY = "gitvisor:auto-sync";
+/** The sync is treated as settled once the repository count holds this long. */
+const SETTLE_MS = 20_000;
+const SYNCED_QUERIES = ["workflows", "pull-requests", "releases", "analytics", "secrets", "packages", "audit-log"];
+
+/**
+ * Keeps the board moving while the first sync runs. Starts a sync when an
+ * installed account has no repositories yet, refreshes every panel as repos
+ * arrive, and ends the syncing state once the count stops changing.
+ */
+function useFirstSync({
+  syncing,
+  repoCount,
+  ready,
+  setSyncStartedAt,
+}: {
+  syncing: boolean;
+  repoCount: number;
+  ready: boolean;
+  setSyncStartedAt: (at: number | null) => void;
+}) {
+  const queryClient = useQueryClient();
+  const last = useRef({ count: -1, since: 0 });
+
+  useEffect(() => {
+    if (!ready || syncing || repoCount > 0) return;
+    try {
+      if (window.sessionStorage.getItem(AUTO_SYNC_KEY)) return;
+      window.sessionStorage.setItem(AUTO_SYNC_KEY, "1");
+    } catch {
+      return;
+    }
+    syncRepositories()
+      .then(({ queued }) => {
+        if (queued > 0) {
+          markFirstSync();
+          setSyncStartedAt(Date.now());
+        }
+      })
+      .catch(() => {});
+  }, [ready, syncing, repoCount, setSyncStartedAt]);
+
+  useEffect(() => {
+    if (!syncing || repoCount === last.current.count) return;
+    last.current = { count: repoCount, since: Date.now() };
+    for (const key of SYNCED_QUERIES) void queryClient.invalidateQueries({ queryKey: [key] });
+  }, [syncing, repoCount, queryClient]);
+
+  useEffect(() => {
+    if (!syncing) return;
+    const timer = window.setInterval(() => {
+      const { count, since } = last.current;
+      if (firstSyncStartedAt() === null) {
+        setSyncStartedAt(null);
+        return;
+      }
+      if (count > 0 && Date.now() - since > SETTLE_MS) {
+        for (const key of SYNCED_QUERIES) void queryClient.invalidateQueries({ queryKey: [key] });
+        clearFirstSync();
+        setSyncStartedAt(null);
+      }
+    }, 4_000);
+    return () => window.clearInterval(timer);
+  }, [syncing, queryClient, setSyncStartedAt]);
 }
 
 // ── Rows ──────────────────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import type { User } from "@gitvisor/shared";
 import { syncRepositories } from "@/lib/api-client";
+import { markFirstSync } from "@/lib/first-sync";
 
 // Client-side calls use the /api proxy (Next.js rewrites → API service).
 // Server-side calls (Server Components) bypass the proxy and hit the API directly.
@@ -94,5 +95,6 @@ export async function finalizeInstallation(installationId: number): Promise<void
 
   if (!res.ok) throw new Error("Installation finalize failed");
 
-  await syncRepositories(installationId);
+  const { queued } = await syncRepositories(installationId);
+  if (queued > 0) markFirstSync();
 }

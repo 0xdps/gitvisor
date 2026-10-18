@@ -1,0 +1,32 @@
+apps/web/src/lib/auth-client.ts
+  s_84c39768a3d85c::t_aee84ef5627170 98-99
+  s_84c39768a3d85c::t_aeffa151c7cef5 3
+apps/web/src/lib/first-sync.ts
+  s_84c39768a3d85c::t_a86576fc325978 1-34
+apps/web/src/app/(dashboard)/dashboard/page.tsx
+  s_84c39768a3d85c::t_ce52c714c229aa 730-735,737-738,743-750
+  s_84c39768a3d85c::t_5bb839a5954391 685-729,736,751-752
+  s_84c39768a3d85c::t_c3f9968be759b5 3
+  s_84c39768a3d85c::t_887d6e5f52ea4e 460-466,469-470,474-488
+  s_84c39768a3d85c::t_0f04becfc47898 348-350
+  s_84c39768a3d85c::t_555b015a6d3cdd 54-59
+  s_84c39768a3d85c::t_629410da9f4cd5 26,28
+  s_84c39768a3d85c::t_720773fe5d81ae 739-742
+  s_84c39768a3d85c::t_444238f1b2c7ad 71,73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6b295be2d2fc10092893eb34f41b7c0e32c232f4",
+  "prompts": {},
+  "sessions": {
+    "s_84c39768a3d85c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "2154a2db-9402-4d2d-b4a0-92e6611dbb96",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+apps/web/src/app/api/[...path]/route.ts
+  s_84c39768a3d85c::t_2ef30807a4005d 39-42,46-48
+  s_84c39768a3d85c::t_9a83fb721eaa19 43-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "161cdff54236438540aa7c5ace523feb4b4dbb20",
+  "prompts": {},
+  "sessions": {
+    "s_84c39768a3d85c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "2154a2db-9402-4d2d-b4a0-92e6611dbb96",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Gitvisor">
+  <rect width="1024" height="1024" rx="228" fill="#0C2344"/>
+  <path
+    d="M768 292
+       A 268 268 0 1 0 748 628"
+    fill="none"
+    stroke="#F4F1EA"
+    stroke-width="124"
+    stroke-linecap="round"
+  />
+  <rect x="458" y="452" width="348" height="116" rx="28" fill="#3AD6FF"/>
+</svg>

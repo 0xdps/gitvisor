@@ -33,6 +33,7 @@ import {
 } from "@/lib/api-client";
 import type { SecretGroup, SecretMeta, Repository } from "@gitvisor/shared";
 import { useAccount } from "@/lib/account-context";
+import { PageHeader } from "@/components/page-header";
 
 function timeAgo(iso: string | null | undefined): string {
   if (!iso) return "never";
@@ -663,10 +664,11 @@ function SecretsContent() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Secrets</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage GitHub Actions secrets across your repositories.</p>
-      </div>
+      <PageHeader
+        kicker="Credentials"
+        title="Secrets"
+        detail="Names and dates only. Raw values stay in GitHub."
+      />
 
       <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 w-fit">
         {TABS.map(({ id, label, icon: Icon }) => (

@@ -21,6 +21,7 @@ import {
 import { getAuditLog } from "@/lib/api-client";
 import type { AuditEntry } from "@/lib/api-client";
 import type { ElementType } from "react";
+import { PageHeader } from "@/components/page-header";
 
 type ActionMeta = {
   label: string;
@@ -88,14 +89,11 @@ function AuditLogContent() {
     <div className="space-y-5">
 
       {/* ── Header ────────────────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Audit Log</h1>
-        {data && (
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {data.total.toLocaleString()} event{data.total !== 1 ? "s" : ""}
-          </p>
-        )}
-      </div>
+      <PageHeader
+        kicker="Record"
+        title="Audit log"
+        detail={data ? `${data.total.toLocaleString()} event${data.total !== 1 ? "s" : ""}` : null}
+      />
 
       {/* ── Timeline ──────────────────────────────────────────────────── */}
       {isLoading ? (

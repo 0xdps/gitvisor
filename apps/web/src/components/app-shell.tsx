@@ -17,6 +17,7 @@ import {
   KeyRound,
   Lock,
   LogOut,
+  Menu,
   MessageSquare,
   Package,
   PanelLeft,
@@ -80,6 +81,8 @@ export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
 
   const [expanded, setExpanded] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const labels = expanded || mobileOpen;
 
   // Init from localStorage after mount to avoid hydration mismatch
   useEffect(() => {
@@ -145,32 +148,47 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div className="h-screen overflow-hidden flex bg-background">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-card focus:px-3 focus:py-2 focus:text-sm"
+      >
+        Skip to content
+      </a>
+      <div className="flex h-screen overflow-hidden bg-background">
+        {mobileOpen && (
+          <button
+            type="button"
+            className="fixed inset-0 z-30 bg-black/60 md:hidden"
+            aria-label="Close navigation"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
 
-        {/* ── Sidebar ──────────────────────────────────────────────────────── */}
         <aside
           className={`${
-            expanded ? "w-52" : "w-14"
-          } transition-[width] duration-200 ease-in-out border-r border-border flex flex-col shrink-0 bg-sidebar py-3 overflow-hidden`}
+            mobileOpen ? "translate-x-0" : "-translate-x-full"
+          } fixed inset-y-0 left-0 z-40 w-60 transition-transform duration-200 md:static md:translate-x-0 ${
+            expanded ? "md:w-52" : "md:w-14"
+          } flex shrink-0 flex-col overflow-hidden border-r border-border bg-sidebar py-3`}
         >
           {/* Logo */}
-          <div className={`flex items-center ${expanded ? "gap-2.5 px-3 mb-3" : "justify-center mb-3"}`}>
+          <div className={`mb-3 flex items-center ${labels ? "gap-2.5 px-3" : "justify-center"}`}>
             <Link
               href="/dashboard"
               className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-white/5 transition-colors shrink-0"
             >
               <LogoIcon size="sm" />
             </Link>
-            {expanded && (
-              <span className="text-sm font-semibold text-foreground truncate">Gitvisor</span>
+            {labels && (
+              <span className="truncate text-sm font-semibold text-foreground">Gitvisor</span>
             )}
           </div>
 
           {/* Account switcher */}
-          <div className={`${expanded ? "px-2 mb-3" : "flex justify-center mb-3"}`}>
+          <div className={`${labels ? "mb-3 px-2" : "mb-3 flex justify-center"}`}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                {expanded ? (
+                {labels ? (
                   <button className="w-full flex items-center gap-2 rounded-lg border border-border/60 bg-white/3 px-2 py-1.5 hover:bg-white/6 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring">
                     {selectedAccount?.avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -319,14 +337,14 @@ export function AppShell({ children }: AppShellProps) {
           </div>
 
           {/* Nav */}
-          <nav className={`flex flex-col flex-1 gap-0.5 ${expanded ? "px-2" : "items-center px-0"}`}>
+          <nav className={`flex flex-1 flex-col gap-0.5 ${labels ? "px-2" : "items-center px-0"}`}>
             {navItems.map((item, idx) => {
               // Divider
               if (item === null) {
                 return (
                   <div
                     key={`divider-${idx}`}
-                    className={`shrink-0 my-1 ${expanded ? "mx-1 border-t border-border/50" : "w-5 border-t border-border/50"}`}
+                    className={`my-1 shrink-0 border-t border-border/50 ${labels ? "mx-1" : "w-5"}`}
                   />
                 );
               }
@@ -343,8 +361,9 @@ export function AppShell({ children }: AppShellProps) {
                   key={to}
                   href={to}
                   aria-label={label}
+                  onClick={() => setMobileOpen(false)}
                   className={`relative flex h-9 items-center rounded-lg transition-colors ${
-                    expanded ? "w-full gap-2.5 px-3" : "w-9 justify-center"
+                    labels ? "w-full gap-2.5 px-3" : "w-9 justify-center"
                   } ${
                     isActive
                       ? "bg-blue/15 text-blue"
@@ -352,13 +371,13 @@ export function AppShell({ children }: AppShellProps) {
                   }`}
                 >
                   <Icon className="h-4.5 w-4.5 shrink-0" />
-                  {expanded && (
-                    <span className="text-sm font-medium truncate flex-1">{label}</span>
+                  {labels && (
+                    <span className="flex-1 truncate text-sm font-medium">{label}</span>
                   )}
                   {showBadge && (
                     <span
                       className={`${
-                        expanded
+                        labels
                           ? "ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-warning px-0.5 text-[9px] font-black text-warning-foreground"
                           : "absolute -top-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-warning text-[7px] font-black text-warning-foreground leading-none"
                       }`}
@@ -369,7 +388,7 @@ export function AppShell({ children }: AppShellProps) {
                 </Link>
               );
 
-              return expanded ? (
+              return labels ? (
                 linkEl
               ) : (
                 <Tooltip key={to}>
@@ -383,7 +402,7 @@ export function AppShell({ children }: AppShellProps) {
           </nav>
 
           {/* Collapse/expand toggle */}
-          <div className={`flex ${expanded ? "justify-end px-2" : "justify-center"} mb-1`}>
+          <div className={`mb-1 hidden md:flex ${expanded ? "justify-end px-2" : "justify-center"}`}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -405,10 +424,10 @@ export function AppShell({ children }: AppShellProps) {
           </div>
 
           {/* User avatar */}
-          <div className={`${expanded ? "px-2" : "flex justify-center"} mt-1`}>
+          <div className={`${labels ? "px-2" : "flex justify-center"} mt-1`}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                {expanded ? (
+                {labels ? (
                   <button className="w-full flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring">
                     <Avatar className="h-7 w-7 ring-1 ring-border shrink-0">
                       <AvatarImage src={user?.avatarUrl ?? undefined} alt={user?.name ?? ""} />
@@ -464,11 +483,25 @@ export function AppShell({ children }: AppShellProps) {
         </aside>
 
         {/* ── Content ───────────────────────────────────────────────────────── */}
-        <main className="flex-1 overflow-y-auto min-w-0">
-          <div className="max-w-5xl mx-auto px-8 py-8">
-            {children}
-          </div>
-        </main>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="flex h-14 items-center gap-3 border-b border-border px-4 md:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-white/5 hover:text-foreground"
+              aria-label="Open navigation"
+            >
+              <Menu className="h-4 w-4" />
+            </button>
+            <LogoIcon size="sm" />
+            <span className="text-sm font-semibold">Gitvisor</span>
+          </header>
+          <main id="main" className="min-w-0 flex-1 overflow-y-auto">
+            <div className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-8">
+              {children}
+            </div>
+          </main>
+        </div>
 
       </div>
     </TooltipProvider>

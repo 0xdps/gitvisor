@@ -5,7 +5,7 @@ export function PublicHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2 font-bold text-foreground">
-          <img src="/icon-trans.png" alt="Gitvisor" className="h-6 w-6" />
+          <img src="/icon.svg" alt="Gitvisor" className="h-6 w-6 rounded" />
           <span>Gitvisor</span>
         </Link>
 

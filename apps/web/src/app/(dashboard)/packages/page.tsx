@@ -9,6 +9,7 @@ import { Package, RefreshCw, Lock, Globe, Download, Check, Copy, ExternalLink } 
 import { getRepositories, getPackages } from "@/lib/api-client";
 import type { Package as PackageType, Repository } from "@gitvisor/shared";
 import { useAccount } from "@/lib/account-context";
+import { PageHeader } from "@/components/page-header";
 
 function PackagesContent() {
   const searchParams = useSearchParams();
@@ -61,14 +62,15 @@ function PackagesContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Packages</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {selectedRepo
+        <PageHeader
+          kicker="Artifacts"
+          title="Packages"
+          detail={
+            selectedRepo
               ? `Packages for ${selectedRepo.fullName}`
-              : "All packages across your repositories."}
-          </p>
-        </div>
+              : "All packages across your repositories."
+          }
+        />
         {selectedRepo && (
           <button
             onClick={() =>

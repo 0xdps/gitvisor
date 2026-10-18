@@ -96,10 +96,7 @@ function LoginContent() {
           defer
         />
       )}
-      <div className="saas-glow" aria-hidden="true" />
-      <div className="absolute inset-0 grid-bg" aria-hidden="true" />
-
-      <header className="relative z-10 flex h-14 items-center border-b border-border glass-panel px-6">
+      <header className="relative z-10 flex h-14 items-center border-b border-border px-6">
         <Link href="/" className="flex items-center gap-2 font-bold text-foreground">
           <LogoIcon size="md" />
           <span>Gitvisor</span>
@@ -112,15 +109,15 @@ function LoginContent() {
             <div className="mx-auto mb-5 flex items-center justify-center">
               <LogoIcon size="xl" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Welcome to Gitvisor
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Sign in to the board
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Your GitHub operational dashboard
+              GitHub remains the source of truth. Gitvisor reads operational metadata.
             </p>
           </div>
 
-          <div className="glass-panel rounded-xl p-6">
+          <div className="rounded-xl border border-border bg-card p-6">
             {error && (
               <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-center text-sm text-destructive">
                 {error}
@@ -171,10 +168,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
-          <div className="saas-glow" aria-hidden="true" />
-          <div className="absolute inset-0 grid-bg" aria-hidden="true" />
-        </div>
+        <div className="min-h-screen bg-background" />
       }
     >
       <LoginContent />

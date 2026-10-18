@@ -4,6 +4,16 @@ function requireEnv(key: string): string {
   return val;
 }
 
+/**
+ * True when the browser origin is HTTPS. Local docker keeps NODE_ENV=development
+ * while the tunnel serves https://…, and a non-Secure cookie on that origin is
+ * dropped when the tab closes.
+ */
+function publicOriginIsHttps(): boolean {
+  const origin = process.env["WEB_URL"] ?? process.env["GITHUB_OAUTH_REDIRECT_URI"] ?? "";
+  return origin.startsWith("https://");
+}
+
 export const config = {
   port: Number(process.env["PORT"] ?? 3001),
   nodeEnv: process.env["NODE_ENV"] ?? "development",
@@ -32,7 +42,7 @@ export const config = {
   session: {
     // __Host- prefix enforces Secure + Path=/ + no Domain attribute in production (HTTPS)
     cookieName: process.env["NODE_ENV"] === "production" ? "__Host-gitvisor_session" : "gitvisor_session",
-    secure: process.env["NODE_ENV"] === "production",
+    secure: process.env["NODE_ENV"] === "production" || publicOriginIsHttps(),
     // Must be at least 32 random characters. Used to sign session cookies (HMAC-SHA256).
     secret: (() => {
       const s = requireEnv("SESSION_SECRET");

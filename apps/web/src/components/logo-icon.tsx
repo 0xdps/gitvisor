@@ -11,18 +11,12 @@ const sizes = {
   xl: { wrapper: "h-14 w-14 rounded-2xl", img: "h-14 w-14" },
 } as const;
 
-/**
- * Renders the Gitvisor icon on a white background so the git-branch
- * logo inside the visor is clearly visible against dark page backgrounds.
- */
 export function LogoIcon({ size = "md", className }: LogoIconProps) {
   const s = sizes[size];
   return (
-    <div
-      className={`${s.wrapper} bg-white shrink-0 overflow-hidden ${className ?? ""}`}
-    >
+    <div className={`${s.wrapper} shrink-0 overflow-hidden ${className ?? ""}`}>
       <img
-        src="/icon-trans.png"
+        src="/icon.svg"
         alt="Gitvisor"
         className={`${s.img} object-cover`}
       />

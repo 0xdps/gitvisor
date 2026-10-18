@@ -16,6 +16,7 @@ import {
 import { getRepositories, syncRepositories } from "@/lib/api-client";
 import type { Repository } from "@gitvisor/shared";
 import { InstallAccountsPanel } from "@/components/install-accounts-panel";
+import { PageHeader } from "@/components/page-header";
 import { useAccount } from "@/lib/account-context";
 import { useUpgradeModal } from "@/components/upgrade-modal";
 
@@ -91,14 +92,15 @@ export default function RepositoriesPage() {
 
       {/* ── Header ────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">Repositories</h1>
-          {repos && (
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {filtered.length}{filtered.length !== repos.length ? ` of ${repos.length}` : ""} {repos.length === 1 ? "repository" : "repositories"}
-            </p>
-          )}
-        </div>
+        <PageHeader
+          kicker="Inventory"
+          title="Repositories"
+          detail={
+            repos
+              ? `${filtered.length}${filtered.length !== repos.length ? ` of ${repos.length}` : ""} ${repos.length === 1 ? "repository" : "repositories"}`
+              : null
+          }
+        />
         <button
           onClick={() => sync.mutate()}
           disabled={sync.isPending}
@@ -239,7 +241,7 @@ function RepoCard({ repo }: { repo: Repository }) {
           <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">{repo.owner}</p>
         </div>
         <Link
-          href={`/workflows?repo=${repo.id}`}
+          href={`/workflows?repositoryId=${repo.id}`}
           className="shrink-0 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground border border-border rounded px-1.5 py-0.5 transition-colors"
           title="View workflows"
         >

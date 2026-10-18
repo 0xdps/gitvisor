@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { getReleases, syncReleases, getRepositories } from "@/lib/api-client";
+import { PageHeader } from "@/components/page-header";
 import { useAccount } from "@/lib/account-context";
 
 interface ReleasesPageProps {
@@ -101,17 +102,16 @@ function ReleasesContent({
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-white">Releases</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {total > 0 ? `${total} release${total !== 1 ? "s" : ""}` : "No releases synced yet"}
-          </p>
-        </div>
+        <PageHeader
+          kicker="Ship"
+          title="Releases"
+          detail={total > 0 ? `${total} release${total !== 1 ? "s" : ""}` : "No releases synced yet"}
+        />
         {repositoryId && (
           <button
             onClick={() => syncMutation.mutate(repositoryId)}
             disabled={syncMutation.isPending}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-white hover:border-blue transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-blue transition-colors disabled:opacity-50"
           >
             <RefreshCw
               size={14}
@@ -130,7 +130,7 @@ function ReleasesContent({
             const v = e.target.value || undefined;
             navigate({ ...(v !== undefined ? { repositoryId: v } : {}), page: 1 });
           }}
-          className="h-8 rounded-md border border-border bg-card px-2 text-sm text-white focus:outline-none focus:border-blue min-w-[200px]"
+          className="h-8 rounded-md border border-border bg-card px-2 text-sm text-foreground focus:outline-none focus:border-blue min-w-[200px]"
         >
           <option value="">All repositories</option>
           {scopedRepos.map((r) => (
@@ -156,7 +156,7 @@ function ReleasesContent({
             <button
               onClick={() => syncMutation.mutate(repositoryId)}
               disabled={syncMutation.isPending}
-              className="mt-4 flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-white transition-colors"
+              className="mt-4 flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-foreground transition-colors"
             >
               <RefreshCw size={14} />
               Sync releases for this repo
@@ -180,7 +180,7 @@ function ReleasesContent({
                 {/* Main info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-white text-sm">
+                    <span className="font-medium text-foreground text-sm">
                       {release.name ?? release.tagName}
                     </span>
                     <code className="text-xs bg-muted/50 text-muted-foreground px-1.5 py-0.5 rounded border border-border">
@@ -249,7 +249,7 @@ function ReleasesContent({
             <button
               onClick={() => navigate({ page: page - 1 })}
               disabled={page <= 1}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-white hover:border-blue disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-blue disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft size={14} />
               Prev
@@ -257,7 +257,7 @@ function ReleasesContent({
             <button
               onClick={() => navigate({ page: page + 1 })}
               disabled={!hasMore}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-white hover:border-blue disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-blue disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Next
               <ChevronRight size={14} />

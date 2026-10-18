@@ -323,6 +323,9 @@ export function createAuthRouter(
       sameSite: "Lax",
       path: "/",
       maxAge: SESSION_TTL_SECONDS,
+      // Expires as well as Max-Age, so the browser stores a persistent cookie
+      // and keeps the session after the tab is closed.
+      expires: new Date(Date.now() + SESSION_TTL_SECONDS * 1000),
     });
 
     // Audit: record the successful login with IP + UA so suspicious sessions
@@ -467,7 +470,11 @@ export function createAuthRouter(
         }
       }
     }
-    deleteCookie(c, config.session.cookieName, { path: "/" });
+    deleteCookie(c, config.session.cookieName, {
+      path: "/",
+      secure: config.session.secure,
+      sameSite: "Lax",
+    });
     return c.json({ ok: true, data: null });
   });
 

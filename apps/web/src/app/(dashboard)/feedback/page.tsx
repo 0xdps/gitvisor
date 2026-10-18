@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Star, Send, CheckCircle2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
+import { PageHeader } from "@/components/page-header";
 
 export default function FeedbackPage() {
   const { data: status, isLoading: statusLoading } = useQuery({
@@ -86,10 +87,11 @@ export default function FeedbackPage() {
   return (
     <div className="max-w-lg mx-auto px-4 py-10">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-foreground">Send Feedback</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          How's Gitvisor working for you? Tell us what you think.
-        </p>
+        <PageHeader
+          kicker="Notes"
+          title="Send feedback"
+          detail="How is Gitvisor working for you?"
+        />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

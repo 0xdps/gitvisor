@@ -20,6 +20,7 @@ import {
 import { getWorkflowRuns, getRepositories, rerunWorkflow, cancelWorkflow } from "@/lib/api-client";
 import type { WorkflowRun } from "@gitvisor/shared";
 import { useUpgradeModal } from "@/components/upgrade-modal";
+import { PageHeader } from "@/components/page-header";
 import { useAccount } from "@/lib/account-context";
 
 function timeAgo(dateStr: string): string {
@@ -159,16 +160,19 @@ function WorkflowsContent() {
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">Workflows</h1>
-          {runData && (
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {total.toLocaleString()} run{total !== 1 ? "s" : ""}
-              {rawStatus !== "all" ? ` · ${FILTERS.find((f) => f.value === rawStatus)?.label}` : ""}
-              {repositoryId ? ` · ${repoMap.get(repositoryId) ?? repositoryId}` : ""}
-            </p>
-          )}
-        </div>
+        <PageHeader
+          kicker="Runs"
+          title="Workflows"
+          detail={
+            runData ? (
+              <>
+                {total.toLocaleString()} run{total !== 1 ? "s" : ""}
+                {rawStatus !== "all" ? ` · ${FILTERS.find((f) => f.value === rawStatus)?.label}` : ""}
+                {repositoryId ? ` · ${repoMap.get(repositoryId) ?? repositoryId}` : ""}
+              </>
+            ) : null
+          }
+        />
       </div>
 
       {/* ── Filter row ──────────────────────────────────────────────────── */}

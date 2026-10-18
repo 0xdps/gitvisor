@@ -5,6 +5,7 @@ import { getAnalytics, getRepositories } from "@/lib/api-client";
 import { TrendingUp, TrendingDown, Activity, GitBranch, CheckCircle2, XCircle } from "lucide-react";
 import type React from "react";
 import { useAccount } from "@/lib/account-context";
+import { PageHeader } from "@/components/page-header";
 
 export default function AnalyticsPage() {
   const { data: analytics, isLoading } = useQuery({
@@ -53,7 +54,7 @@ export default function AnalyticsPage() {
   if (total === 0) {
     return (
       <div className="space-y-6">
-        <h1 className="text-xl font-semibold tracking-tight">Analytics</h1>
+        <PageHeader kicker="Signal" title="Analytics" />
         <div className="rounded-xl border border-border bg-card flex flex-col items-center justify-center py-20 text-center px-6">
           <Activity className="h-10 w-10 text-muted-foreground/20 mb-4" />
           <p className="text-sm font-medium text-muted-foreground">No data yet</p>
@@ -97,12 +98,11 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Analytics</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Last 30 days · {total.toLocaleString()} runs across {byRepo.length} {byRepo.length === 1 ? "repo" : "repos"}
-        </p>
-      </div>
+      <PageHeader
+        kicker="Signal"
+        title="Analytics"
+        detail={`Last 30 days · ${total.toLocaleString()} runs across ${byRepo.length} ${byRepo.length === 1 ? "repo" : "repos"}`}
+      />
 
       {/* ── Stat strip ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">

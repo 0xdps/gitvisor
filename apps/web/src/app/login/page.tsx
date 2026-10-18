@@ -4,16 +4,10 @@ import Link from "next/link";
 import Script from "next/script";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { LogoGithub } from "@carbon/icons-react";
+import { Button, Column, Content, Grid, Header, HeaderName, InlineNotification, Tile } from "@carbon/react";
 import { finalizeInstallation, login, me } from "@/lib/auth-client";
 import { LogoIcon } from "@/components/logo-icon";
-
-function GitHubIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
-      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
-    </svg>
-  );
-}
 
 function LoginContent() {
   const router = useRouter();
@@ -86,8 +80,7 @@ function LoginContent() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background">
-      {/* Load Turnstile JS only when a site key is configured */}
+    <>
       {siteKey && (
         <Script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js"
@@ -96,80 +89,67 @@ function LoginContent() {
           defer
         />
       )}
-      <header className="relative z-10 flex h-14 items-center border-b border-border px-6">
-        <Link href="/" className="flex items-center gap-2 font-bold text-foreground">
-          <LogoIcon size="md" />
-          <span>Gitvisor</span>
-        </Link>
-      </header>
-
-      <main className="relative z-10 flex flex-1 items-center justify-center px-6 py-16">
-        <div className="w-full max-w-sm">
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-5 flex items-center justify-center">
-              <LogoIcon size="xl" />
-            </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <Header aria-label="Gitvisor">
+        <HeaderName href="/" prefix="" as={Link}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+            <LogoIcon size="xs" />
+            Gitvisor
+          </span>
+        </HeaderName>
+      </Header>
+      <Content id="main">
+        <Grid>
+          <Column sm={4} md={4} lg={{ span: 6, offset: 5 }}>
+            <LogoIcon size="xl" />
+            <h1 className="cds--type-productive-heading-04" style={{ marginTop: "1rem" }}>
               Sign in to the board
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="cds--type-body-01" style={{ marginTop: "0.5rem" }}>
               GitHub remains the source of truth. Gitvisor reads operational metadata.
             </p>
-          </div>
-
-          <div className="rounded-xl border border-border bg-card p-6">
-            {error && (
-              <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-center text-sm text-destructive">
-                {error}
-              </p>
-            )}
-
-            {/* Cloudflare Turnstile — only rendered when NEXT_PUBLIC_CF_TURNSTILE_SITE_KEY is set */}
-            {siteKey && (
-              <div
-                ref={turnstileRef}
-                className="cf-turnstile mb-4 flex justify-center"
-                data-sitekey={siteKey}
-                data-callback="onTurnstileSuccess"
-                data-expired-callback="onTurnstileExpired"
-                data-theme="dark"
-              />
-            )}
-
-            <button
-              onClick={handleLogin}
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-2.5 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-            >
-              <GitHubIcon />
-              {loading ? "Redirecting…" : "Continue with GitHub"}
-            </button>
-
-            {process.env.NEXT_PUBLIC_SHOW_LEGAL_LINKS === "true" && (
-              <p className="mt-4 text-center text-xs text-muted-foreground">
-                By continuing, you agree to our{" "}
-                <a href="/tos" className="underline underline-offset-4 hover:text-foreground transition-colors">
-                  Terms of Service
-                </a>{" "}
-                and{" "}
-                <a href="/privacy" className="underline underline-offset-4 hover:text-foreground transition-colors">
-                  Privacy Policy
-                </a>.
-              </p>
-            )}
-          </div>
-        </div>
-      </main>
-    </div>
+            <Tile style={{ marginTop: "2rem" }}>
+              {error ? (
+                <InlineNotification
+                  kind="error"
+                  title="Sign-in failed"
+                  subtitle={error}
+                  hideCloseButton
+                  lowContrast
+                />
+              ) : null}
+              {siteKey && (
+                <div
+                  ref={turnstileRef}
+                  className="cf-turnstile"
+                  data-sitekey={siteKey}
+                  data-callback="onTurnstileSuccess"
+                  data-expired-callback="onTurnstileExpired"
+                  data-theme="dark"
+                  style={{ marginTop: error ? "1rem" : undefined }}
+                />
+              )}
+              <div style={{ marginTop: "1rem" }}>
+                <Button renderIcon={LogoGithub} disabled={loading} onClick={handleLogin}>
+                  {loading ? "Redirecting…" : "Continue with GitHub"}
+                </Button>
+              </div>
+              {process.env.NEXT_PUBLIC_SHOW_LEGAL_LINKS === "true" && (
+                <p className="cds--helper-text" style={{ marginTop: "1rem" }}>
+                  By continuing, you agree to our <a href="/tos">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.
+                </p>
+              )}
+            </Tile>
+          </Column>
+        </Grid>
+      </Content>
+    </>
   );
 }
 
 export default function LoginPage() {
   return (
     <Suspense
-      fallback={
-        <div className="min-h-screen bg-background" />
-      }
+      fallback={null}
     >
       <LoginContent />
     </Suspense>

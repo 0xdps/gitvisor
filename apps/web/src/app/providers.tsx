@@ -1,5 +1,6 @@
 "use client";
 
+import { Theme } from "@carbon/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { AccountProvider } from "@/lib/account-context";
@@ -19,7 +20,9 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AccountProvider>{children}</AccountProvider>
+      <Theme theme="g100">
+        <AccountProvider>{children}</AccountProvider>
+      </Theme>
     </QueryClientProvider>
   );
 }

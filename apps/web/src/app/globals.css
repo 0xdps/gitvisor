@@ -1,70 +1,59 @@
+/* Carbon sits above Tailwind's preflight and below its utilities. */
+@layer theme, base, carbon, components, utilities;
 @import "tailwindcss";
 
-@theme {
-  --color-background: #0b0e12;
-  --color-foreground: #e8eef4;
+/* Tailwind utilities inherit Carbon tokens. Carbon's own CSS owns element styles. */
+@theme inline {
+  --color-background: var(--cds-background);
+  --color-foreground: var(--cds-text-primary);
 
-  --color-card: #141a21;
-  --color-card-foreground: #e8eef4;
-  --color-popover: #1a2129;
-  --color-popover-foreground: #e8eef4;
+  --color-card: var(--cds-layer-01);
+  --color-card-foreground: var(--cds-text-primary);
+  --color-popover: var(--cds-layer-02);
+  --color-popover-foreground: var(--cds-text-primary);
 
-  --color-primary: #3d8bfd;
-  --color-primary-foreground: #061018;
+  --color-primary: var(--cds-button-primary);
+  --color-primary-foreground: var(--cds-text-on-color);
 
-  --color-secondary: #1c242d;
-  --color-secondary-foreground: #e8eef4;
+  --color-secondary: var(--cds-layer-02);
+  --color-secondary-foreground: var(--cds-text-primary);
 
-  --color-muted: #1c242d;
-  --color-muted-foreground: #93a0ae;
+  --color-muted: var(--cds-layer-02);
+  --color-muted-foreground: var(--cds-text-secondary);
 
-  --color-accent: #1c242d;
-  --color-accent-foreground: #e8eef4;
+  --color-accent: var(--cds-layer-hover-01);
+  --color-accent-foreground: var(--cds-text-primary);
 
-  --color-destructive: #f07167;
-  --color-destructive-foreground: #2a0d0b;
+  --color-destructive: var(--cds-support-error);
+  --color-destructive-foreground: var(--cds-text-on-color);
 
-  --color-border: #2a3542;
-  --color-input: #2a3542;
-  --color-ring: #3d8bfd;
+  --color-border: var(--cds-border-subtle-01);
+  --color-input: var(--cds-border-strong-01);
+  --color-ring: var(--cds-focus);
 
-  --color-blue: #3d8bfd;
-  --color-blue-dim: #163056;
+  --color-blue: var(--cds-interactive);
+  --color-blue-dim: var(--cds-highlight);
 
-  --color-success: #3ecf8e;
-  --color-success-foreground: #062117;
-  --color-success-dim: #123528;
+  --color-success: var(--cds-support-success);
+  --color-success-foreground: var(--cds-text-on-color);
+  --color-success-dim: var(--cds-highlight);
 
-  --color-warning: #e2a23a;
-  --color-warning-foreground: #2a1c05;
-  --color-warning-dim: #2a1c05;
+  --color-warning: var(--cds-support-warning);
+  --color-warning-foreground: var(--cds-text-primary);
+  --color-warning-dim: var(--cds-highlight);
 
-  --color-sidebar: #080b0f;
+  --color-sidebar: var(--cds-background);
 
-  --radius: 0.75rem;
+  --radius: 0px;
 
-  --font-sans: var(--font-instrument), "Avenir Next", "Segoe UI", sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
+  --font-sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
 @layer base {
-  * {
-    border-color: var(--color-border);
-    box-sizing: border-box;
-    scrollbar-width: thin;
-    scrollbar-color: #2a3542 transparent;
-  }
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    line-height: 1.5;
-  }
   ::selection {
-    background: rgba(61, 139, 253, 0.28);
-    color: #f4f7fb;
+    background: var(--cds-highlight);
+    color: var(--cds-text-primary);
   }
 }
 

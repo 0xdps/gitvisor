@@ -4,19 +4,32 @@ import { Suspense, useTransition, useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Lock,
-  RefreshCw,
+  CheckmarkFilled,
+  CloseFilled,
+  Time,
+  Locked,
+  Renew,
   ChevronLeft,
   ChevronRight,
-  RotateCcw,
-  ExternalLink,
-  Ban,
+  Restart,
+  Launch,
+  StopFilled,
+} from "@carbon/icons-react";
+import {
+  Button,
+  ContentSwitcher,
+  Dropdown,
+  InlineLoading,
+  InlineNotification,
   Search,
-  ChevronDown,
-} from "lucide-react";
+  Switch,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@carbon/react";
 import { getWorkflowRuns, getRepositories, rerunWorkflow, cancelWorkflow } from "@/lib/api-client";
 import type { WorkflowRun } from "@gitvisor/shared";
 import { useUpgradeModal } from "@/components/upgrade-modal";
@@ -68,7 +81,7 @@ function buildUrl(params: {
 
 export default function WorkflowsPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<InlineLoading description="Loading workflow filters" />}>
       <WorkflowsContent />
     </Suspense>
   );
@@ -114,7 +127,7 @@ function WorkflowsContent() {
   const needsClientFilter = rawStatus === "success" || rawStatus === "failure" || rawStatus === "cancelled";
   const apiStatus = rawStatus === "in_progress" ? "in_progress" : needsClientFilter ? "completed" : undefined;
 
-  const { data: runData, isLoading } = useQuery({
+  const { data: runData, isLoading, isError } = useQuery({
     queryKey: ["workflows", apiStatus, repositoryId, workflowNameParam, page],
     queryFn: () => getWorkflowRuns({
       ...(apiStatus !== undefined ? { status: apiStatus } : {}),
@@ -156,7 +169,7 @@ function WorkflowsContent() {
   const totalPages = Math.max(1, Math.ceil(total / 20));
 
   return (
-    <div className="space-y-5">
+    <div>
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
@@ -176,83 +189,103 @@ function WorkflowsContent() {
       </div>
 
       {/* ── Filter row ──────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="gitvisor-filter-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "1rem", marginTop: "1.5rem", alignItems: "end" }}>
         {/* Status chips */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <ContentSwitcher
+          size="sm"
+          style={{ gridColumn: "1 / -1", maxWidth: "42rem" }}
+          selectedIndex={FILTERS.findIndex((filter) => filter.value === rawStatus)}
+          onChange={({ index }) => {
+            const next = FILTERS[index ?? 0];
+            if (next) navigate({ status: next.value });
+          }}
+        >
           {FILTERS.map((f) => {
-            const isActive = rawStatus === f.value;
             return (
-              <button
+              <Switch
                 key={f.value}
-                onClick={() => navigate({ status: f.value })}
+                name={f.value}
+                text={f.label}
                 disabled={isPending}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors border disabled:opacity-60 ${
-                  isActive
-                    ? "bg-blue/10 text-blue border-blue/30"
-                    : "bg-card text-muted-foreground border-border hover:text-foreground hover:border-foreground/20"
-                }`}
-              >
-                {f.dot && <span className={`h-1.5 w-1.5 rounded-full ${f.dot}`} />}
-                {f.label}
-              </button>
+              />
             );
           })}
-        </div>
+        </ContentSwitcher>
 
         {/* Repo dropdown */}
         {repos && repos.length > 0 && (
-          <div className="relative ml-auto">
-            <select
-              value={repositoryId ?? ""}
-              onChange={(e) => navigate({ repositoryId: e.target.value || undefined })}
+            <Dropdown
+              id="workflow-repository"
+              label="All repositories"
+              titleText="Repository"
+              size="sm"
+              items={[{ id: "", text: "All repositories" }, ...unlockedRepos.map((repo) => ({ id: repo.id, text: repo.fullName }))]}
+              itemToString={(item) => item?.text ?? ""}
+              selectedItem={
+                repositoryId
+                  ? { id: repositoryId, text: repoMap.get(repositoryId) ?? repositoryId }
+                  : { id: "", text: "All repositories" }
+              }
+              onChange={({ selectedItem }) => navigate({ repositoryId: selectedItem?.id || undefined })}
               disabled={isPending}
-              className="appearance-none rounded-lg border border-border bg-card text-xs text-muted-foreground pl-3 pr-7 py-1.5 hover:text-foreground hover:border-foreground/20 transition-colors disabled:opacity-60 cursor-pointer focus:outline-none"
-            >
-              <option value="">All repos</option>
-              {unlockedRepos.map((r) => (
-                <option key={r.id} value={r.id}>{r.fullName}</option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-          </div>
+            />
         )}
 
         {/* Workflow name search */}
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/60 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Filter by workflow…"
+        <Search
+            labelText="Workflow name"
+            placeholder="Filter by workflow name"
+            size="sm"
             value={workflowNameInput}
             onChange={(e) => onWorkflowNameChange(e.target.value)}
-            className="rounded-lg border border-border bg-card text-xs pl-7 pr-3 py-1.5 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-blue/50 transition-colors w-44"
           />
-        </div>
       </div>
 
       {/* ── Run list ─────────────────────────────────────────────────────── */}
-      {isLoading ? (
-        <div className="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-14 bg-muted/10 animate-pulse" />
-          ))}
-        </div>
+      {isError ? (
+        <InlineNotification
+          kind="error"
+          title="Workflow runs not loaded"
+          subtitle="Check your connection and try again."
+          hideCloseButton
+          lowContrast
+          style={{ marginTop: "1.5rem" }}
+        />
+      ) : isLoading ? (
+        <div style={{ marginTop: "1.5rem" }}><InlineLoading description="Loading workflow runs" /></div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card flex flex-col items-center justify-center py-16 text-center px-6">
-          <CheckCircle2 className="h-8 w-8 text-muted-foreground/20 mb-3" />
-          <p className="text-sm font-medium text-muted-foreground">No runs found</p>
-          <p className="mt-1 text-xs text-muted-foreground/50">Try a different filter.</p>
-        </div>
+        <InlineNotification
+          kind="info"
+          title="No runs found"
+          subtitle="Try a different status, repository, or workflow name."
+          hideCloseButton
+          lowContrast
+          style={{ marginTop: "1.5rem" }}
+        />
       ) : (
-        <div className="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border/50">
-          {filtered.map((run) => (
-            <RunRow
-              key={run.id}
-              run={run}
-              repoName={repoMap.get(run.repositoryId) ?? null}
-              locked={lockedRepoIds.has(run.repositoryId)}
-            />
-          ))}
+        <div style={{ marginTop: "1.5rem" }}>
+          <Table size="sm">
+            <TableHead>
+              <TableRow>
+                <TableHeader id="workflow-status" />
+                <TableHeader id="workflow-name">Workflow</TableHeader>
+                <TableHeader id="workflow-repo">Repository</TableHeader>
+                <TableHeader id="workflow-duration">Duration</TableHeader>
+                <TableHeader id="workflow-when">When</TableHeader>
+                <TableHeader id="workflow-actions" />
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filtered.map((run) => (
+                <RunRow
+                  key={run.id}
+                  run={run}
+                  repoName={repoMap.get(run.repositoryId) ?? null}
+                  locked={lockedRepoIds.has(run.repositoryId)}
+                />
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
@@ -261,22 +294,24 @@ function WorkflowsContent() {
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>Page {page} of {totalPages}</span>
           <div className="flex items-center gap-1">
-            <button
+            <Button
               onClick={() => navigate({ page: page - 1 })}
               disabled={page <= 1 || isPending}
-              aria-label="Previous page"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:pointer-events-none"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
+              kind="ghost"
+              size="sm"
+              hasIconOnly
+              renderIcon={ChevronLeft}
+              iconDescription="Previous page"
+            />
+            <Button
               onClick={() => navigate({ page: page + 1 })}
               disabled={page >= totalPages || isPending}
-              aria-label="Next page"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border transition-colors hover:bg-accent hover:text-foreground disabled:opacity-30 disabled:pointer-events-none"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+              kind="ghost"
+              size="sm"
+              hasIconOnly
+              renderIcon={ChevronRight}
+              iconDescription="Next page"
+            />
           </div>
         </div>
       )}
@@ -289,48 +324,32 @@ function WorkflowsContent() {
 function RunRow({ run, repoName, locked }: { run: WorkflowRun; repoName: string | null; locked?: boolean }) {
   const queryClient = useQueryClient();
   const { openUpgradeModal } = useUpgradeModal();
-
-  if (locked) {
-    const repoShortLocked = repoName ? (repoName.split("/")[1] ?? repoName) : null;
-    return (
-      <button
-        onClick={openUpgradeModal}
-        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/2 transition-colors group relative overflow-hidden text-left"
-        title="Upgrade to view runs from private repositories"
-      >
-        {/* Blur overlay */}
-        <div className="absolute inset-0 backdrop-blur-[2px] bg-background/40 z-10 flex items-center justify-center">
-          <div className="flex items-center gap-1.5 rounded-full border border-blue/30 bg-blue/10 px-3 py-1">
-            <Lock className="h-3 w-3 text-blue" />
-            <span className="text-xs font-medium text-blue">Upgrade to unlock</span>
-          </div>
-        </div>
-        {/* Blurred background content */}
-        <div className="shrink-0 blur-sm pointer-events-none" aria-hidden>
-          <RefreshCw className="h-3.5 w-3.5 text-muted-foreground/30" />
-        </div>
-        <span className="shrink-0 inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[11px] font-semibold w-18 justify-center text-muted-foreground/30 blur-sm pointer-events-none" aria-hidden>
-          Private
-        </span>
-        <div className="flex-1 min-w-0 blur-sm pointer-events-none" aria-hidden>
-          <p className="text-sm font-medium truncate text-muted-foreground/30">workflow run</p>
-          <p className="text-xs text-muted-foreground/20 mt-0.5">
-            {repoShortLocked ?? "private repo"}
-          </p>
-        </div>
-      </button>
-    );
-  }
-
   const rerun = useMutation({
     mutationFn: () => rerunWorkflow(run.githubRunId),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["workflows"] }),
   });
-
   const cancel = useMutation({
     mutationFn: () => cancelWorkflow(run.githubRunId),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["workflows"] }),
   });
+
+  const repoShort = repoName ? (repoName.split("/")[1] ?? repoName) : null;
+
+  if (locked) {
+    return (
+      <TableRow>
+        <TableCell>
+          <Locked size={16} />
+        </TableCell>
+        <TableCell colSpan={4}>{repoShort ?? "Private repository"}</TableCell>
+        <TableCell>
+          <Button kind="ghost" size="sm" onClick={openUpgradeModal}>
+            Unlock
+          </Button>
+        </TableCell>
+      </TableRow>
+    );
+  }
 
   const isRunning = run.status === "in_progress";
   const isQueued  = run.status === "queued";
@@ -339,110 +358,80 @@ function RunRow({ run, repoName, locked }: { run: WorkflowRun; repoName: string 
   const isCancelled = run.conclusion === "cancelled";
 
   const statusIcon = isRunning ? (
-    <RefreshCw className="h-3.5 w-3.5 text-warning animate-spin" />
+    <Renew size={16} className="animate-spin" />
   ) : isQueued ? (
-    <Clock className="h-3.5 w-3.5 text-muted-foreground/60" />
+    <Time size={16} />
   ) : isSuccess ? (
-    <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+    <CheckmarkFilled size={16} style={{ color: "var(--cds-support-success)" }} />
   ) : isFailed ? (
-    <XCircle className="h-3.5 w-3.5 text-destructive" />
+    <CloseFilled size={16} style={{ color: "var(--cds-support-error)" }} />
   ) : (
-    <Ban className="h-3.5 w-3.5 text-muted-foreground/40" />
+    <StopFilled size={16} />
   );
 
   const statusLabel = isRunning ? "Running"
     : isQueued ? "Queued"
-    : isSuccess ? "Success"
+    : isSuccess ? "Passed"
     : isFailed ? (run.conclusion === "timed_out" ? "Timed out" : "Failed")
     : isCancelled ? "Cancelled"
-    : (run.conclusion ?? "—");
-
-  const statusClass = isRunning ? "text-warning bg-warning/10 border-warning/20"
-    : isSuccess ? "text-success bg-success/10 border-success/20"
-    : isFailed ? "text-destructive bg-destructive/10 border-destructive/20"
-    : "text-muted-foreground bg-muted/30 border-border";
-
-  const repoShort = repoName ? (repoName.split("/")[1] ?? repoName) : null;
+    : (run.conclusion ?? "Finished");
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 hover:bg-white/2 transition-colors group">
-
-      {/* Status icon */}
-      <div className="shrink-0">{statusIcon}</div>
-
-      {/* Status label */}
-      <span className={`shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold w-18 justify-center ${statusClass}`}>
-        {statusLabel}
-      </span>
-
-      {/* Name + meta */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <p className="text-sm font-medium truncate">{run.workflowName}</p>
-          {repoShort && (
-            <span className="shrink-0 text-[11px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded font-mono">
-              {repoShort}
-            </span>
-          )}
-          <span className="shrink-0 text-[11px] text-muted-foreground/50">#{run.runNumber}</span>
-        </div>
-        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5 truncate">
-          <span className="truncate">{run.branch}</span>
-          {run.commitSha && (
-            <>
-              <span className="opacity-40 shrink-0">·</span>
-              <span className="font-mono shrink-0">{run.commitSha.slice(0, 7)}</span>
-            </>
-          )}
-          {run.triggeredBy && (
-            <>
-              <span className="opacity-40 shrink-0">·</span>
-              <span className="shrink-0">{run.triggeredBy}</span>
-            </>
-          )}
-        </p>
-      </div>
-
-      {/* Right side */}
-      <div className="flex items-center gap-3 shrink-0 text-xs text-muted-foreground">
-        {run.durationMs != null && (
-          <span className="tabular-nums w-14 text-right">{formatDuration(run.durationMs)}</span>
-        )}
-        <span className="tabular-nums w-14 text-right">{run.startedAt ? timeAgo(run.startedAt) : "—"}</span>
-
-        {/* Actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {run.status === "completed" && (
-            <button
+    <TableRow>
+      <TableCell>
+        <span title={statusLabel} aria-label={statusLabel} style={{ display: "inline-flex" }}>
+          {statusIcon}
+        </span>
+      </TableCell>
+      <TableCell>
+        <span className="cds--type-body-compact-01">{run.workflowName}</span>
+        <span className="cds--helper-text" style={{ display: "block" }}>
+          #{run.runNumber}
+          {run.branch ? ` · ${run.branch}` : ""}
+          {run.commitSha ? ` · ${run.commitSha.slice(0, 7)}` : ""}
+          {run.triggeredBy ? ` · ${run.triggeredBy}` : ""}
+        </span>
+      </TableCell>
+      <TableCell>{repoShort ?? "—"}</TableCell>
+      <TableCell>{run.durationMs != null ? formatDuration(run.durationMs) : "—"}</TableCell>
+      <TableCell>{run.startedAt ? timeAgo(run.startedAt) : "—"}</TableCell>
+      <TableCell>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.25rem" }}>
+          {run.status === "completed" ? (
+            <Button
               onClick={() => rerun.mutate()}
               disabled={rerun.isPending}
-              title="Re-run workflow"
-              className="flex h-6 w-6 items-center justify-center rounded border border-border hover:bg-accent text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors"
-            >
-              <RotateCcw className="h-3 w-3" />
-            </button>
-          )}
-          {isRunning && (
-            <button
+              kind="ghost"
+              size="sm"
+              hasIconOnly
+              renderIcon={Restart}
+              iconDescription="Re-run workflow"
+            />
+          ) : null}
+          {isRunning ? (
+            <Button
               onClick={() => cancel.mutate()}
               disabled={cancel.isPending}
-              title="Cancel run"
-              className="flex h-6 w-6 items-center justify-center rounded border border-border hover:bg-accent text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors"
-            >
-              <Ban className="h-3 w-3" />
-            </button>
-          )}
-          <a
+              kind="danger--ghost"
+              size="sm"
+              hasIconOnly
+              renderIcon={StopFilled}
+              iconDescription="Cancel run"
+            />
+          ) : null}
+          <Button
+            as="a"
             href={run.htmlUrl}
             target="_blank"
             rel="noopener noreferrer"
-            title="Open in GitHub"
-            className="flex h-6 w-6 items-center justify-center rounded border border-border hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            kind="ghost"
+            size="sm"
+            renderIcon={Launch}
           >
-            <ExternalLink className="h-3 w-3" />
-          </a>
+            Logs
+          </Button>
         </div>
-      </div>
-    </div>
+      </TableCell>
+    </TableRow>
   );
 }

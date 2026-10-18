@@ -2,13 +2,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getAnalytics, getRepositories } from "@/lib/api-client";
-import { TrendingUp, TrendingDown, Activity, GitBranch, CheckCircle2, XCircle } from "lucide-react";
+import { Activity, ArrowDownRight, ArrowUpRight, Catalog, CheckmarkFilled, ErrorFilled } from "@carbon/icons-react";
+import { InlineLoading, InlineNotification, Tag, Tile } from "@carbon/react";
 import type React from "react";
 import { useAccount } from "@/lib/account-context";
 import { PageHeader } from "@/components/page-header";
 
 export default function AnalyticsPage() {
-  const { data: analytics, isLoading } = useQuery({
+  const { data: analytics, isLoading, isError } = useQuery({
     queryKey: ["analytics", 30],
     queryFn: () => getAnalytics(30),
     staleTime: 60_000,
@@ -30,12 +31,14 @@ export default function AnalyticsPage() {
   const repoMap = new Map(allRepos.map((r) => [r.id, r.fullName]));
 
   if (isLoading) {
+    return <InlineLoading description="Loading analytics" />;
+  }
+
+  if (isError) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 w-48 bg-muted/20 rounded animate-pulse" />
-        <div className="h-24 bg-muted/10 rounded-xl animate-pulse" />
-        <div className="h-40 bg-muted/10 rounded-xl animate-pulse" />
-        <div className="h-48 bg-muted/10 rounded-xl animate-pulse" />
+      <div>
+        <PageHeader kicker="Signal" title="Analytics" />
+        <InlineNotification kind="error" title="Analytics not loaded" subtitle="Check your connection and try again." hideCloseButton lowContrast style={{ marginTop: "1.5rem" }} />
       </div>
     );
   }
@@ -53,15 +56,9 @@ export default function AnalyticsPage() {
 
   if (total === 0) {
     return (
-      <div className="space-y-6">
+      <div>
         <PageHeader kicker="Signal" title="Analytics" />
-        <div className="rounded-xl border border-border bg-card flex flex-col items-center justify-center py-20 text-center px-6">
-          <Activity className="h-10 w-10 text-muted-foreground/20 mb-4" />
-          <p className="text-sm font-medium text-muted-foreground">No data yet</p>
-          <p className="mt-1 text-xs text-muted-foreground/50">
-            Analytics will appear after your first workflow run.
-          </p>
-        </div>
+        <InlineNotification kind="info" title="No data yet" subtitle="Analytics will appear after your first workflow run." hideCloseButton lowContrast style={{ marginTop: "1.5rem" }} />
       </div>
     );
   }
@@ -74,10 +71,10 @@ export default function AnalyticsPage() {
 
   const grade =
     successRate == null  ? null
-    : successRate >= 90  ? { label: "Excellent", icon: TrendingUp,   color: "text-success",     bg: "bg-success/10",     border: "border-success/20" }
-    : successRate >= 75  ? { label: "Good",      icon: TrendingUp,   color: "text-blue",        bg: "bg-blue/10",        border: "border-blue/20" }
-    : successRate >= 50  ? { label: "Fair",       icon: TrendingDown, color: "text-warning",     bg: "bg-warning/10",     border: "border-warning/20" }
-    :                      { label: "Poor",       icon: TrendingDown, color: "text-destructive", bg: "bg-destructive/10", border: "border-destructive/20" };
+    : successRate >= 90  ? { label: "Excellent", icon: ArrowUpRight, type: "green" as const }
+    : successRate >= 75  ? { label: "Good",      icon: ArrowUpRight, type: "blue" as const }
+    : successRate >= 50  ? { label: "Fair",       icon: ArrowDownRight, type: "magenta" as const }
+    :                      { label: "Poor",       icon: ArrowDownRight, type: "red" as const };
 
   const successPct = total > 0 ? (success / total) * 100 : 0;
   const failurePct = total > 0 ? (failure / total) * 100 : 0;
@@ -95,7 +92,7 @@ export default function AnalyticsPage() {
   const maxDayTotal = Math.max(1, ...daySlots.map((d) => d.total));
 
   return (
-    <div className="space-y-6">
+    <div>
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <PageHeader
@@ -105,22 +102,19 @@ export default function AnalyticsPage() {
       />
 
       {/* ── Stat strip ──────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border rounded-xl overflow-hidden border border-border">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border overflow-hidden border border-border" style={{ marginTop: "1.5rem" }}>
         <MetricBlock label="Total Runs"   value={total}        icon={Activity} />
-        <MetricBlock label="Repositories" value={byRepo.length} icon={GitBranch} />
-        <MetricBlock label="Successful"   value={success}      icon={CheckCircle2} valueClass="text-success"     sub={`${Math.round(successPct)}%`} />
-        <MetricBlock label="Failed"       value={failure}      icon={XCircle}      valueClass={failure > 0 ? "text-destructive" : undefined} sub={`${Math.round(failurePct)}%`} />
+        <MetricBlock label="Repositories" value={byRepo.length} icon={Catalog} />
+        <MetricBlock label="Successful"   value={success}      icon={CheckmarkFilled} valueClass="text-success" sub={`${Math.round(successPct)}%`} />
+        <MetricBlock label="Failed"       value={failure}      icon={ErrorFilled} valueClass={failure > 0 ? "text-destructive" : undefined} sub={`${Math.round(failurePct)}%`} />
       </div>
 
       {/* ── 30-day sparkbar chart ────────────────────────────────────────── */}
-      <div className="rounded-xl border border-border bg-card p-5">
+      <Tile style={{ marginTop: "1.5rem" }}>
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm font-semibold">Daily runs — last 30 days</p>
           {grade && (
-            <div className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 ${grade.bg} ${grade.border}`}>
-              <grade.icon className={`h-3.5 w-3.5 ${grade.color}`} />
-              <span className={`text-xs font-semibold ${grade.color}`}>{successRate}% · {grade.label}</span>
-            </div>
+            <Tag type={grade.type} renderIcon={grade.icon}>{successRate}% · {grade.label}</Tag>
           )}
         </div>
 
@@ -163,10 +157,10 @@ export default function AnalyticsPage() {
           <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-destructive/70" />&lt; 50%</span>
           <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-border" />no runs</span>
         </div>
-      </div>
+      </Tile>
 
       {/* ── Per-repo breakdown ───────────────────────────────────────────── */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <Tile style={{ marginTop: "1.5rem", padding: 0 }}>
         <div className="px-5 py-4 border-b border-border">
           <p className="text-sm font-semibold">Repos by activity</p>
         </div>
@@ -198,7 +192,7 @@ export default function AnalyticsPage() {
             );
           })}
         </div>
-      </div>
+      </Tile>
 
     </div>
   );
@@ -212,18 +206,18 @@ function MetricBlock({
   label: string; value: number; icon: React.ElementType; valueClass?: string | undefined; sub?: string | undefined;
 }) {
   return (
-    <div className="bg-card px-5 py-4 flex flex-col gap-2">
+    <Tile style={{ height: "100%" }}>
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
-        <Icon className="h-3.5 w-3.5 text-muted-foreground/30" />
+        <p className="cds--label-01">{label}</p>
+        <Icon size={16} />
       </div>
       <div className="flex items-baseline gap-1.5">
-        <p className={`text-2xl font-black tabular-nums leading-none ${valueClass ?? "text-foreground"}`}>
+        <p className={`cds--type-productive-heading-04 tabular-nums ${valueClass ?? "text-foreground"}`}>
           {value.toLocaleString()}
         </p>
-        {sub && <span className="text-sm text-muted-foreground/60 font-medium">{sub}</span>}
+        {sub && <span className="cds--helper-text">{sub}</span>}
       </div>
-    </div>
+    </Tile>
   );
 }
 

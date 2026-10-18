@@ -2,16 +2,17 @@
 
 import { useState } from "react";
 import { Suspense } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Package, RefreshCw, Lock, Globe, Download, Check, Copy, ExternalLink } from "lucide-react";
+import { Checkmark, Copy, Download, Globe, Launch, Locked, Package, Renew } from "@carbon/icons-react";
+import { Button, Dropdown, InlineLoading, InlineNotification, Tag, Tile } from "@carbon/react";
 import { getRepositories, getPackages } from "@/lib/api-client";
 import type { Package as PackageType, Repository } from "@gitvisor/shared";
 import { useAccount } from "@/lib/account-context";
 import { PageHeader } from "@/components/page-header";
 
 function PackagesContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const repositoryId = searchParams.get("repositoryId") ?? undefined;
   const queryClient = useQueryClient();
@@ -60,7 +61,7 @@ function PackagesContent() {
       : reposWithPackages;
 
   return (
-    <div className="space-y-6">
+    <div>
       <div className="flex items-start justify-between">
         <PageHeader
           kicker="Artifacts"
@@ -72,75 +73,48 @@ function PackagesContent() {
           }
         />
         {selectedRepo && (
-          <button
+          <Button
             onClick={() =>
               queryClient.invalidateQueries({ queryKey: ["packages"] })
             }
-            className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/30 transition-colors"
+            kind="tertiary"
+            size="sm"
+            renderIcon={Renew}
           >
-            <RefreshCw className="h-3.5 w-3.5" />
             Refresh
-          </button>
+          </Button>
         )}
       </div>
 
       {tabRepos.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/packages"
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-              !repositoryId
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/40"
-            }`}
-          >
-            All
-          </Link>
-          {tabRepos.map((repo) => (
-            <Link
-              key={repo.id}
-              href={`/packages?repositoryId=${repo.id}`}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                repositoryId === repo.id
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/40"
-              }`}
-            >
-              {repo.name}
-            </Link>
-          ))}
+        <div style={{ marginTop: "1.5rem", maxWidth: "24rem" }}>
+          <Dropdown
+            id="package-repository"
+            titleText="Repository"
+            label="All repositories"
+            size="sm"
+            items={[{ id: "", text: "All repositories" }, ...tabRepos.map((repo) => ({ id: repo.id, text: repo.fullName }))]}
+            itemToString={(item) => item?.text ?? ""}
+            selectedItem={repositoryId ? { id: repositoryId, text: selectedRepo?.fullName ?? repositoryId } : { id: "", text: "All repositories" }}
+            onChange={({ selectedItem }) => router.push(selectedItem?.id ? `/packages?repositoryId=${selectedItem.id}` : "/packages")}
+          />
         </div>
       )}
 
       {isLoading && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-24 rounded-xl border border-border bg-muted/40 animate-pulse"
-            />
-          ))}
-        </div>
+        <div style={{ marginTop: "1.5rem" }}><InlineLoading description="Loading packages" /></div>
       )}
 
       {error && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          Failed to load packages.
-        </div>
+        <InlineNotification kind="error" title="Packages not loaded" subtitle="Try refreshing this page." hideCloseButton lowContrast style={{ marginTop: "1.5rem" }} />
       )}
 
       {packages && packages.length === 0 && (
-        <div className="rounded-xl border border-dashed border-border py-16 text-center">
-          <Package className="mx-auto h-8 w-8 text-muted-foreground/50" />
-          <p className="mt-3 font-medium">No packages</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Packages published from your repositories will appear here.
-          </p>
-        </div>
+        <InlineNotification kind="info" title="No packages" subtitle="Packages published from your repositories will appear here." hideCloseButton lowContrast style={{ marginTop: "1.5rem" }} />
       )}
 
       {packages && packages.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" style={{ marginTop: "1.5rem" }}>
           {packages.map((pkg) => (
             <PackageCard
               key={pkg.id}
@@ -226,13 +200,13 @@ function PackageCard({ pkg, repo }: { pkg: PackageType; repo: Repository | null 
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden hover:border-foreground/15 transition-colors">
+    <Tile style={{ height: "100%", padding: 0, display: "flex", flexDirection: "column" }}>
       {/* Repo context header */}
       {repo && (
         <div className="flex items-center gap-2 border-b border-border px-4 py-2 bg-muted/20">
           <span className="text-[10px] font-mono text-muted-foreground truncate flex-1">{repo.fullName}</span>
           {repo.private ? (
-            <Lock className="h-3 w-3 text-muted-foreground/60 shrink-0" />
+            <Locked size={14} />
           ) : (
             <Globe className="h-3 w-3 text-muted-foreground/60 shrink-0" />
           )}
@@ -253,11 +227,7 @@ function PackageCard({ pkg, repo }: { pkg: PackageType; repo: Repository | null 
               ) : (
                 <p className="text-sm font-semibold truncate">{pkg.name}</p>
               )}
-              {pkg.latestVersion && (
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground shrink-0">
-                  v{pkg.latestVersion}
-                </span>
-              )}
+              {pkg.latestVersion && <Tag size="sm" type="gray">v{pkg.latestVersion}</Tag>}
             </div>
             {repo?.description && (
               <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
@@ -272,16 +242,13 @@ function PackageCard({ pkg, repo }: { pkg: PackageType; repo: Repository | null 
           <span className="capitalize font-medium" style={{ color: ecoColor }}>{pkg.ecosystem}</span>
           {pkg.downloadCount != null && pkg.downloadCount > 0 && (
             <span className="flex items-center gap-1">
-              <Download className="h-3 w-3" />
+              <Download size={14} />
               {fmtDownloads(pkg.downloadCount)}
             </span>
           )}
           <span className="ml-auto">{timeAgo(pkg.updatedAt)}</span>
           {ghUrl && (
-            <a href={ghUrl} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-foreground transition-colors">
-              <ExternalLink className="h-3 w-3" />
-            </a>
+            <Button as="a" href={ghUrl} target="_blank" rel="noopener noreferrer" kind="ghost" size="sm" hasIconOnly renderIcon={Launch} iconDescription="Open package on GitHub" />
           )}
         </div>
 
@@ -290,35 +257,27 @@ function PackageCard({ pkg, repo }: { pkg: PackageType; repo: Repository | null 
           <div className="rounded-md bg-muted/40 border border-border/60">
             <div className="flex items-center justify-between gap-2 px-3 py-1.5 border-b border-border/40">
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium">Install</span>
-              <button
+              <Button
                 onClick={copyCommand}
-                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                kind="ghost"
+                size="sm"
+                renderIcon={copied ? Checkmark : Copy}
               >
-                {copied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
                 {copied ? "Copied!" : "Copy"}
-              </button>
+              </Button>
             </div>
             <pre className="px-3 py-2 text-[11px] font-mono text-muted-foreground overflow-x-auto whitespace-pre-wrap leading-relaxed">{installCmd}</pre>
           </div>
         )}
       </div>
-    </div>
+    </Tile>
   );
 }
 
 export default function PackagesPage() {
   return (
     <Suspense
-      fallback={
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-24 rounded-xl border border-border bg-muted/40 animate-pulse"
-            />
-          ))}
-        </div>
-      }
+      fallback={<InlineLoading description="Loading packages" />}
     >
       <PackagesContent />
     </Suspense>

@@ -4,13 +4,14 @@ import { useState, useEffect, useTransition } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import {
-  Tag,
-  RefreshCw,
-  ExternalLink,
-  GitBranch,
+  Tag as ReleaseIcon,
+  Renew,
+  Launch,
+  Branch,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react";
+} from "@carbon/icons-react";
+import { Button, Dropdown, InlineLoading, InlineNotification, Tag, Tile } from "@carbon/react";
 import { getReleases, syncReleases, getRepositories } from "@/lib/api-client";
 import { PageHeader } from "@/components/page-header";
 import { useAccount } from "@/lib/account-context";
@@ -99,7 +100,7 @@ function ReleasesContent({
   const hasMore = result?.hasMore ?? false;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div>
       {/* Header */}
       <div className="flex items-start justify-between">
         <PageHeader
@@ -108,73 +109,68 @@ function ReleasesContent({
           detail={total > 0 ? `${total} release${total !== 1 ? "s" : ""}` : "No releases synced yet"}
         />
         {repositoryId && (
-          <button
+          <Button
             onClick={() => syncMutation.mutate(repositoryId)}
             disabled={syncMutation.isPending}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-blue transition-colors disabled:opacity-50"
+            kind="tertiary"
+            size="sm"
+            renderIcon={Renew}
           >
-            <RefreshCw
-              size={14}
-              className={syncMutation.isPending ? "animate-spin" : ""}
-            />
             Sync releases
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3">
-        <select
-          value={repositoryId ?? ""}
-          onChange={(e) => {
-            const v = e.target.value || undefined;
+      <div style={{ marginTop: "1.5rem", maxWidth: "24rem" }}>
+        <Dropdown
+          id="release-repository"
+          titleText="Repository"
+          label="All repositories"
+          size="sm"
+          items={[{ id: "", text: "All repositories" }, ...scopedRepos.map((repo) => ({ id: repo.id, text: repo.fullName }))]}
+          itemToString={(item) => item?.text ?? ""}
+          selectedItem={repositoryId ? { id: repositoryId, text: scopedRepos.find((repo) => repo.id === repositoryId)?.fullName ?? repositoryId } : { id: "", text: "All repositories" }}
+          onChange={({ selectedItem }) => {
+            const v = selectedItem?.id || undefined;
             navigate({ ...(v !== undefined ? { repositoryId: v } : {}), page: 1 });
           }}
-          className="h-8 rounded-md border border-border bg-card px-2 text-sm text-foreground focus:outline-none focus:border-blue min-w-[200px]"
-        >
-          <option value="">All repositories</option>
-          {scopedRepos.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.fullName}
-            </option>
-          ))}
-        </select>
+        />
       </div>
 
       {/* Release list */}
-      {releasesQuery.isPending || !paramsLoaded ? (
-        <div className="flex flex-col gap-3">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-20 rounded-lg border border-border bg-card animate-pulse" />
-          ))}
-        </div>
+      {releasesQuery.isError ? (
+        <InlineNotification kind="error" title="Releases not loaded" subtitle="Check your connection and try again." hideCloseButton lowContrast style={{ marginTop: "1.5rem" }} />
+      ) : releasesQuery.isPending || !paramsLoaded ? (
+        <div style={{ marginTop: "1.5rem" }}><InlineLoading description="Loading releases" /></div>
       ) : releases.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Tag size={40} className="text-muted-foreground/40 mb-4" />
-          <p className="text-muted-foreground text-sm">No releases found.</p>
+        <div style={{ marginTop: "1.5rem" }}>
+          <InlineNotification kind="info" title="No releases found" subtitle="Sync a repository to import its release history." hideCloseButton lowContrast />
           {repositoryId && (
-            <button
+            <Button
               onClick={() => syncMutation.mutate(repositoryId)}
               disabled={syncMutation.isPending}
-              className="mt-4 flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-foreground transition-colors"
+              kind="tertiary"
+              size="sm"
+              renderIcon={Renew}
+              style={{ marginTop: "1rem" }}
             >
-              <RefreshCw size={14} />
               Sync releases for this repo
-            </button>
+            </Button>
           )}
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid gap-3 sm:grid-cols-2" style={{ marginTop: "1.5rem" }}>
           {releases.map((release) => {
             const repo = repos.find((r) => r.id === release.repositoryId);
             return (
-              <div
+              <Tile
                 key={release.id}
-                className="rounded-lg border border-border bg-card px-4 py-3 flex items-start gap-4 hover:border-blue/40 transition-colors"
+                style={{ height: "100%", display: "flex", alignItems: "flex-start", gap: "1rem" }}
               >
                 {/* Icon */}
                 <div className="mt-0.5 shrink-0 rounded-md bg-muted/40 p-2">
-                  <Tag size={16} className="text-muted-foreground" />
+                  <ReleaseIcon size={20} />
                 </div>
 
                 {/* Main info */}
@@ -187,21 +183,17 @@ function ReleasesContent({
                       {release.tagName}
                     </code>
                     {release.prerelease && (
-                      <span className="text-xs px-1.5 py-0.5 rounded-full border border-warning/50 text-warning bg-warning/10">
-                        Pre-release
-                      </span>
+                      <Tag size="sm" type="magenta">Pre-release</Tag>
                     )}
                     {release.draft && (
-                      <span className="text-xs px-1.5 py-0.5 rounded-full border border-border text-muted-foreground bg-muted/20">
-                        Draft
-                      </span>
+                      <Tag size="sm" type="gray">Draft</Tag>
                     )}
                   </div>
 
                   <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                     {repo && (
                       <span className="flex items-center gap-1">
-                        <GitBranch size={11} />
+                        <Branch size={14} />
                         {repo.fullName}
                       </span>
                     )}
@@ -224,16 +216,18 @@ function ReleasesContent({
                 </div>
 
                 {/* Actions */}
-                <a
+                <Button
+                  as="a"
                   href={release.htmlUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="shrink-0 mt-1 text-muted-foreground hover:text-blue transition-colors"
-                  title="View on GitHub"
-                >
-                  <ExternalLink size={14} />
-                </a>
-              </div>
+                  kind="ghost"
+                  size="sm"
+                  hasIconOnly
+                  renderIcon={Launch}
+                  iconDescription="View release on GitHub"
+                />
+              </Tile>
             );
           })}
         </div>
@@ -246,22 +240,24 @@ function ReleasesContent({
             Page {page} · {total} total
           </span>
           <div className="flex items-center gap-2">
-            <button
+            <Button
               onClick={() => navigate({ page: page - 1 })}
               disabled={page <= 1}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-blue disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              kind="ghost"
+              size="sm"
+              renderIcon={ChevronLeft}
             >
-              <ChevronLeft size={14} />
-              Prev
-            </button>
-            <button
+              Previous
+            </Button>
+            <Button
               onClick={() => navigate({ page: page + 1 })}
               disabled={!hasMore}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-blue disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              kind="ghost"
+              size="sm"
+              renderIcon={ChevronRight}
             >
               Next
-              <ChevronRight size={14} />
-            </button>
+            </Button>
           </div>
         </div>
       )}

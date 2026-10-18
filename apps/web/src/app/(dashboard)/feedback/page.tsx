@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Star, Send, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { CheckmarkFilled, Send, Star, StarFilled } from "@carbon/icons-react";
+import { Button, InlineLoading, InlineNotification, TextArea, Tile } from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { PageHeader } from "@/components/page-header";
@@ -45,48 +46,24 @@ export default function FeedbackPage() {
   }
 
   if (statusLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="size-5 rounded-full border-2 border-blue border-t-transparent animate-spin" />
-      </div>
-    );
+    return <InlineLoading description="Checking feedback availability" />;
   }
 
   if (notAvailable) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-center px-4">
-        <p className="text-muted-foreground text-sm">Feedback is not available in this deployment.</p>
-      </div>
-    );
+    return <InlineNotification kind="info" title="Feedback is unavailable" subtitle="This deployment does not accept feedback." hideCloseButton lowContrast />;
   }
 
   if (alreadySent && !done) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
-        <CheckCircle2 className="size-12 text-blue" />
-        <h2 className="text-xl font-semibold text-foreground">Thanks for your feedback!</h2>
-        <p className="text-muted-foreground text-sm max-w-sm">
-          You've already shared feedback today. Come back tomorrow — we'd love to hear from you again.
-        </p>
-      </div>
-    );
+    return <InlineNotification kind="success" title="Thanks for your feedback" subtitle="You already shared feedback today. Come back tomorrow to send another response." hideCloseButton lowContrast />;
   }
 
   if (done) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
-        <CheckCircle2 className="size-12 text-blue" />
-        <h2 className="text-xl font-semibold text-foreground">Feedback received!</h2>
-        <p className="text-muted-foreground text-sm max-w-sm">
-          Thank you for helping us improve Gitvisor. We read every response.
-        </p>
-      </div>
-    );
+    return <InlineNotification kind="success" title="Feedback received" subtitle="Thank you for helping improve Gitvisor. We read every response." hideCloseButton lowContrast />;
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-10">
-      <div className="mb-8">
+    <div style={{ maxWidth: "42rem", marginInline: "auto" }}>
+      <div>
         <PageHeader
           kicker="Notes"
           title="Send feedback"
@@ -94,11 +71,12 @@ export default function FeedbackPage() {
         />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <Tile style={{ marginTop: "2rem" }}>
+      <form onSubmit={handleSubmit}>
         {/* Rating */}
-        <div className="space-y-1.5">
-          <p className="text-sm font-medium text-foreground">Rating</p>
-          <div className="flex gap-1">
+        <fieldset>
+          <legend className="cds--label-01">Rating</legend>
+          <div style={{ display: "flex", gap: "0.25rem", marginTop: "0.5rem" }}>
             {[1, 2, 3, 4, 5].map((star) => (
               <button
                 key={star}
@@ -106,49 +84,42 @@ export default function FeedbackPage() {
                 onClick={() => setRating(star)}
                 onMouseEnter={() => setHovered(star)}
                 onMouseLeave={() => setHovered(0)}
-                className="p-0.5 rounded transition-transform hover:scale-110 focus:outline-none"
+                style={{ border: 0, padding: "0.25rem", background: "transparent", color: "var(--cds-link-primary)", cursor: "pointer" }}
                 aria-label={`${star} star`}
               >
-                <Star
-                  className={`size-7 transition-colors ${
-                    star <= (hovered || rating)
-                      ? "fill-blue text-blue"
-                      : "text-muted-foreground"
-                  }`}
-                />
+                {star <= (hovered || rating) ? <StarFilled size={24} /> : <Star size={24} />}
               </button>
             ))}
           </div>
-        </div>
+        </fieldset>
 
         {/* Comment */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-foreground" htmlFor="fb-comment">
-            Comment <span className="text-muted-foreground font-normal">(optional)</span>
-          </label>
-          <textarea
+        <div style={{ marginTop: "1.5rem" }}>
+          <TextArea
             id="fb-comment"
+            labelText="Comment"
+            helperText="Optional"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={4}
-            className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue/50 resize-none"
             placeholder="What do you love? What could be better?"
           />
         </div>
 
         {error && (
-          <p className="text-sm text-destructive">{error}</p>
+          <InlineNotification kind="error" title="Feedback not sent" subtitle={error} hideCloseButton lowContrast style={{ marginTop: "1rem" }} />
         )}
 
-        <button
+        <Button
           type="submit"
           disabled={submitting}
-          className="flex items-center gap-2 rounded-md bg-blue px-5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          renderIcon={submitting ? CheckmarkFilled : Send}
+          style={{ marginTop: "1.5rem" }}
         >
-          <Send className="size-4" />
-          {submitting ? "Sending…" : "Send Feedback"}
-        </button>
+          {submitting ? "Sending…" : "Send feedback"}
+        </Button>
       </form>
+      </Tile>
     </div>
   );
 }

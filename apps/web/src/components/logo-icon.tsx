@@ -3,23 +3,24 @@ interface LogoIconProps {
   className?: string;
 }
 
-const sizes = {
-  xs: { wrapper: "h-5 w-5 rounded",      img: "h-5 w-5" },
-  sm: { wrapper: "h-6 w-6 rounded-md",   img: "h-6 w-6" },
-  md: { wrapper: "h-8 w-8 rounded-lg",   img: "h-8 w-8" },
-  lg: { wrapper: "h-10 w-10 rounded-xl", img: "h-10 w-10" },
-  xl: { wrapper: "h-14 w-14 rounded-2xl", img: "h-14 w-14" },
+const pixels = {
+  xs: 20,
+  sm: 24,
+  md: 32,
+  lg: 40,
+  xl: 56,
 } as const;
 
 export function LogoIcon({ size = "md", className }: LogoIconProps) {
-  const s = sizes[size];
+  const px = pixels[size];
   return (
-    <div className={`${s.wrapper} shrink-0 overflow-hidden ${className ?? ""}`}>
-      <img
-        src="/icon.svg"
-        alt="Gitvisor"
-        className={`${s.img} object-cover`}
-      />
-    </div>
+    <img
+      src="/icon-192x192.png"
+      alt=""
+      width={px}
+      height={px}
+      className={className}
+      style={{ width: px, height: px, display: "block", flexShrink: 0 }}
+    />
   );
 }

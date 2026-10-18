@@ -92,7 +92,7 @@ export default async function PublicProfilePage({
       <header className="border-b border-border">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-6">
           <a href="/" className="flex items-center gap-2 font-bold text-foreground">
-            <img src="/icon.svg" alt="Gitvisor" className="h-6 w-6 rounded" />
+            <img src="/icon-192x192.png" alt="" width={24} height={24} className="h-6 w-6" />
             <span>Gitvisor</span>
           </a>
           <a

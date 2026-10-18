@@ -2,21 +2,16 @@
 
 import React, { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Launch, Renew, StopFilledAlt, WarningAlt } from "@carbon/icons-react";
+import { Button, InlineLoading, InlineNotification, Tag } from "@carbon/react";
 import {
-  AlertTriangle,
-  Activity,
-  Boxes,
-  Clock,
-  ExternalLink,
-  FolderGit2,
-  GitBranch,
-  GitPullRequest,
-  KeyRound,
-  Loader2,
-  RotateCcw,
-  Tag,
-  XCircle,
-} from "lucide-react";
+  Catalog,
+  ChartLine,
+  Code,
+  Package,
+  Password,
+  Tag as ReleaseIcon,
+} from "@carbon/icons-react";
 import {
   getWorkflowRuns,
   getRepositories,
@@ -35,7 +30,7 @@ import { InstallAccountsPanel } from "@/components/install-accounts-panel";
 import { PageHeader } from "@/components/page-header";
 import { DomainPanel, Meter, SparkBars, type Tone } from "@/components/ops/domain-panel";
 import { RepoMatrix, type CiState, type RepoRow } from "@/components/ops/repo-matrix";
-import { ActivityFeed, type ActivityItem } from "@/components/ops/activity-feed";
+import { ActivityFeed, ListPagination, stableListStyle, stableSlots, usePagedSlice, type ActivityItem } from "@/components/ops/activity-feed";
 import { AttentionInbox, type AttentionItem } from "@/components/ops/attention-inbox";
 import { ageInDays, formatDuration, timeAgo } from "@/lib/format";
 
@@ -61,7 +56,7 @@ export default function OpsCenterPage() {
     staleTime: 15_000,
     refetchInterval: 30_000,
   });
-  const { data: allRepos = [] } = useQuery({
+  const { data: allRepos = [], isLoading: repositoriesLoading, isError: repositoriesError } = useQuery({
     queryKey: ["repositories"],
     queryFn: getRepositories,
     staleTime: 30_000,
@@ -334,8 +329,7 @@ export default function OpsCenterPage() {
     }
     return items
       .filter((item) => item.kind !== "run-pass")
-      .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
-      .slice(0, 30);
+      .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
   }, [runs, releases, audit, repoById]);
 
   // ── Verdict ─────────────────────────────────────────────────────────────────
@@ -418,6 +412,33 @@ export default function OpsCenterPage() {
   const ciTone: Tone =
     failing.length > 0 ? "bad" : ci.rate == null ? "neutral" : ci.rate < 80 ? "warn" : "good";
 
+  if (repositoriesLoading) {
+    return (
+      <div>
+        <PageHeader kicker="Ops Center" title="Loading your operations board" />
+        <div style={{ marginTop: "1.5rem" }}>
+          <InlineLoading description="Checking repositories and current activity" />
+        </div>
+      </div>
+    );
+  }
+
+  if (repositoriesError) {
+    return (
+      <div>
+        <PageHeader kicker="Ops Center" title="Operations board unavailable" />
+        <InlineNotification
+          kind="error"
+          title="Repositories not loaded"
+          subtitle="Gitvisor could not load the data that anchors this board. Check your connection and try again."
+          hideCloseButton
+          lowContrast
+          style={{ marginTop: "1.5rem" }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -443,7 +464,7 @@ export default function OpsCenterPage() {
       {/* ── Domain panels ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <DomainPanel
-          icon={Activity}
+          icon={ChartLine}
           label="CI health · 30d"
           href="/analytics"
           value={ci.rate == null ? "—" : `${ci.rate}%`}
@@ -461,7 +482,7 @@ export default function OpsCenterPage() {
         </DomainPanel>
 
         <DomainPanel
-          icon={GitPullRequest}
+          icon={Code}
           label="Pull requests"
           href="/pull-requests"
           value={prs.length}
@@ -484,7 +505,7 @@ export default function OpsCenterPage() {
         </DomainPanel>
 
         <DomainPanel
-          icon={Tag}
+          icon={ReleaseIcon}
           label="Releases"
           href="/releases"
           value={releaseSummary.week}
@@ -504,7 +525,7 @@ export default function OpsCenterPage() {
         />
 
         <DomainPanel
-          icon={KeyRound}
+          icon={Password}
           label="Secrets"
           href="/secrets"
           value={secrets.length}
@@ -530,7 +551,7 @@ export default function OpsCenterPage() {
         </DomainPanel>
 
         <DomainPanel
-          icon={Boxes}
+          icon={Package}
           label="Packages"
           href="/packages"
           value={packages.length}
@@ -547,16 +568,16 @@ export default function OpsCenterPage() {
               <span className="text-[11px] text-muted-foreground">No packages found</span>
             ) : (
               packageSummary.eco.slice(0, 4).map(([eco, n]) => (
-                <span key={eco} className="rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                <Tag key={eco} size="sm" type="gray">
                   {eco} {n}
-                </span>
+                </Tag>
               ))
             )}
           </div>
         </DomainPanel>
 
         <DomainPanel
-          icon={FolderGit2}
+          icon={Catalog}
           label="Repositories"
           href="/repositories"
           value={repos.length}
@@ -581,12 +602,11 @@ export default function OpsCenterPage() {
 
       {/* ── Act now ───────────────────────────────────────────────────────── */}
       {(failing.length > 0 || inFlight.length > 0) && (
-        <section className="grid gap-3 lg:grid-cols-2">
+        <section className="grid gap-6 lg:grid-cols-2">
           {failing.length > 0 && (
-            <div className="space-y-2">
-              <h2 className="flex items-center gap-2 text-sm font-semibold">
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-                Blocking deploys
+            <div>
+              <h2 className="cds--type-productive-heading-02">
+                <WarningAlt size={16} /> Blocking deploys
               </h2>
               {failing.map(({ repo, run }) => (
                 <FailingRow
@@ -600,12 +620,9 @@ export default function OpsCenterPage() {
             </div>
           )}
           {inFlight.length > 0 && (
-            <div className="space-y-2">
-              <h2 className="flex items-center gap-2 text-sm font-semibold">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-blue" />
-                Running now
-              </h2>
-              <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border bg-card">
+            <div>
+              <h2 className="cds--type-productive-heading-02">Running now</h2>
+              <div>
                 {inFlight.slice(0, 8).map((run) => (
                   <InFlightRow
                     key={run.id}
@@ -626,25 +643,7 @@ export default function OpsCenterPage() {
 
       {/* ── Review queue + activity ───────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <section className="rounded-xl border border-border bg-card">
-          <div className="border-b border-border px-4 py-3">
-            <h2 className="text-sm font-semibold">Review queue</h2>
-            <p className="text-[11px] text-muted-foreground">Open pull requests, oldest untouched first</p>
-          </div>
-          {prs.filter((p) => !p.draft).length === 0 ? (
-            <p className="px-4 py-8 text-center text-xs text-muted-foreground">No open pull requests.</p>
-          ) : (
-            <div className="max-h-[420px] divide-y divide-border/60 overflow-y-auto">
-              {[...prs]
-                .filter((p) => !p.draft)
-                .sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime())
-                .slice(0, 15)
-                .map((pr) => (
-                  <PrRow key={`${pr.repoFullName}#${pr.number}`} pr={pr} />
-                ))}
-            </div>
-          )}
-        </section>
+        <ReviewQueue pullRequests={prs} />
         <ActivityFeed items={activity} />
       </div>
     </div>
@@ -665,38 +664,28 @@ function FailingRow({
   onRerun: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-destructive/35 bg-destructive/[0.05] px-4 py-3">
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-mono text-sm text-foreground">{repo.name}</p>
-        <p className="mt-0.5 flex items-center gap-1.5 truncate font-mono text-[11px] text-muted-foreground">
-          {run.workflowName}
-          <span className="opacity-40">·</span>
-          <GitBranch className="h-3 w-3" />
-          {run.branch}
-          <span className="opacity-40">·</span>
-          {run.commitSha.slice(0, 7)}
-          <span className="opacity-40">·</span>
-          {timeAgo(run.completedAt ?? run.startedAt)}
-          {run.conclusion === "timed_out" && <span className="text-warning">· timed out</span>}
+    <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginTop: "0.75rem" }}>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <p className="cds--type-body-compact-01">{repo.name}</p>
+        <p className="cds--helper-text">
+          {run.workflowName} · {run.branch} · {run.commitSha.slice(0, 7)} · {timeAgo(run.completedAt ?? run.startedAt)}
+          {run.conclusion === "timed_out" ? " · timed out" : ""}
         </p>
       </div>
-      <a
+      <Button
+        kind="ghost"
+        size="sm"
+        as="a"
         href={run.htmlUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="hidden items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground sm:flex"
+        renderIcon={Launch}
       >
-        Logs <ExternalLink className="h-3 w-3" />
-      </a>
-      <button
-        type="button"
-        onClick={onRerun}
-        disabled={isRerunning}
-        className="flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1.5 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-      >
-        {isRerunning ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
-        Rerun
-      </button>
+        Logs
+      </Button>
+      <Button size="sm" renderIcon={Renew} disabled={isRerunning} onClick={onRerun}>
+        {isRerunning ? "Rerunning" : "Rerun"}
+      </Button>
     </div>
   );
 }
@@ -714,28 +703,57 @@ function InFlightRow({
 }) {
   const elapsed = run.startedAt ? Date.now() - new Date(run.startedAt).getTime() : 0;
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5">
-      <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-blue" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium">{run.workflowName}</p>
-        <p className="truncate font-mono text-[11px] text-muted-foreground">
+    <div style={{ display: "flex", alignItems: "center", gap: "1rem", paddingBlock: "0.5rem" }}>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <p className="cds--type-body-compact-01">{run.workflowName}</p>
+        <p className="cds--helper-text">
           {repo?.name ?? "repo"} · {run.branch} · {run.commitSha.slice(0, 7)}
         </p>
       </div>
-      <span className="flex items-center gap-1 font-mono text-[11px] text-blue">
-        <Clock className="h-3 w-3" />
+      <span className="cds--label-01" style={{ color: "var(--cds-interactive)" }}>
         {run.status === "queued" ? "queued" : formatDuration(elapsed)}
       </span>
-      <button
-        type="button"
-        onClick={onCancel}
+      <Button
+        kind="danger--ghost"
+        size="sm"
+        hasIconOnly
+        renderIcon={StopFilledAlt}
+        iconDescription="Cancel this run"
         disabled={isCancelling}
-        title="Cancel this run"
-        className="text-muted-foreground/50 hover:text-destructive disabled:opacity-50"
-      >
-        {isCancelling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
-      </button>
+        onClick={onCancel}
+      />
     </div>
+  );
+}
+
+function ReviewQueue({ pullRequests }: { pullRequests: RepoPullRequest[] }) {
+  const items = useMemo(
+    () =>
+      [...pullRequests]
+        .filter((pr) => !pr.draft)
+        .sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()),
+    [pullRequests],
+  );
+  const { page, visible, setPage } = usePagedSlice(items);
+  const slots = stableSlots(items.length);
+
+  return (
+    <section className="gitvisor-stable-section">
+      <h2 className="cds--type-productive-heading-02">Review queue</h2>
+      <p className="cds--helper-text">Open pull requests, oldest untouched first</p>
+      {items.length === 0 ? (
+        <p className="cds--type-body-01" style={{ marginTop: "1rem" }}>
+          No open pull requests.
+        </p>
+      ) : (
+        <div className="gitvisor-fixed-rows" style={stableListStyle(slots)}>
+          {visible.map((pr) => (
+            <PrRow key={`${pr.repoFullName}#${pr.number}`} pr={pr} />
+          ))}
+        </div>
+      )}
+      <ListPagination page={page} total={items.length} onChange={setPage} />
+    </section>
   );
 }
 

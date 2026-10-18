@@ -1,0 +1,298 @@
+// Load Carbon's Sass config before the stylesheet so IBM Plex resolves
+// through the package name instead of the legacy tilde import.
+@use "sass:meta";
+@use "@carbon/styles/scss/config" with (
+  $font-path: "~@ibm/plex"
+);
+
+@layer carbon {
+  @include meta.load-css("@carbon/react");
+}
+
+// The side nav is a layout column. Open, it reserves its own width. Closed,
+// it leaves no rail and no modal scrim.
+@media (min-width: 42rem) {
+  .cds--side-nav.cds--side-nav--expanded ~ .cds--content {
+    margin-inline-start: 16rem;
+  }
+}
+
+.cds--side-nav.cds--side-nav--hidden:not(.cds--side-nav--expanded) ~ .cds--content {
+  margin-inline-start: 0;
+}
+
+.cds--side-nav__overlay,
+.cds--side-nav__overlay-active {
+  background-color: transparent;
+  block-size: 0;
+  inline-size: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gitvisor-sidenav {
+  border-inline-end: 1px solid var(--cds-border-subtle);
+}
+
+.gitvisor-sidenav__workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-block-end: 1px solid var(--cds-border-subtle);
+}
+
+.gitvisor-sidenav__account-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  inline-size: 100%;
+
+  svg {
+    flex-shrink: 0;
+    fill: var(--cds-text-secondary);
+  }
+}
+
+.gitvisor-sidenav__account-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gitvisor-sidenav__plan {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.gitvisor-sidenav__plan .cds--btn {
+  max-inline-size: none;
+  inline-size: 100%;
+}
+
+.gitvisor-sidenav__plan-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gitvisor-sidenav__items {
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+.gitvisor-sidenav__profile {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  border-block-start: 1px solid var(--cds-border-subtle);
+}
+
+.gitvisor-sidenav__profile-link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+  min-inline-size: 0;
+  padding-block: 0.25rem;
+  color: var(--cds-text-primary);
+  text-decoration: none;
+}
+
+.gitvisor-sidenav__profile-link:hover .cds--type-body-compact-01,
+.gitvisor-sidenav__profile-link[aria-current="page"] .cds--type-body-compact-01 {
+  color: var(--cds-link-primary);
+}
+
+.gitvisor-sidenav__avatar {
+  flex-shrink: 0;
+  block-size: 2rem;
+  inline-size: 2rem;
+  border-radius: 50%;
+}
+
+.gitvisor-sidenav__identity {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.gitvisor-sidenav__identity > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gitvisor-header-cta {
+  display: flex;
+  align-items: center;
+  block-size: 3rem;
+  padding-inline: 1rem;
+}
+
+.gitvisor-dashboard {
+  min-block-size: calc(100vh - 3rem);
+  padding-block-end: 4rem;
+}
+
+// List regions keep the height of a full page of rows, so tabs and page
+// changes do not move the cards and controls underneath.
+.gitvisor-stable-section {
+  min-inline-size: 0;
+}
+
+.gitvisor-fixed-list,
+.gitvisor-fixed-rows {
+  --gitvisor-row: 4rem;
+  min-block-size: calc(var(--gitvisor-slots, 0) * var(--gitvisor-row));
+  margin-block-start: 1rem;
+  background-color: var(--cds-layer-01);
+  outline: 1px solid var(--cds-border-subtle);
+}
+
+.gitvisor-fixed-list .cds--structured-list {
+  table-layout: fixed;
+  inline-size: 100%;
+}
+
+.gitvisor-fixed-list .cds--structured-list-row,
+.gitvisor-fixed-list .cds--structured-list-td {
+  block-size: var(--gitvisor-row);
+  height: var(--gitvisor-row);
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.gitvisor-fixed-list .gitvisor-col-index {
+  inline-size: 3rem;
+}
+
+.gitvisor-fixed-list .gitvisor-col-tag {
+  inline-size: 7rem;
+}
+
+.gitvisor-fixed-list .gitvisor-col-when {
+  inline-size: 7rem;
+}
+
+.gitvisor-fixed-list .gitvisor-clip-cell {
+  inline-size: 100%;
+  max-inline-size: 0;
+}
+
+.gitvisor-clip {
+  display: block;
+  overflow: hidden;
+  margin: 0;
+  max-inline-size: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gitvisor-fixed-rows > a {
+  block-size: var(--gitvisor-row);
+  overflow: hidden;
+}
+
+.gitvisor-fixed-table {
+  --gitvisor-row: 4.5rem;
+  --gitvisor-head: 3.25rem;
+  display: flex;
+  flex-direction: column;
+  margin-block-start: 1rem;
+  outline: 1px solid var(--cds-border-subtle);
+  background-color: var(--cds-layer-01);
+}
+
+.gitvisor-fixed-table__body {
+  block-size: calc(var(--gitvisor-head) + var(--gitvisor-slots, 0) * var(--gitvisor-row));
+  overflow: auto;
+}
+
+.gitvisor-fixed-table--empty .gitvisor-fixed-table__body {
+  block-size: auto;
+  padding-block: 1rem;
+}
+
+.gitvisor-fixed-table table {
+  min-inline-size: 72rem;
+}
+
+.gitvisor-fixed-table .gitvisor-fixed-pager {
+  flex: 0 0 auto;
+  margin-block-start: 0;
+  border-block-start: 1px solid var(--cds-border-subtle);
+  padding-inline: 1rem;
+}
+
+.gitvisor-fixed-table tbody td {
+  height: var(--gitvisor-row);
+  max-height: var(--gitvisor-row);
+  overflow: hidden;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.gitvisor-repo-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-inline-size: 100%;
+  overflow: hidden;
+}
+
+.gitvisor-fixed-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-block-size: 2.5rem;
+  margin-block-start: 1rem;
+}
+
+.gitvisor-switcher {
+  flex: 0 0 auto;
+  max-inline-size: 100%;
+  overflow-x: auto;
+}
+
+.gitvisor-stable-section > .gitvisor-switcher {
+  margin-block-start: 1rem;
+}
+
+.gitvisor-switcher .cds--content-switcher {
+  flex-wrap: nowrap;
+  inline-size: max-content;
+  max-inline-size: none;
+}
+
+.gitvisor-switcher .cds--content-switcher-btn {
+  flex: 0 0 auto;
+  max-inline-size: none;
+}
+
+.gitvisor-dashboard > :first-child {
+  max-inline-size: 100rem;
+  margin-inline: auto;
+}
+
+.gitvisor-plan-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-block-start: 1.5rem;
+}
+
+@media (max-width: 41.98rem) {
+  .gitvisor-plan-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .gitvisor-filter-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

@@ -251,6 +251,23 @@ export interface TrialEligibility {
   reason?: string;
 }
 
+export interface BillingSubscription {
+  planId: "public" | "private";
+  status: "active" | "trialing" | "past_due" | "canceled";
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  trialEndsAt?: string | null;
+}
+
+/** `/billing/subscription` returns the subscription body directly, without the `{ ok, data }` envelope. */
+export async function getBillingSubscription(): Promise<BillingSubscription | null> {
+  const res = await fetch(`${API_URL}/billing/subscription`, { credentials: "include" });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  const json = (await res.json()) as BillingSubscription | { ok: true; data: BillingSubscription | null } | null;
+  if (json && "ok" in json) return json.data;
+  return json;
+}
+
 export function getBillingTrialEligibility(): Promise<TrialEligibility> {
   return apiFetch<TrialEligibility>("/billing/trial/eligibility");
 }

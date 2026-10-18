@@ -2,7 +2,20 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Lock, Search } from "lucide-react";
+import { Locked } from "@carbon/icons-react";
+import {
+  ContentSwitcher,
+  Search,
+  Switch,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Tag,
+} from "@carbon/react";
+import { ListPagination, stableListStyle, stableSlots, usePagedSlice } from "@/components/ops/activity-feed";
 import { timeAgo } from "@/lib/format";
 
 export type CiState = "failing" | "running" | "passing" | "none";
@@ -37,167 +50,155 @@ const CI_LABEL: Record<CiState, string> = {
   none: "No runs",
 };
 
-const CI_DOT: Record<CiState, string> = {
-  failing: "bg-destructive",
-  running: "bg-blue animate-pulse",
-  passing: "bg-success",
-  none: "bg-white/15",
+const REPO_PAGE_SIZE = 6;
+
+const CI_TAG: Record<CiState, "red" | "blue" | "green" | "gray"> = {
+  failing: "red",
+  running: "blue",
+  passing: "green",
+  none: "gray",
 };
 
 export function RepoMatrix({ rows }: { rows: RepoRow[] }) {
   const [filter, setFilter] = useState<"attention" | "all">("attention");
   const [query, setQuery] = useState("");
 
-  const attentionCount = rows.filter((r) => r.score > 0).length;
+  const attentionCount = rows.filter((row) => row.score > 0).length;
 
-  const visible = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows
-      .filter((r) => (filter === "attention" && attentionCount > 0 ? r.score > 0 : true))
-      .filter((r) => (q ? r.fullName.toLowerCase().includes(q) : true));
+      .filter((row) => (filter === "attention" && attentionCount > 0 ? row.score > 0 : true))
+      .filter((row) => (q ? row.fullName.toLowerCase().includes(q) : true));
   }, [rows, filter, query, attentionCount]);
+  const { page, visible, setPage } = usePagedSlice(filtered, REPO_PAGE_SIZE);
+  const slots = stableSlots(rows.length, REPO_PAGE_SIZE);
 
   return (
-    <section className="rounded-xl border border-border bg-card">
-      <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
+    <section className="gitvisor-stable-section">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end", justifyContent: "space-between" }}>
         <div>
-          <h2 className="text-sm font-semibold">Repository state</h2>
-          <p className="text-[11px] text-muted-foreground">
-            Every signal per repo, sorted by what needs you first
-          </p>
+          <h2 className="cds--type-productive-heading-02">Repository state</h2>
+          <p className="cds--helper-text">Every signal per repo, sorted by what needs you first</p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <div className="flex rounded-lg border border-border p-0.5 text-xs">
-            {(
-              [
-                ["attention", `Needs attention · ${attentionCount}`],
-                ["all", `All · ${rows.length}`],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setFilter(id)}
-                className={`rounded-md px-2.5 py-1 transition-colors ${
-                  filter === id ? "bg-blue/15 text-blue" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "flex-end" }}>
+          <div className="gitvisor-switcher">
+            <ContentSwitcher
+              size="sm"
+              selectedIndex={filter === "attention" ? 0 : 1}
+              onChange={({ index }) => setFilter(index === 0 ? "attention" : "all")}
+            >
+              <Switch name="attention" text={`Needs attention ${attentionCount}`} />
+              <Switch name="all" text={`All ${rows.length}`} />
+            </ContentSwitcher>
           </div>
-          <label className="relative hidden sm:block">
-            <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+          <div style={{ inlineSize: "16rem" }}>
+            <Search
+              size="sm"
+              labelText="Filter repositories"
               placeholder="Filter repos"
-              className="h-8 w-40 rounded-lg border border-border bg-background pl-7 pr-2 text-xs outline-none focus:border-blue"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
             />
-          </label>
+          </div>
         </div>
       </div>
 
+      <div className={slots === 0 ? "gitvisor-fixed-table gitvisor-fixed-table--empty" : "gitvisor-fixed-table"} style={stableListStyle(slots)}>
+      <div className="gitvisor-fixed-table__body">
       {visible.length === 0 ? (
-        <p className="px-4 py-8 text-center text-xs text-muted-foreground">
+        <p className="cds--type-body-01">
           {rows.length === 0 ? "No repositories synced yet." : "Nothing matches."}
         </p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] text-left text-xs">
-            <thead className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-              <tr className="border-b border-border">
-                <th className="px-4 py-2 font-normal">Repository</th>
-                <th className="px-3 py-2 font-normal">CI on default</th>
-                <th className="px-3 py-2 font-normal">30d pass</th>
-                <th className="px-3 py-2 font-normal">PRs</th>
-                <th className="px-3 py-2 font-normal">Issues</th>
-                <th className="px-3 py-2 font-normal">Latest release</th>
-                <th className="px-3 py-2 font-normal">Secrets</th>
-                <th className="px-3 py-2 font-normal">Pkgs</th>
-                <th className="px-4 py-2 text-right font-normal">Pushed</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/60">
-              {visible.map((r) => (
-                <tr
-                  key={r.id}
-                  className={`transition-colors hover:bg-white/[0.02] ${r.locked ? "opacity-50" : ""} ${
-                    r.ci === "failing" ? "bg-destructive/[0.04]" : ""
-                  }`}
-                >
-                  <td className="px-4 py-2.5">
-                    <Link href={`/repositories/${r.id}`} className="block min-w-0 hover:text-blue">
-                      <span className="flex items-center gap-1.5">
-                        {r.locked && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
-                        <span className="truncate font-mono text-foreground">{r.name}</span>
-                        {r.private && !r.locked && (
-                          <span className="rounded border border-border px-1 text-[9px] uppercase text-muted-foreground">
-                            private
-                          </span>
-                        )}
-                      </span>
-                      {r.reasons.length > 0 && (
-                        <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">{r.reasons.join(" · ")}</span>
-                      )}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <span className="flex items-center gap-2">
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${CI_DOT[r.ci]}`} />
-                      <span className={r.ci === "failing" ? "text-destructive" : r.ci === "running" ? "text-blue" : "text-muted-foreground"}>
-                        {CI_LABEL[r.ci]}
-                      </span>
-                      {r.lastRunAt && <span className="text-muted-foreground/60">{timeAgo(r.lastRunAt)}</span>}
+        <Table size="sm">
+          <TableHead>
+            <TableRow>
+              <TableHeader>Repository</TableHeader>
+              <TableHeader>CI on default</TableHeader>
+              <TableHeader>30d pass</TableHeader>
+              <TableHeader>PRs</TableHeader>
+              <TableHeader>Issues</TableHeader>
+              <TableHeader>Latest release</TableHeader>
+              <TableHeader>Secrets</TableHeader>
+              <TableHeader>Packages</TableHeader>
+              <TableHeader>Pushed</TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {visible.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell>
+                  <Link href={`/repositories/${row.id}`} className="gitvisor-clip" title={row.fullName}>
+                    <span className="gitvisor-repo-name">
+                      {row.locked ? <Locked size={16} /> : null}
+                      {row.name}
+                      {row.private && !row.locked ? (
+                        <Tag size="sm" type="gray">
+                          private
+                        </Tag>
+                      ) : null}
                     </span>
-                  </td>
-                  <td className="px-3 py-2.5">
-                    {r.successRate == null ? (
-                      <span className="text-muted-foreground/50">—</span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <span
-                          className={`font-mono ${
-                            r.successRate < 70 ? "text-destructive" : r.successRate < 90 ? "text-warning" : "text-foreground"
-                          }`}
-                        >
-                          {r.successRate}%
-                        </span>
-                        <span className="text-muted-foreground/60">{r.runs30d}</span>
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5 font-mono">
-                    <span className={r.openPrs ? "text-foreground" : "text-muted-foreground/50"}>{r.openPrs}</span>
-                    {r.stalePrs > 0 && <span className="text-warning"> · {r.stalePrs} stale</span>}
-                  </td>
-                  <td className={`px-3 py-2.5 font-mono ${r.openIssues ? "text-foreground" : "text-muted-foreground/50"}`}>
-                    {r.openIssues}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    {r.latestRelease ? (
-                      <span className="flex items-center gap-2">
-                        <span className="font-mono text-foreground">{r.latestRelease.tag}</span>
-                        <span className="text-muted-foreground/60">{timeAgo(r.latestRelease.at)}</span>
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground/50">—</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5 font-mono">
-                    <span className={r.secrets ? "text-foreground" : "text-muted-foreground/50"}>{r.secrets}</span>
-                    {r.staleSecrets > 0 && <span className="text-warning"> · {r.staleSecrets} old</span>}
-                  </td>
-                  <td className={`px-3 py-2.5 font-mono ${r.packages ? "text-foreground" : "text-muted-foreground/50"}`}>
-                    {r.packages}
-                  </td>
-                  <td className="px-4 py-2.5 text-right text-muted-foreground">{timeAgo(r.pushedAt)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </Link>
+                  {row.reasons.length > 0 ? (
+                    <span className="cds--helper-text gitvisor-clip" title={row.reasons.join(" · ")}>
+                      {row.reasons.join(" · ")}
+                    </span>
+                  ) : (
+                    <span className="cds--helper-text gitvisor-clip">&nbsp;</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Tag size="sm" type={CI_TAG[row.ci]}>
+                    {CI_LABEL[row.ci]}
+                  </Tag>
+                  {row.lastRunAt ? <span className="cds--helper-text"> {timeAgo(row.lastRunAt)}</span> : null}
+                </TableCell>
+                <TableCell>
+                  {row.successRate == null ? (
+                    "—"
+                  ) : (
+                    <span>
+                      {row.successRate}% <span className="cds--helper-text">{row.runs30d}</span>
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {row.openPrs}
+                  {row.stalePrs > 0 ? <span style={{ color: "var(--cds-support-warning)" }}> · {row.stalePrs} stale</span> : null}
+                </TableCell>
+                <TableCell>{row.openIssues}</TableCell>
+                <TableCell>
+                  {row.latestRelease ? (
+                    <span>
+                      {row.latestRelease.tag} <span className="cds--helper-text">{timeAgo(row.latestRelease.at)}</span>
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </TableCell>
+                <TableCell>
+                  {row.secrets}
+                  {row.staleSecrets > 0 ? (
+                    <span style={{ color: "var(--cds-support-warning)" }}> · {row.staleSecrets} old</span>
+                  ) : null}
+                </TableCell>
+                <TableCell>{row.packages}</TableCell>
+                <TableCell>{timeAgo(row.pushedAt)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
+      </div>
+      <ListPagination
+        page={page}
+        total={filtered.length}
+        onChange={setPage}
+        pageSize={REPO_PAGE_SIZE}
+        pinned={rows.length > REPO_PAGE_SIZE}
+      />
+      </div>
     </section>
   );
 }

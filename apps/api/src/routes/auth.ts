@@ -378,9 +378,11 @@ export function createAuthRouter(
       ok: true,
       data: {
         id: payload.userId,
+        githubUsername: payload.githubUsername,
         email: payload.email,
         name: payload.name,
         avatarUrl: payload.avatarUrl,
+        createdAt: payload.createdAt,
       },
     });
   });

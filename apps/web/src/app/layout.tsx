@@ -1,20 +1,7 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
+import "./carbon.scss";
 import { Providers } from "./providers";
-
-const instrument = Instrument_Sans({
-  subsets: ["latin"],
-  variable: "--font-instrument",
-  display: "swap",
-});
-
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-plex-mono",
-  display: "swap",
-});
 
 const DESCRIPTION =
   "Monitor every GitHub Actions workflow run, manage secrets, and debug CI/CD failures — all in one clean dashboard.";
@@ -52,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${instrument.variable} ${plexMono.variable}`}>
+    <html lang="en" className="cds--g100">
       <body>
         <Providers>{children}</Providers>
       </body>

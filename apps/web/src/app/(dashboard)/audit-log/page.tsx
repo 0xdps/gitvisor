@@ -4,20 +4,30 @@ import { Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import {
-  GitBranch,
-  KeyRound,
-  Trash2,
-  RefreshCw,
+  Branch,
+  Password,
+  TrashCan,
+  Renew,
   Package,
   Globe,
-  Lock,
-  Zap,
+  Locked,
+  Flash,
   ChevronLeft,
   ChevronRight,
-  LogIn,
-  LogOut,
-  ShieldAlert,
-} from "lucide-react";
+  Login,
+  Logout,
+  Security,
+} from "@carbon/icons-react";
+import {
+  Button,
+  InlineLoading,
+  InlineNotification,
+  StructuredListBody,
+  StructuredListCell,
+  StructuredListRow,
+  StructuredListWrapper,
+  Tag,
+} from "@carbon/react";
 import { getAuditLog } from "@/lib/api-client";
 import type { AuditEntry } from "@/lib/api-client";
 import type { ElementType } from "react";
@@ -27,32 +37,32 @@ type ActionMeta = {
   label: string;
   icon: ElementType;
   category: string;
-  dot: string;
+  type: "blue" | "green" | "red" | "magenta" | "gray";
 };
 
 function getActionMeta(action: string): ActionMeta {
   const map: Record<string, ActionMeta> = {
-    "repository.synced_first":        { label: "New repo synced",      icon: GitBranch,  category: "Repository", dot: "bg-blue" },
-    "repository.synced_with_changes": { label: "Repo updated",         icon: RefreshCw,  category: "Repository", dot: "bg-blue/60" },
-    "repository.privatized":          { label: "Repo privatized",      icon: Lock,       category: "Repository", dot: "bg-muted-foreground/40" },
-    "repository.publicized":          { label: "Repo made public",     icon: Globe,      category: "Repository", dot: "bg-muted-foreground/40" },
-    "secret.upserted":                { label: "Secret set",           icon: KeyRound,   category: "Secret",     dot: "bg-warning" },
-    "secret.deleted":                 { label: "Secret deleted",       icon: Trash2,     category: "Secret",     dot: "bg-destructive" },
-    "workflow_run.rerun":             { label: "Workflow re-run",      icon: RefreshCw,  category: "Workflow",   dot: "bg-success" },
-    "workflow_run.cancelled":         { label: "Workflow cancelled",   icon: Zap,        category: "Workflow",   dot: "bg-muted-foreground/40" },
-    "installation.created":           { label: "App installed",        icon: Package,    category: "App",        dot: "bg-success" },
-    "installation.deleted":           { label: "App removed",          icon: Trash2,     category: "App",        dot: "bg-destructive" },
+    "repository.synced_first":        { label: "New repo synced",      icon: Branch,     category: "Repository", type: "blue" },
+    "repository.synced_with_changes": { label: "Repo updated",         icon: Renew,      category: "Repository", type: "blue" },
+    "repository.privatized":          { label: "Repo privatized",      icon: Locked,     category: "Repository", type: "gray" },
+    "repository.publicized":          { label: "Repo made public",     icon: Globe,      category: "Repository", type: "gray" },
+    "secret.upserted":                { label: "Secret set",           icon: Password,   category: "Secret",     type: "magenta" },
+    "secret.deleted":                 { label: "Secret deleted",       icon: TrashCan,   category: "Secret",     type: "red" },
+    "workflow_run.rerun":             { label: "Workflow re-run",      icon: Renew,      category: "Workflow",   type: "green" },
+    "workflow_run.cancelled":         { label: "Workflow cancelled",   icon: Flash,      category: "Workflow",   type: "gray" },
+    "installation.created":           { label: "App installed",        icon: Package,    category: "App",        type: "green" },
+    "installation.deleted":           { label: "App removed",          icon: TrashCan,   category: "App",        type: "red" },
     // Auth / security events
-    "auth.login":                     { label: "Signed in",            icon: LogIn,      category: "Auth",       dot: "bg-blue/70" },
-    "auth.logout":                    { label: "Signed out",           icon: LogOut,     category: "Auth",       dot: "bg-muted-foreground/40" },
-    "security.alert":                 { label: "Security alert",       icon: ShieldAlert, category: "Security",  dot: "bg-destructive" },
+    "auth.login":                     { label: "Signed in",            icon: Login,      category: "Auth",       type: "blue" },
+    "auth.logout":                    { label: "Signed out",           icon: Logout,     category: "Auth",       type: "gray" },
+    "security.alert":                 { label: "Security alert",       icon: Security,   category: "Security",  type: "red" },
   };
-  return map[action] ?? { label: action, icon: Zap, category: "System", dot: "bg-muted-foreground/30" };
+  return map[action] ?? { label: action, icon: Flash, category: "System", type: "gray" };
 }
 
 export default function AuditLogPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<InlineLoading description="Loading audit log" />}>
       <AuditLogContent />
     </Suspense>
   );
@@ -62,7 +72,7 @@ function AuditLogContent() {
   const searchParams = useSearchParams();
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["audit-log", page],
     queryFn: () => getAuditLog(page),
     staleTime: 30_000,
@@ -86,7 +96,7 @@ function AuditLogContent() {
   }, []);
 
   return (
-    <div className="space-y-5">
+    <div>
 
       {/* ── Header ────────────────────────────────────────────────────── */}
       <PageHeader
@@ -96,31 +106,27 @@ function AuditLogContent() {
       />
 
       {/* ── Timeline ──────────────────────────────────────────────────── */}
-      {isLoading ? (
-        <div className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-12 rounded-lg bg-muted/10 animate-pulse" />
-          ))}
-        </div>
+      {isError ? (
+        <InlineNotification kind="error" title="Audit log not loaded" subtitle="Check your connection and try again." hideCloseButton lowContrast style={{ marginTop: "1.5rem" }} />
+      ) : isLoading ? (
+        <div style={{ marginTop: "1.5rem" }}><InlineLoading description="Loading audit events" /></div>
       ) : entries.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card flex flex-col items-center justify-center py-16 text-center px-6">
-          <Zap className="h-8 w-8 text-muted-foreground/20 mb-3" />
-          <p className="text-sm font-medium text-muted-foreground">No events yet</p>
-          <p className="mt-1 text-xs text-muted-foreground/50">Actions will appear here as you use Gitvisor.</p>
-        </div>
+        <InlineNotification kind="info" title="No events yet" subtitle="Actions will appear here as you use Gitvisor." hideCloseButton lowContrast style={{ marginTop: "1.5rem" }} />
       ) : (
-        <div className="space-y-6">
+        <div style={{ marginTop: "1.5rem" }}>
           {grouped.map(({ date, items }) => (
-            <div key={date}>
-              <p className="text-xs font-semibold text-muted-foreground/50 uppercase tracking-widest mb-2 px-1">
+            <section key={date} style={{ marginTop: "1.5rem" }}>
+              <h2 className="cds--label-01" style={{ marginBottom: "0.5rem" }}>
                 {date}
-              </p>
-              <div className="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border/50">
+              </h2>
+              <StructuredListWrapper isCondensed>
+                <StructuredListBody>
                 {items.map((entry) => (
                   <AuditRow key={entry.id} entry={entry} />
                 ))}
-              </div>
-            </div>
+                </StructuredListBody>
+              </StructuredListWrapper>
+            </section>
           ))}
         </div>
       )}
@@ -130,22 +136,26 @@ function AuditLogContent() {
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>Page {page} of {totalPages}</span>
           <div className="flex items-center gap-1">
-            <a
+            <Button
+              as="a"
               href={`/audit-log${page > 2 ? `?page=${page - 1}` : ""}`}
-              aria-disabled={page <= 1}
-              className={`flex h-8 w-8 items-center justify-center rounded-lg border border-border transition-colors ${page <= 1 ? "pointer-events-none opacity-30" : "hover:bg-accent hover:text-foreground"}`}
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </a>
-            <a
+              disabled={page <= 1}
+              kind="ghost"
+              size="sm"
+              hasIconOnly
+              renderIcon={ChevronLeft}
+              iconDescription="Previous page"
+            />
+            <Button
+              as="a"
               href={`/audit-log?page=${page + 1}`}
-              aria-disabled={page >= totalPages}
-              className={`flex h-8 w-8 items-center justify-center rounded-lg border border-border transition-colors ${page >= totalPages ? "pointer-events-none opacity-30" : "hover:bg-accent hover:text-foreground"}`}
-              aria-label="Next page"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </a>
+              disabled={page >= totalPages}
+              kind="ghost"
+              size="sm"
+              hasIconOnly
+              renderIcon={ChevronRight}
+              iconDescription="Next page"
+            />
           </div>
         </div>
       )}
@@ -165,31 +175,27 @@ function AuditRow({ entry }: { entry: AuditEntry }) {
   });
 
   return (
-    <div className="flex items-center gap-4 px-4 py-3 hover:bg-white/2 transition-colors">
+    <StructuredListRow>
       {/* Category icon */}
-      <div className="shrink-0 h-7 w-7 rounded-lg bg-muted/20 flex items-center justify-center">
-        <Icon className="h-3.5 w-3.5 text-muted-foreground/70" />
-      </div>
+      <StructuredListCell noWrap><Icon size={16} /></StructuredListCell>
 
       {/* Label + resource */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium leading-snug">{meta.label}</p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[11px] text-muted-foreground/50 font-medium">{meta.category}</span>
+      <StructuredListCell>
+        <span className="cds--type-body-compact-01">{meta.label}</span>
+        <span className="cds--helper-text" style={{ display: "block" }}>
+          {meta.category}
           {entry.resourceId && (
             <>
-              <span className="text-muted-foreground/30 text-[10px]">·</span>
-              <span className="text-[11px] text-muted-foreground/50 font-mono truncate">{entry.resourceId}</span>
+              {" · "}
+              <span className="font-mono">{entry.resourceId}</span>
             </>
           )}
-        </div>
-      </div>
+        </span>
+      </StructuredListCell>
 
       {/* Dot + time */}
-      <div className="flex items-center gap-2.5 shrink-0">
-        <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
-        <p className="text-xs text-muted-foreground tabular-nums">{time}</p>
-      </div>
-    </div>
+      <StructuredListCell noWrap><Tag size="sm" type={meta.type}>{meta.category}</Tag></StructuredListCell>
+      <StructuredListCell noWrap>{time}</StructuredListCell>
+    </StructuredListRow>
   );
 }

@@ -8,10 +8,16 @@ export function PageHeader({
   detail?: React.ReactNode;
 }) {
   return (
-    <div>
-      <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{kicker}</p>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
-      {detail ? <div className="mt-1 text-sm text-muted-foreground">{detail}</div> : null}
-    </div>
+    <header>
+      <p className="cds--label-01">{kicker}</p>
+      <h1 className="cds--type-productive-heading-04" style={{ marginTop: "0.25rem" }}>
+        {title}
+      </h1>
+      {detail ? (
+        <div className="cds--type-body-01" style={{ marginTop: "0.25rem" }}>
+          {detail}
+        </div>
+      ) : null}
+    </header>
   );
 }

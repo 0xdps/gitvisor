@@ -1,7 +1,17 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Lock, PlusCircle, RefreshCw } from "lucide-react";
+import { Add, CheckmarkFilled, Locked, Renew } from "@carbon/icons-react";
+import {
+  Button,
+  SkeletonText,
+  StructuredListBody,
+  StructuredListCell,
+  StructuredListRow,
+  StructuredListWrapper,
+  Tag,
+  Tile,
+} from "@carbon/react";
 import { getInstallations } from "@/lib/api-client";
 import { useUpgradeModal } from "./upgrade-modal";
 
@@ -24,105 +34,127 @@ export function InstallAccountsPanel() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="px-4 py-3 border-b border-border animate-pulse">
-          <div className="h-4 w-28 bg-muted/40 rounded" />
-          <div className="h-3 w-44 bg-muted/30 rounded mt-1.5" />
-        </div>
-        {[0, 1].map((i) => (
-          <div
-            key={i}
-            className="px-4 py-2.5 flex items-center gap-2.5 border-b last:border-0 border-border/50 animate-pulse"
-          >
-            <div className="h-6 w-6 rounded-full bg-muted/40 shrink-0" />
-            <div className="h-3 w-24 bg-muted/30 rounded" />
-          </div>
-        ))}
-      </div>
+      <Tile>
+        <SkeletonText heading width="35%" />
+        <SkeletonText paragraph lineCount={3} width="70%" />
+      </Tile>
     );
   }
 
   if (installations.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold">Connect GitHub App</h3>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+    <Tile style={{ padding: 0 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "1rem",
+          padding: "1rem",
+          borderBottom: "1px solid var(--cds-border-subtle-01)",
+        }}
+      >
+        <div>
+          <h3 className="cds--type-productive-heading-02">Connect GitHub App</h3>
+          <p className="cds--helper-text" style={{ marginTop: "0.25rem" }}>
             {allInstalled
               ? "All accounts connected"
               : "Install the app on each account to start tracking."}
           </p>
         </div>
-        <button
+        <Button
+          kind="ghost"
+          size="sm"
+          hasIconOnly
+          renderIcon={Renew}
+          iconDescription="Refresh connected accounts"
           onClick={() => void refetch()}
-          title="Refresh"
-          className="ml-2 shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-        >
-          <RefreshCw className="h-3 w-3" />
-        </button>
+        />
       </div>
 
-      <div className="divide-y divide-border/50">
-        {installations.map((account) => (
-          <div key={account.login} className="flex items-center justify-between px-4 py-2.5">
-            <div className="flex items-center gap-2.5 min-w-0">
+      <StructuredListWrapper isCondensed>
+        <StructuredListBody>
+          {installations.map((account) => (
+            <StructuredListRow key={account.login}>
+              <StructuredListCell>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               {account.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={account.avatarUrl}
                   alt={account.login}
-                  className={`h-6 w-6 rounded-full shrink-0 ${account.locked ? "opacity-40 grayscale" : ""}`}
+                      width={32}
+                      height={32}
+                      style={{ borderRadius: "50%", opacity: account.locked ? 0.4 : 1 }}
                 />
               ) : (
-                <div className="h-6 w-6 rounded-full bg-muted/40 flex items-center justify-center text-[11px] font-bold text-muted-foreground shrink-0">
+                    <span
+                      className="cds--type-label-01"
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        display: "grid",
+                        placeItems: "center",
+                        background: "var(--cds-layer-02)",
+                      }}
+                    >
                   {account.login.slice(0, 1).toUpperCase()}
-                </div>
+                    </span>
               )}
-              <div className="min-w-0">
-                <p className={`text-xs font-medium truncate ${account.locked ? "text-muted-foreground/50" : ""}`}>{account.login}</p>
-                <p className="text-[10px] text-muted-foreground">{account.type}</p>
+                  <span>
+                    <span className="cds--type-body-compact-01" style={{ display: "block" }}>
+                      {account.login}
+                    </span>
+                    <span className="cds--helper-text">{account.type}</span>
+                  </span>
               </div>
-            </div>
+              </StructuredListCell>
+              <StructuredListCell noWrap>
             {account.locked ? (
-              <button
+                  <Button
+                    kind="tertiary"
+                    size="sm"
+                    renderIcon={Locked}
                 onClick={openUpgradeModal}
-                className="shrink-0 inline-flex items-center gap-1 rounded-md border border-border bg-background/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:border-blue/30 hover:text-blue transition-colors"
               >
-                <Lock className="h-3 w-3" /> Upgrade
-              </button>
+                    Upgrade
+                  </Button>
             ) : account.installed ? (
-              <span className="shrink-0 flex items-center gap-1 text-[11px] text-success font-medium">
-                <CheckCircle2 className="h-3 w-3" /> Connected
-              </span>
+                  <Tag type="green" renderIcon={CheckmarkFilled}>Connected</Tag>
             ) : (
-              <a
+                  <Button
+                    as="a"
                 href={account.installUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="shrink-0 inline-flex items-center gap-1 rounded-md border border-blue/30 bg-blue/10 px-2.5 py-1 text-[11px] font-medium text-blue hover:bg-blue/20 transition-colors"
+                    size="sm"
               >
                 Install App
-              </a>
+                  </Button>
             )}
-          </div>
-        ))}
-      </div>
+              </StructuredListCell>
+            </StructuredListRow>
+          ))}
+        </StructuredListBody>
+      </StructuredListWrapper>
 
       {baseInstallUrl && (
-        <div className="px-4 py-2.5 border-t border-border/50">
-          <a
+        <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid var(--cds-border-subtle-01)" }}>
+          <Button
+            as="a"
             href={baseInstallUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+            kind="ghost"
+            size="sm"
+            renderIcon={Add}
           >
-            <PlusCircle className="h-3 w-3" />
             Install on another organization
-          </a>
+          </Button>
         </div>
       )}
-    </div>
+    </Tile>
   );
 }

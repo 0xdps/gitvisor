@@ -3,20 +3,12 @@ import type { ElementType, ReactNode } from "react";
 
 export type Tone = "neutral" | "good" | "warn" | "bad" | "live";
 
-const TONE_TEXT: Record<Tone, string> = {
-  neutral: "text-foreground",
-  good: "text-success",
-  warn: "text-warning",
-  bad: "text-destructive",
-  live: "text-blue",
-};
-
-const TONE_EDGE: Record<Tone, string> = {
-  neutral: "border-border",
-  good: "border-border",
-  warn: "border-warning/35",
-  bad: "border-destructive/40",
-  live: "border-blue/35",
+const TONE_COLOR: Record<Tone, string | undefined> = {
+  neutral: undefined,
+  good: "var(--cds-support-success)",
+  warn: "var(--cds-support-warning)",
+  bad: "var(--cds-support-error)",
+  live: "var(--cds-interactive)",
 };
 
 export function DomainPanel({
@@ -39,34 +31,37 @@ export function DomainPanel({
   children?: ReactNode;
 }) {
   return (
-    <Link
-      href={href}
-      className={`group flex flex-col rounded-xl border bg-card p-4 transition-colors hover:bg-white/[0.03] ${TONE_EDGE[tone]}`}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-          <Icon className="h-3.5 w-3.5" />
-          {label}
+    <Link href={href} className="cds--tile cds--tile--clickable" style={{ display: "flex", flexDirection: "column" }}>
+      <span className="cds--label-01" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <Icon size={16} />
+        {label}
+      </span>
+      <div style={{ marginTop: "0.75rem", display: "flex", alignItems: "baseline", gap: "0.5rem" }}>
+        <span className="cds--type-productive-heading-05" style={{ color: TONE_COLOR[tone] }}>
+          {value}
         </span>
-        <span className="text-[11px] text-muted-foreground/0 transition-colors group-hover:text-muted-foreground">
-          Open
-        </span>
+        {unit ? <span className="cds--helper-text">{unit}</span> : null}
       </div>
-      <div className="mt-3 flex items-baseline gap-1.5">
-        <span className={`font-mono text-3xl leading-none ${TONE_TEXT[tone]}`}>{value}</span>
-        {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
-      </div>
-      {children && <div className="mt-3">{children}</div>}
-      <div className="mt-auto pt-4">
-        <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-border pt-3">
-          {facts.map((f) => (
-            <div key={f.label} className="min-w-0">
-              <dt className="truncate text-[10px] text-muted-foreground">{f.label}</dt>
-              <dd className={`truncate font-mono text-xs ${TONE_TEXT[f.tone ?? "neutral"]}`}>{f.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
+      {children ? <div style={{ marginTop: "0.75rem" }}>{children}</div> : null}
+      <div style={{ flex: 1, minHeight: "1rem" }} />
+      <dl
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "0.5rem 0.75rem",
+          paddingTop: "0.75rem",
+          borderTop: "1px solid var(--cds-border-subtle-01)",
+        }}
+      >
+        {facts.map((fact) => (
+          <div key={fact.label}>
+            <dt className="cds--helper-text">{fact.label}</dt>
+            <dd className="cds--type-body-compact-01" style={{ color: TONE_COLOR[fact.tone ?? "neutral"] }}>
+              {fact.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
     </Link>
   );
 }
@@ -80,7 +75,7 @@ export function SparkBars({
 }) {
   const max = Math.max(1, ...values.map((v) => v.total));
   return (
-    <div className="flex h-10 items-end gap-[3px]" aria-hidden="true">
+    <div style={{ display: "flex", alignItems: "flex-end", gap: "3px", height: "2.5rem" }} aria-hidden="true">
       {values.map((v, i) => {
         const h = v.total === 0 ? 4 : Math.max(10, (v.total / max) * 100);
         const badShare = v.total === 0 ? 0 : (v.total - v.good) / v.total;
@@ -88,14 +83,27 @@ export function SparkBars({
           <div
             key={v.label}
             title={`${v.label}: ${v.good}/${v.total} passed`}
-            className={`relative flex-1 overflow-hidden rounded-[2px] ${v.total === 0 ? "bg-white/5" : "bg-success/70"} ${
-              highlight === i ? "ring-1 ring-blue" : ""
-            }`}
-            style={{ height: `${h}%` }}
+            style={{
+              position: "relative",
+              flex: 1,
+              overflow: "hidden",
+              height: `${h}%`,
+              background: v.total === 0 ? "var(--cds-border-subtle-01)" : "var(--cds-support-success)",
+              outline: highlight === i ? "1px solid var(--cds-interactive)" : undefined,
+            }}
           >
-            {badShare > 0 && (
-              <span className="absolute inset-x-0 top-0 bg-destructive" style={{ height: `${badShare * 100}%` }} />
-            )}
+            {badShare > 0 ? (
+              <span
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  height: `${badShare * 100}%`,
+                  background: "var(--cds-support-error)",
+                }}
+              />
+            ) : null}
           </div>
         );
       })}
@@ -104,13 +112,13 @@ export function SparkBars({
 }
 
 export function Meter({ parts }: { parts: { value: number; className: string; label: string }[] }) {
-  const total = parts.reduce((s, p) => s + p.value, 0);
-  if (total === 0) return <div className="h-1.5 rounded-full bg-white/5" />;
+  const total = parts.reduce((sum, part) => sum + part.value, 0);
+  if (total === 0) return <div style={{ height: "0.25rem", background: "var(--cds-border-subtle-01)" }} />;
   return (
-    <div className="flex h-1.5 overflow-hidden rounded-full bg-white/5" aria-hidden="true">
-      {parts.map((p) =>
-        p.value > 0 ? (
-          <span key={p.label} title={`${p.label}: ${p.value}`} className={p.className} style={{ width: `${(p.value / total) * 100}%` }} />
+    <div style={{ display: "flex", height: "0.25rem", overflow: "hidden", background: "var(--cds-border-subtle-01)" }} aria-hidden="true">
+      {parts.map((part) =>
+        part.value > 0 ? (
+          <span key={part.label} title={`${part.label}: ${part.value}`} className={part.className} style={{ width: `${(part.value / total) * 100}%` }} />
         ) : null,
       )}
     </div>

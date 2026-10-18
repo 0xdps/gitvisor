@@ -2,6 +2,16 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  ContentSwitcher,
+  StructuredListBody,
+  StructuredListCell,
+  StructuredListRow,
+  StructuredListWrapper,
+  Switch,
+  Tag,
+} from "@carbon/react";
+import { LIST_PAGE_SIZE, ListPagination, stableListStyle, stableSlots, usePagedSlice } from "@/components/ops/activity-feed";
 
 export type AttentionCategory = "all" | "ci" | "reviews" | "security" | "releases" | "setup";
 
@@ -17,11 +27,20 @@ export interface AttentionItem {
   external?: boolean;
 }
 
-const SEVERITY = {
-  critical: "text-destructive",
-  warning: "text-warning",
-  info: "text-blue",
-} as const;
+const CATEGORIES = [
+  ["all", "All"],
+  ["ci", "CI"],
+  ["reviews", "Reviews"],
+  ["security", "Security"],
+  ["releases", "Releases"],
+  ["setup", "Setup"],
+] as const;
+
+const TAG: Record<AttentionItem["severity"], "red" | "magenta" | "blue"> = {
+  critical: "red",
+  warning: "magenta",
+  info: "blue",
+};
 
 export function AttentionInbox({ items }: { items: AttentionItem[] }) {
   const [category, setCategory] = useState<AttentionCategory>("all");
@@ -30,65 +49,82 @@ export function AttentionInbox({ items }: { items: AttentionItem[] }) {
     for (const item of items) result[item.category] += 1;
     return result;
   }, [items]);
-  const visible = category === "all" ? items : items.filter((item) => item.category === category);
+  const filtered = useMemo(
+    () => (category === "all" ? items : items.filter((item) => item.category === category)),
+    [items, category],
+  );
+  const { page, visible, setPage } = usePagedSlice(filtered);
+  const slots = stableSlots(items.length);
+  const selectedIndex = CATEGORIES.findIndex(([id]) => id === category);
 
   return (
-    <section className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-3">
-        <div className="mr-auto">
-          <h2 className="text-sm font-semibold">Attention</h2>
-          <p className="text-[11px] text-muted-foreground">Ranked by what blocks shipping, then what is waiting or aging</p>
-        </div>
-        {(
-          [
-            ["all", "All"],
-            ["ci", "CI"],
-            ["reviews", "Reviews"],
-            ["security", "Security"],
-            ["releases", "Releases"],
-            ["setup", "Setup"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setCategory(id)}
-            className={`rounded-md px-2 py-1 font-mono text-[11px] ${
-              category === id ? "bg-blue/15 text-blue" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {label} {counts[id]}
-          </button>
-        ))}
+    <section className="gitvisor-stable-section">
+      <h2 className="cds--type-productive-heading-02">Attention</h2>
+      <p className="cds--helper-text">Ranked by what blocks shipping, then what is waiting or aging</p>
+      <div className="gitvisor-switcher">
+        <ContentSwitcher
+          size="sm"
+          selectedIndex={selectedIndex}
+          onChange={({ index }) => {
+            if (index === undefined) return;
+            const next = CATEGORIES[index]?.[0];
+            if (next) setCategory(next);
+          }}
+        >
+          {CATEGORIES.map(([id, label]) => (
+            <Switch key={id} name={id} text={`${label} ${counts[id]}`} />
+          ))}
+        </ContentSwitcher>
       </div>
-      {visible.length === 0 ? (
-        <p className="px-4 py-8 text-center text-sm text-muted-foreground">Nothing in this queue.</p>
-      ) : (
-        <ol className="divide-y divide-border/70">
-          {visible.slice(0, 12).map((item, index) => {
-            const body = (
-              <>
-                <span className="w-5 font-mono text-[11px] text-muted-foreground">{index + 1}</span>
-                <span className={`w-16 font-mono text-[10px] uppercase tracking-wider ${SEVERITY[item.severity]}`}>{item.severity}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm text-foreground">{item.title}</span>
-                  <span className="block truncate text-[11px] text-muted-foreground">{item.repo} · {item.reason}</span>
-                </span>
-                <span className="hidden font-mono text-[11px] text-muted-foreground sm:block">{item.when}</span>
-              </>
-            );
-            return (
-              <li key={item.id}>
-                {item.external ? (
-                  <a href={item.href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03]">{body}</a>
+      <div className="gitvisor-fixed-list" style={stableListStyle(slots)}>
+        {visible.length === 0 ? (
+          <p className="cds--type-body-01">Nothing in this queue.</p>
+        ) : (
+          <StructuredListWrapper isCondensed>
+            <StructuredListBody>
+              {visible.map((item, index) => {
+                const title = item.external ? (
+                  <a href={item.href} target="_blank" rel="noopener noreferrer">
+                    {item.title}
+                  </a>
                 ) : (
-                  <Link href={item.href} className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03]">{body}</Link>
-                )}
-              </li>
-            );
-          })}
-        </ol>
-      )}
+                  <Link href={item.href}>{item.title}</Link>
+                );
+                const detail = `${item.repo} · ${item.reason}`;
+                return (
+                  <StructuredListRow key={item.id}>
+                    <StructuredListCell noWrap className="gitvisor-col-index">
+                      {page * LIST_PAGE_SIZE + index + 1}
+                    </StructuredListCell>
+                    <StructuredListCell noWrap className="gitvisor-col-tag">
+                      <Tag size="sm" type={TAG[item.severity]}>
+                        {item.severity}
+                      </Tag>
+                    </StructuredListCell>
+                    <StructuredListCell className="gitvisor-clip-cell">
+                      <span className="cds--type-body-compact-01 gitvisor-clip" title={item.title}>
+                        {title}
+                      </span>
+                      <span className="cds--helper-text gitvisor-clip" title={detail}>
+                        {detail}
+                      </span>
+                    </StructuredListCell>
+                    <StructuredListCell noWrap className="gitvisor-col-when">
+                      {item.when}
+                    </StructuredListCell>
+                  </StructuredListRow>
+                );
+              })}
+            </StructuredListBody>
+          </StructuredListWrapper>
+        )}
+      </div>
+      <ListPagination
+        page={page}
+        total={filtered.length}
+        onChange={setPage}
+        pinned={items.length > LIST_PAGE_SIZE}
+      />
     </section>
   );
 }

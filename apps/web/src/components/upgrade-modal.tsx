@@ -8,13 +8,17 @@ import {
   type ReactNode,
 } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Checkmark, Locked, LogoX } from "@carbon/icons-react";
 import {
-  Check,
-  Lock,
-  Share2,
-  Sparkles,
-  X,
-} from "lucide-react";
+  Button,
+  ComposedModal,
+  InlineNotification,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  Tag,
+  Tile,
+} from "@carbon/react";
 import {
   getBillingTrialEligibility,
   getBillingCheckout,
@@ -44,7 +48,7 @@ export function UpgradeModalProvider({ children }: { children: ReactNode }) {
   return (
     <UpgradeModalContext.Provider value={{ openUpgradeModal }}>
       {children}
-      {open && <UpgradeModal onClose={() => setOpen(false)} />}
+      <UpgradeModal open={open} onClose={() => setOpen(false)} />
     </UpgradeModalContext.Provider>
   );
 }
@@ -65,7 +69,7 @@ const PUBLIC_FEATURES = [
 
 type ShareStep = "idle" | "shared";
 
-function UpgradeModal({ onClose }: { onClose: () => void }) {
+function UpgradeModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [shareStep, setShareStep] = useState<ShareStep>("idle");
 
@@ -105,130 +109,101 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
   const canClaimTrial = eligibility?.eligible !== false;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden="true"
+    <ComposedModal open={open} onClose={onClose} size="md">
+      <ModalHeader
+        buttonOnClick={onClose}
+        closeModal={onClose}
+        label="Plans"
+        title="Upgrade to Private"
       />
-
-      {/* Dialog */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="upgrade-modal-title"
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      >
-        <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card shadow-2xl shadow-black/40 overflow-hidden">
-          {/* Close */}
-          <button
-            onClick={onClose}
-            className="absolute right-4 top-4 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" />
-          </button>
-
-          {/* Header */}
-          <div className="px-6 pt-6 pb-4 border-b border-border">
-            <div className="flex items-center gap-2 mb-1">
-              <Lock className="h-4 w-4 text-blue" />
-              <h2 id="upgrade-modal-title" className="text-base font-semibold">
-                Upgrade to Private
-              </h2>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Unlock private repositories and organization accounts.
-            </p>
-          </div>
-
-          {/* Plan comparison */}
-          <div className="grid grid-cols-2 gap-3 px-6 py-4">
-            {/* Public plan */}
-            <div className="rounded-xl border border-border bg-background/50 p-4">
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                Public
-              </div>
-              <div className="text-2xl font-bold mb-3">$0</div>
-              <ul className="space-y-2">
-                {PUBLIC_FEATURES.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Check className="h-3 w-3 text-muted-foreground/50 shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Private plan */}
-            <div className="rounded-xl border border-blue/30 bg-blue/5 p-4 relative">
-              <div className="absolute -top-px left-4 right-4 h-px bg-blue/50 rounded-full" />
-              <div className="text-xs font-semibold text-blue uppercase tracking-wider mb-1">
-                Private
-              </div>
-              <div className="text-2xl font-bold mb-3">$2.49<span className="text-sm font-normal text-muted-foreground">/mo</span></div>
-              <ul className="space-y-2">
-                {PRIVATE_FEATURES.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-xs text-foreground">
-                    <Check className="h-3 w-3 text-blue shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* CTAs */}
-          <div className="px-6 pb-6 space-y-3">
-            {/* Upgrade button */}
-            <button
-              onClick={() => checkoutMutation.mutate()}
-              disabled={checkoutMutation.isPending}
-              className="w-full rounded-xl bg-blue px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue/90 disabled:opacity-50 transition-colors"
+      <ModalBody hasScrollingContent>
+        <p className="cds--type-body-01">
+          Unlock private repositories and organization accounts.
+        </p>
+        <div className="gitvisor-plan-comparison">
+          {[
+            { name: "Public", price: "$0", features: PUBLIC_FEATURES, highlighted: false },
+            { name: "Private", price: "$2.49/mo", features: PRIVATE_FEATURES, highlighted: true },
+          ].map((plan) => (
+            <Tile
+              key={plan.name}
+              style={{
+                height: "100%",
+                borderTop: plan.highlighted ? "3px solid var(--cds-interactive)" : undefined,
+              }}
             >
-              {checkoutMutation.isPending ? "Redirecting…" : "Upgrade to Private — $2.49/mo"}
-            </button>
-
-            {/* Twitter trial */}
-            {canClaimTrial && (
-              <div className="rounded-xl border border-border bg-background/30 p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
-                  <p className="text-xs font-medium">
-                    Share on X and get <span className="text-amber-400">15 days free</span>
-                  </p>
-                </div>
-
-                {shareStep === "idle" ? (
-                  <button
-                    onClick={handleShare}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg border border-border bg-white/5 px-4 py-2 text-sm font-medium hover:bg-white/10 transition-colors"
-                  >
-                    <Share2 className="h-3.5 w-3.5" />
-                    Share on X
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => trialMutation.mutate()}
-                    disabled={trialMutation.isPending}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-400 hover:bg-amber-500/20 disabled:opacity-50 transition-colors"
-                  >
-                    <Check className="h-3.5 w-3.5" />
-                    {trialMutation.isPending ? "Claiming…" : "I shared it! Claim 15 days free"}
-                  </button>
-                )}
-
-                {trialMutation.isError && (
-                  <p className="text-xs text-destructive text-center">
-                    Could not claim trial. Please try again.
-                  </p>
-                )}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h3 className="cds--type-productive-heading-02">{plan.name}</h3>
+                {plan.highlighted ? <Tag type="blue">Recommended</Tag> : null}
               </div>
-            )}
-          </div>
+              <p className="cds--type-productive-heading-04" style={{ marginTop: "1rem" }}>
+                {plan.price}
+              </p>
+              <ul style={{ marginTop: "1.5rem" }}>
+                {plan.features.map((feature) => (
+                  <li
+                    key={feature}
+                    className="cds--type-body-compact-01"
+                    style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.75rem" }}
+                  >
+                    <Checkmark size={16} />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </Tile>
+          ))}
         </div>
-      </div>
-    </>
+        {canClaimTrial ? (
+          <Tile style={{ marginTop: "1rem" }}>
+            <Tag type="purple">15 days free</Tag>
+            <h3 className="cds--type-productive-heading-02" style={{ marginTop: "0.75rem" }}>
+              Share Gitvisor on X
+            </h3>
+            <p className="cds--type-body-01" style={{ marginTop: "0.5rem" }}>
+              Open a prefilled post, then return here to claim the trial.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "1rem" }}>
+              {shareStep === "idle" ? (
+                <Button kind="tertiary" renderIcon={LogoX} onClick={handleShare}>
+                  Share on X
+                </Button>
+              ) : (
+                <Button
+                  kind="tertiary"
+                  renderIcon={Checkmark}
+                  disabled={trialMutation.isPending}
+                  onClick={() => trialMutation.mutate()}
+                >
+                  {trialMutation.isPending ? "Claiming…" : "Claim 15 days free"}
+                </Button>
+              )}
+            </div>
+            {trialMutation.isError ? (
+              <InlineNotification
+                kind="error"
+                title="Trial not claimed"
+                subtitle="Try again in a moment."
+                hideCloseButton
+                lowContrast
+                style={{ marginTop: "1rem" }}
+              />
+            ) : null}
+          </Tile>
+        ) : null}
+      </ModalBody>
+      <ModalFooter>
+        <Button kind="secondary" onClick={onClose}>
+          Stay on Public
+        </Button>
+        <Button
+          renderIcon={Locked}
+          disabled={checkoutMutation.isPending}
+          onClick={() => checkoutMutation.mutate()}
+        >
+          {checkoutMutation.isPending ? "Opening checkout…" : "Upgrade · $2.49/month"}
+        </Button>
+      </ModalFooter>
+    </ComposedModal>
   );
 }

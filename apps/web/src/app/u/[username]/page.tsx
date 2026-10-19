@@ -61,12 +61,17 @@ export async function generateMetadata({
     openGraph: {
       title: `${displayName} on Gitvisor`,
       description,
-      images: profile.avatarUrl ? [{ url: profile.avatarUrl }] : [],
+      url: `/u/${profile.githubUsername}`,
+      images: [
+        { url: "/og.png", width: 1200, height: 630, alt: "Gitvisor" },
+        ...(profile.avatarUrl ? [{ url: profile.avatarUrl }] : []),
+      ],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: `${displayName} on Gitvisor`,
       description,
+      images: ["/og.png"],
     },
   };
 }

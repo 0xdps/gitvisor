@@ -1,0 +1,29 @@
+apps/web/public/site.webmanifest
+  s_84c39768a3d85c::t_cd905e1f5bbdbf 7-8,10-12
+apps/web/public/icon.svg
+  s_84c39768a3d85c::t_0f93c6b658f440 1
+apps/web/src/app/layout.tsx
+  s_84c39768a3d85c::t_98a240264b8205 6-7,11-17,19-20,22-27,30,32,34-35,38-41,43,52-53,55-56,61-90
+  s_84c39768a3d85c::t_b09498c464c98b 101
+  s_84c39768a3d85c::t_2533ea801ddc75 91-92
+apps/web/public/robots.txt
+  s_84c39768a3d85c::t_69e33390f02f34 1-2
+apps/web/src/app/u/[username]/page.tsx
+  s_84c39768a3d85c::t_3d685ccc3bf4b4 64-68,71,74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5e85c9b06f21396ff68524ef27fcbe60dc8c2657",
+  "prompts": {},
+  "sessions": {
+    "s_84c39768a3d85c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "2154a2db-9402-4d2d-b4a0-92e6611dbb96",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+apps/worker/src/handlers/index.ts
+  s_84c39768a3d85c::t_9de2ef07c8b421 104
+apps/web/src/components/upgrade-modal.tsx
+  s_84c39768a3d85c::t_816bc6c46eeafe 6-7
+  s_84c39768a3d85c::t_2fa64c74214f1b 196
+  s_84c39768a3d85c::t_c6e1f8deed07d1 102-131,135
+  s_84c39768a3d85c::t_2eb1383d5f513b 218-222
+packages/github/src/webhooks.ts
+  s_84c39768a3d85c::t_24dd544cbc3a28 177,180-187
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "691dd00a53e950573d99a3830a7258307472aaec",
+  "prompts": {},
+  "sessions": {
+    "s_84c39768a3d85c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "2154a2db-9402-4d2d-b4a0-92e6611dbb96",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}

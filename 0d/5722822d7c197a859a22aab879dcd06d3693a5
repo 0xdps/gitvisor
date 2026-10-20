@@ -1,0 +1,43 @@
+apps/web/src/components/ops/attention-inbox.tsx
+  s_84c39768a3d85c::t_7931c65bf3a5af 1-94
+apps/web/src/components/app-shell.tsx
+  s_84c39768a3d85c::t_dcde6986456525 17
+  s_84c39768a3d85c::t_4bbab72d7adb91 57,60
+apps/web/src/components/ops/repo-matrix.tsx
+  s_84c39768a3d85c::t_852fbd9722a050 130-141
+  s_84c39768a3d85c::t_787b6b864e4bcc 30
+apps/web/src/app/(dashboard)/dashboard/page.tsx
+  s_84c39768a3d85c::t_c1d367a5337bc7 343,346
+  s_84c39768a3d85c::t_8ff5dfb8a242c0 335-338
+  s_84c39768a3d85c::t_f775c5f265c9b5 39
+  s_84c39768a3d85c::t_474bad95b33085 358-417
+  s_84c39768a3d85c::t_4267d755337189 219
+  s_84c39768a3d85c::t_c1289c2fa91136 466
+  s_84c39768a3d85c::t_86559232e085f3 441-442
+  s_84c39768a3d85c::t_e7e6ee36476c22 191-197
+apps/web/src/app/(dashboard)/pull-requests/page.tsx
+  s_84c39768a3d85c::t_77ef50cdd82c7f 1-80
+apps/web/src/middleware.ts
+  s_84c39768a3d85c::t_d5dd0135b03c37 24
+  s_84c39768a3d85c::t_bfa25f48f5865e 25
+apps/web/src/app/(dashboard)/repositories/[id]/page.tsx
+  s_84c39768a3d85c::t_e91ea41d205bbf 3
+  s_84c39768a3d85c::t_17051431820916 117
+  s_84c39768a3d85c::t_daadf22630fc4e 1-2,4-116,118-127
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0d5722822d7c197a859a22aab879dcd06d3693a5",
+  "prompts": {},
+  "sessions": {
+    "s_84c39768a3d85c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "2154a2db-9402-4d2d-b4a0-92e6611dbb96",
+        "model": "auto-smart"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
